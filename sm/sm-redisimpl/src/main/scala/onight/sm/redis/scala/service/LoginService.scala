@@ -1,11 +1,8 @@
 package onight.sm.redis.scala.service
 
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import org.apache.commons.lang3.StringUtils
-
 import com.github.mauricio.async.db.RowData
-
 import lombok.extern.slf4j.Slf4j
 import onight.async.mysql.commons.Range
 import onight.oapi.scala.traits.OLog
@@ -13,7 +10,6 @@ import onight.osgi.annotation.NActorProvider
 import onight.sm.Ssm.PBSSO
 import onight.sm.Ssm.PBSSORet
 import onight.sm.Ssm.RetCode
-import onight.sm.redis.entity.SMIDSession
 import onight.sm.redis.scala.LService
 import onight.sm.redis.scala.PBUtils
 import onight.sm.redis.scala.SMIDHelper
@@ -25,6 +21,8 @@ import onight.sm.redis.scala.persist.VMDaos
 import onight.tfw.async.CompleteHandler
 import onight.tfw.otransio.api.PacketHelper
 import onight.tfw.otransio.api.beans.FramePacket
+import onight.sm.redis.scala.persist.LoginIDRedisLoCache
+import onight.sm.redis.entity.LoginResIDSession
 
 @NActorProvider
 object LoginActor extends SessionModules[PBSSO] {
@@ -43,9 +41,9 @@ object LoginService extends OLog with PBUtils with LService[PBSSO] {
       //        log.debug("db.row=" + row + ",gua size=" + VMDaos.guCache.size());
       ret.setLoginId(pbo.getLoginId) setStatus (RetCode.FAILED)
       if (StringUtils.equals(row("PASSWORD").asInstanceOf[String], pbo.getPassword)) {
-        val smid = SMIDHelper.nextSMID(ret.getLoginId)
+        val smid = SMIDHelper.nextSMID(pbo.getLoginId+"/"+pbo.getResId)
         ret.setCode("0000").setStatus(RetCode.SUCCESS) setLoginId (row("LOGIN_ID").asInstanceOf[String]) setSmid (smid)
-        val session = SMIDSession(smid,pbo.getUserId, pbo.getLoginId, pbo.getPassword, pbo.getResId, pbo.getExt.toString());
+        val session = LoginResIDSession(smid,pbo.getUserId, pbo.getLoginId, pbo.getPassword, pbo.getResId, pbo.getExt.toString());
         SessionManager.watchSMID(session)
       } else {
         ret.setDesc("Password error").setCode("0002");

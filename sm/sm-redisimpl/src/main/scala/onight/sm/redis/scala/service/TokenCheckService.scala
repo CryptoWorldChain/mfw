@@ -1,30 +1,18 @@
 package onight.sm.redis.scala.service
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import org.apache.commons.lang3.StringUtils
-import com.github.mauricio.async.db.RowData
 import lombok.extern.slf4j.Slf4j
-import onight.async.mysql.commons.Range
 import onight.oapi.scala.traits.OLog
 import onight.osgi.annotation.NActorProvider
-import onight.sm.Ssm.PBSSO
-import onight.sm.Ssm.PBSSORet
-import onight.sm.redis.entity.SMIDSession
+import onight.sm.Ssm.PBToken
+import onight.sm.Ssm.PBTokenRet
+import onight.sm.Ssm.RetCode
 import onight.sm.redis.scala.LService
 import onight.sm.redis.scala.PBUtils
-import onight.sm.redis.scala.SMIDHelper
-import onight.sm.redis.scala.SessionManager
 import onight.sm.redis.scala.SessionModules
-import onight.sm.redis.scala.persist.MysqlDAOs
-import onight.sm.redis.scala.persist.MysqlDAOs.KOLoginUser
-import onight.sm.redis.scala.persist.VMDaos
+import onight.sm.redis.scala.TokensManager
 import onight.tfw.async.CompleteHandler
 import onight.tfw.otransio.api.PacketHelper
 import onight.tfw.otransio.api.beans.FramePacket
-import onight.sm.Ssm.RetCode
-import onight.sm.Ssm.PBToken
-import onight.sm.Ssm.PBTokenRet
-import onight.sm.redis.scala.TokensManager
 
 @NActorProvider
 object TokenCheckActor extends SessionModules[PBToken] {

@@ -4,11 +4,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import onight.tfw.outils.serialize.SerializerUtil;
+import onight.tfw.outils.serialize.TransBeanSerializer.BeanMap;
 
 public class StringType {
 
@@ -137,20 +141,76 @@ public class StringType {
 	}
 
 	public static Object toTObject(byte[] bb) {
-		Character ch=(char)bb[0];
-		
+		Character ch = (char) bb[0];
+
 		Factory factory = type2Class.get(ch);
 		if (factory != null) {
-			return factory.newOne(new String(bb,1,bb.length-1));
+			return factory.newOne(new String(bb, 1, bb.length - 1));
 		} else {
 			ByteArrayOutputStream bout = new ByteArrayOutputStream();
 			try {
-				bout.write(bb,1,bb.length-1);
+				bout.write(bb, 1, bb.length - 1);
 				bout.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			return SerializerUtil.fromBytes(bout.toByteArray());
 		}
+	}
+
+	public static void flatMap(Map<String, Object> org, HashMap<byte[], byte[]> dist, String prefix) {
+		for (Entry<String, Object> kv : org.entrySet()) {
+			if (kv.getValue() instanceof BeanMap) {
+//				dist.put((prefix + kv.getKey()).getBytes(), toTBytes(kv.getValue()));
+				flatMap((Map<String, Object>) kv.getValue(), dist, prefix + kv.getKey() + "$B");
+			} else if (kv.getValue() instanceof HashMap) {
+				flatMap((Map<String, Object>) kv.getValue(), dist, prefix + kv.getKey() + "$H");
+			} else {
+				dist.put(("T"+prefix + kv.getKey()).getBytes(), toTBytes(kv.getValue()));
+			}
+		}
+	}
+
+	public static Map<String, Object> foldMap(String foldkeys[], Map<String, Object> dist, int index, Object value) {
+		if (foldkeys.length == index + 1) {
+			dist.put(foldkeys[index].substring(1), value);
+		} else {
+			System.out.println("foldKeys:" + foldkeys[index]);
+			char type=foldkeys[index+1].charAt(0);
+			HashMap<String, Object> nextmap = (HashMap<String, Object>) dist.get(foldkeys[index].substring(1));
+			if (nextmap == null) {
+				if(type=='B')
+				{
+					nextmap = new BeanMap<String, Object>();
+				}else{
+					nextmap = new HashMap<String, Object>();
+				}
+				dist.put(foldkeys[index].substring(1), nextmap);
+			}
+			foldMap(foldkeys, nextmap, index + 1, value);
+		}
+		return dist;
+	}
+
+	public static void foldMap(Map<String, Object> dist, Map<byte[], byte[]> src) {
+		for (Entry<byte[], byte[]> kv : src.entrySet()) {
+			String key = new String(kv.getKey());
+			String foldkeys[] = key.split("\\$");
+			// if (foldkeys.length > 1) {
+			// HashMap<String, Object> map = (HashMap<String, Object>)
+			// dist.get(foldkeys[0]);
+			// if (map == null) {
+			// map = new HashMap<String, Object>();
+			// dist.put(foldkeys[0], map);
+			// }
+			foldMap(foldkeys, dist, 0, toTObject(kv.getValue()));
+			// } else {
+			// dist.put(key, toTObject(kv.getValue()));
+			// }
+		}
+	}
+
+	public static void main(String[] args) {
+
 	}
 }

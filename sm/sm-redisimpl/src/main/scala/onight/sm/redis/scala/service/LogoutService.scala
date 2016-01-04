@@ -36,12 +36,12 @@ object LogoutService extends OLog with PBUtils with LService[PBSSO] {
   def onPBPacket(pack: FramePacket, pbo: PBSSO, handler: CompleteHandler) = {
     // ！！检查用户是否已经登录
     val ret = PBSSORet.newBuilder();
-    val session = SessionManager.logout(pbo.getSmid)
-    if (session != null) {
-      ret.setCode("0000").setStatus(RetCode.SUCCESS) setLoginId (session.getLoginId());
+    val session = SessionManager.logout(pbo.getSmid,pbo.getLoginId,pbo.getResId)
+    if (session._1!= null) {
+      ret.setCode("0000").setStatus(RetCode.SUCCESS) setLoginId (session._1.getLoginId());
     } else {
 //      log.debug("result error: session not found")
-      ret.setDesc("NotLoginIn").setCode("0001").setLoginId(pbo.getLoginId) setStatus (RetCode.FAILED);
+      ret.setDesc(session._2).setCode("0001").setLoginId(pbo.getLoginId) setStatus (RetCode.FAILED);
     }
     handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
   }

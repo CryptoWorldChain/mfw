@@ -65,15 +65,16 @@ public class DaoRedisImpl extends NoneDomainDao {
 	static byte[] EXIST_FIELD = "__".getBytes();
 	static byte[] EXIST_VALUE = StringType.toTBytes(1);
 
-	
 	protected KV kv(Object entity) {
 		HashMap<byte[], byte[]> map = new HashMap<byte[], byte[]>();
 		map.put(EXIST_FIELD, EXIST_VALUE);
-		if (entity instanceof HashMap) {
-			BeanMap<String,Object> hmap = (BeanMap<String,Object>) entity;
-			for (Map.Entry<String,Object> entry :  hmap.entrySet()) {
-				map.put(entry.getKey().getBytes(), StringType.toTBytes(entry.getValue()));
-			}
+		if (entity instanceof BeanMap) {
+			BeanMap<String, Object> hmap = (BeanMap<String, Object>) entity;
+			StringType.flatMap(hmap, map, "");
+			// for (Map.Entry<String,Object> entry : hmap.entrySet()) {
+			// map.put(entry.getKey().getBytes(),
+			// StringType.toTBytes(entry.getValue()));
+			// }
 		} else {
 			map.put(new byte[] { 0x01 }, StringType.toTBytes(entity));
 		}
@@ -108,11 +109,19 @@ public class DaoRedisImpl extends NoneDomainDao {
 		return redis.exec(new RedisCallback<Integer>() {
 			public Integer doInRedis(RedisConnection connection) throws DataAccessException {
 				KVExample kvexm = localExmaple(example);
+
 				int size = 0;
 				if (kvexm.getCriterias().size() == 0)
 					return 0;
 				for (Object cri : kvexm.getCriterias()) {
-					size += connection.del(((String) cri).getBytes());
+					if (kvexm.getSelectCol() != null) {
+						// 删除某一列
+						for (String col : kvexm.getSelectCol().split(",")) {
+							size += connection.hDel((localKey(cri)).getBytes(), col.getBytes());
+						}
+					} else {
+						size += connection.del(localKey(cri).getBytes());
+					}
 				}
 				return size;
 			}
@@ -146,11 +155,15 @@ public class DaoRedisImpl extends NoneDomainDao {
 	}
 
 	public BeanMap<String, Object> byteFieldMaps(Map<byte[], byte[]> bmap) {
-		if(bmap==null||bmap.size()==0)return null;
+		if (bmap == null || bmap.size() == 0)
+			return null;
 		BeanMap<String, Object> retmapper = new BeanMap<String, Object>();
-		for (Entry<byte[], byte[]> entry : bmap.entrySet()) {
-			retmapper.put(new String(entry.getKey()), StringType.toTObject(entry.getValue()));
-		}
+
+		StringType.foldMap(retmapper, bmap);
+		// for (Entry<byte[], byte[]> entry : bmap.entrySet()) {
+		// retmapper.put(new String(entry.getKey()),
+		// StringType.toTObject(entry.getValue()));
+		// }
 		return retmapper;
 	}
 
@@ -171,8 +184,7 @@ public class DaoRedisImpl extends NoneDomainDao {
 					connection.multi();
 					connection.hGetAll(kv._1);
 					connection.hMSet(kv._1, kv._2);
-					if(ll>0)
-					{
+					if (ll > 0) {
 						connection.expire(kv._1, ll);
 					}
 					List<Object> ret = connection.exec();
@@ -232,7 +244,7 @@ public class DaoRedisImpl extends NoneDomainDao {
 				KVExample kvexm = localExmaple(example);
 				ArrayList<Object> ret = new ArrayList<Object>();
 				for (Object cri : kvexm.getCriterias()) {
-					ret.add(byteFieldMaps(connection.hGetAll(((String) cri).getBytes())));
+					ret.add(byteFieldMaps(connection.hGetAll((localKey(cri)).getBytes())));
 				}
 				return ret;
 			}
@@ -280,7 +292,7 @@ public class DaoRedisImpl extends NoneDomainDao {
 				KVExample kvexm = localExmaple(example);
 				int size = 0;
 				for (Object cri : kvexm.getCriterias()) {
-					size += connection.keys(((String) cri).getBytes()).size();
+					size += connection.keys((localKey(cri)).getBytes()).size();
 				}
 				return size;
 			}
@@ -322,9 +334,11 @@ public class DaoRedisImpl extends NoneDomainDao {
 					return connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(),
 							Integer.parseInt(counterCri.getIncrements().toString()));
 				} else if (counterCri.getIncrements() instanceof Float) {
-					return connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(), Float.parseFloat(counterCri.getIncrements().toString()));
+					return connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(),
+							Float.parseFloat(counterCri.getIncrements().toString()));
 				} else if (counterCri.getIncrements() instanceof Double) {
-					return connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(), Double.parseDouble(counterCri.getIncrements().toString()));
+					return connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(),
+							Double.parseDouble(counterCri.getIncrements().toString()));
 				}
 				throw new JPAException("unknow incremen type:" + counterCri.getIncrements());
 			}
@@ -344,11 +358,14 @@ public class DaoRedisImpl extends NoneDomainDao {
 					return null;
 				}
 				if (counterCri.getIncrements() instanceof Integer) {
-					connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(), Integer.parseInt(counterCri.getIncrements().toString()));
+					connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(),
+							Integer.parseInt(counterCri.getIncrements().toString()));
 				} else if (counterCri.getIncrements() instanceof Float) {
-					connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(), Float.parseFloat(counterCri.getIncrements().toString()));
+					connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(),
+							Float.parseFloat(counterCri.getIncrements().toString()));
 				} else if (counterCri.getIncrements() instanceof Double) {
-					connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(), Double.parseDouble(counterCri.getIncrements().toString()));
+					connection.hIncrBy(counterCri.getRowkey().getBytes(), counterCri.getColumn().getBytes(),
+							Double.parseDouble(counterCri.getIncrements().toString()));
 				} else {
 					connection.discard();
 					return null;

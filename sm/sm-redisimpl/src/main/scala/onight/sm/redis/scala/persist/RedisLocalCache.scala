@@ -8,7 +8,6 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.Cache
 import java.util.concurrent.TimeUnit
 import com.github.mauricio.async.db.RowData
-import onight.sm.redis.entity.SMIDSession
 import onight.sm.redis.entity.TokenEncKeys
 import onight.sm.redis.entity.LoginResIDSession
 import onight.tfw.ojpa.api.CASCriteria
@@ -58,10 +57,10 @@ object LoginIDRedisLoCache extends RedisLocalCache[LoginResIDSession] {
   val dao: OJpaDAO[LoginResIDSession] = RedisDAOs.logiddao;
 }
 
-object SMIDIDRedisLoCache extends RedisLocalCache[SMIDSession] {
-  def getKey(v: SMIDSession) = v.smid
-  val dao: OJpaDAO[SMIDSession] = RedisDAOs.smiddao;
-}
+//object SMIDIDRedisLoCache extends RedisLocalCache[SMIDSession] {
+//  def getKey(v: SMIDSession) = v.smid
+//  val dao: OJpaDAO[SMIDSession] = RedisDAOs.smiddao;
+//}
 
 object TokenRedisLoCache extends RedisLocalCache[TokenEncKeys] {
   def getKey(v: TokenEncKeys) = v.timeIdx
