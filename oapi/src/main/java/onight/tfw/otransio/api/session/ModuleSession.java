@@ -17,7 +17,7 @@ public class ModuleSession extends PSession {
 	public void onPacket(FramePacket pack, final CompleteHandler handler) {
 		CMDService service = serviceByCMD.get(pack.getCMD());
 		if (service != null) {
-			service.onPacket(pack, new CompleteHandler() {
+			service.doPacketWithFilter(pack, new CompleteHandler() {
 				@Override
 				public void onFinished(FramePacket packet) {
 					handler.onFinished(packet);

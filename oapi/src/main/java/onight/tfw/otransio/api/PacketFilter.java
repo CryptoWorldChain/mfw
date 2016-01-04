@@ -10,8 +10,10 @@ import onight.tfw.otransio.api.beans.FramePacket;
  */
 public interface PacketFilter {
 
-	public boolean preRoute(FramePacket pack, CompleteHandler handler);
+	public String[] modules();
 
-	public boolean postRoute(FramePacket pack, CompleteHandler handler);
-	
+	public boolean preRoute(String module, FramePacket pack, CompleteHandler handler);
+
+	public boolean postRoute(String module, FramePacket pack, CompleteHandler handler);
+
 }

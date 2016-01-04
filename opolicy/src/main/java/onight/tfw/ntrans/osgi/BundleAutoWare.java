@@ -4,6 +4,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,19 +27,33 @@ public class BundleAutoWare {
 	public static class WaredInfo {
 		Method setMethod;
 		Object destObj;
+		boolean global = false;
 	};
 
 	public ConcurrentHashMap<String, List<WaredInfo>> requireList = new ConcurrentHashMap<>();
+
+	public static List<Field> getInheritedFields(Class<?> type) {
+		List<Field> fields = new ArrayList<Field>();
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			fields.addAll(Arrays.asList(c.getDeclaredFields()));
+		}
+		return fields;
+	}
 
 	public void bindActor(ActorService service, ServiceReference ref) {
 
 		Class clazz = service.getClass();
 		Instantiate inst = (Instantiate) clazz.getAnnotation(Instantiate.class);
-		String name = clazz.getName();
+		String name = (String) ref.getProperty("name");
+
 		if (inst != null) {
 			name = inst.name();
 			log.debug("Register ActorService:" + name + "," + service + ",clazz=" + clazz);
 		}
+		if (name == null) {
+			name = clazz.getName();
+		}
+
 		serviceByName.put(name, service);
 
 		// serviceByName.put(service.getClass(), value)
@@ -46,13 +61,14 @@ public class BundleAutoWare {
 
 		ArrayList<WaredInfo> wares = new ArrayList<WaredInfo>();
 
-		for (Field field : clazz.getDeclaredFields()) {
+		for (Field field : getInheritedFields(clazz)) {
 			ActorRequire anno = field.getAnnotation(ActorRequire.class);
 			if (anno != null) {
 				String beanname = anno.name();
 				if (StringUtils.isBlank(beanname)) {
 					beanname = field.getType().getName();
 				}
+				boolean global = anno.scope().equals("global");
 				log.debug("Service(" + service + "),require.field=" + field.getName() + ",bean=" + beanname + ",type=" + field.getType());
 				try {
 					PropertyDescriptor pd = new PropertyDescriptor(field.getName(), clazz);
@@ -61,7 +77,7 @@ public class BundleAutoWare {
 						rq = new ArrayList<WaredInfo>();
 						requireList.put(beanname, rq);
 					}
-					rq.add(new WaredInfo(pd.getWriteMethod(), service));
+					rq.add(new WaredInfo(pd.getWriteMethod(), service, global));
 				} catch (Exception e) {
 					log.error("error in auto ware Service..", e);
 					e.printStackTrace();
@@ -84,11 +100,17 @@ public class BundleAutoWare {
 	}
 
 	public void checkWared() {
+		checkWared(requireList, serviceByName, false);
+	}
+
+	public void checkWared(ConcurrentHashMap<String, List<WaredInfo>> requireList, ConcurrentHashMap<String, Object> serviceByName, boolean global) {
 		for (Entry<String, List<WaredInfo>> hunted : requireList.entrySet()) {
 			Object result = serviceByName.get(hunted.getKey());
 			if (result != null) {
 				for (WaredInfo wi : hunted.getValue()) {
 					try {
+						if (wi.global != global)
+							continue;
 						wi.setMethod.invoke(wi.destObj, result);
 						log.debug("AutoWared Success " + hunted.getKey() + " for class " + wi.setMethod);
 

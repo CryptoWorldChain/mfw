@@ -57,91 +57,55 @@ public class ActorManager {
 		}
 		services.remove(http);
 	}
-
-	ArrayList<PacketFilter> listeners = new ArrayList<>();
-
-	@Bind(aggregate = true, optional = true)
-	public void bindProc(PacketFilter pl) {
-		if (!listeners.contains(pl)) {
-			listeners.add(pl);
-			log.info("Register PacketListern::" + pl);
-		}
-	}
-
-	@Unbind(aggregate = true, optional = true)
-	public void unbindProc(PacketFilter pl) {
-		log.info("Remove PacketListern::" + pl);
-		listeners.remove(pl);
-	}
-
-	boolean preRouteListner(FramePacket pack, CompleteHandler handler) {
-		for (PacketFilter pl : listeners) {
-			if (pl.preRoute(pack, handler)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	boolean postRouteListner(FramePacket pack, CompleteHandler handler) {
-		for (PacketFilter pl : listeners) {
-			if (pl.postRoute(pack, handler)) {
-				return true;
-			}
-		}
-		return false;
-	}
 	
-	@WebServlet(asyncSupported=true)
-	public class AsyncServlet extends HttpServlet{
+	@WebServlet(asyncSupported = true)
+	public class AsyncServlet extends HttpServlet {
 		IActor factor;
-		
+
 		public AsyncServlet(IActor factor) {
 			super();
 			this.factor = factor;
 		}
 
 		protected void doGet(HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-			FramePacket pack = PacketHelper.buildHeaderFromHttpGet(req);
-			CompleteHandler handler = new CompleteHandler() {
-				@Override
-				public void onFinished(FramePacket packet) {
-					try {
-						if (packet != null) {
-							resp.getOutputStream().write(PacketHelper.toTransBytes(packet));
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
-			if (preRouteListner(pack, handler)) {
-				return;
-			}
+//			FramePacket pack = PacketHelper.buildHeaderFromHttpGet(req);
+//			CompleteHandler handler = new CompleteHandler() {
+//				@Override
+//				public void onFinished(FramePacket packet) {
+//					try {
+//						postRouteListner(packet, null);
+//					} catch (IOException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//			};
+//			if (preRouteListner(pack, handler)) {
+//				return;
+//			}
 			factor.doGet(req, resp);
-			postRouteListner(pack, null);
 		}
 
 		@Override
 		protected void doPost(HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-			FramePacket pack = PacketHelper.buildHeaderFromHttpPost(req);
-			CompleteHandler handler = new CompleteHandler() {
-				@Override
-				public void onFinished(FramePacket packet) {
-					try {
-						if (packet != null) {
-							resp.getOutputStream().write(PacketHelper.toTransBytes(packet));
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			};
-			if (preRouteListner(pack, handler)) {
-				return;
-			}
+//			FramePacket pack = PacketHelper.buildHeaderFromHttpPost(req);
+//			CompleteHandler handler = new CompleteHandler() {
+//				@Override
+//				public void onFinished(FramePacket packet) {
+//					try {
+//						if (packet != null) {
+//							resp.getOutputStream().write(PacketHelper.toTransBytes(packet));
+//						}
+//						postRouteListner(packet, null);
+//					} catch (IOException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//			};
+//			if (preRouteListner(pack, handler)) {
+//				return;
+//			}
 			factor.doPost(req, resp);
-			postRouteListner(pack, null);
+
 		}
 
 		@Override
@@ -163,7 +127,7 @@ public class ActorManager {
 		String[] ctxpaths = actor.getWebPaths();
 		if (ctxpaths != null) {
 			for (String ctxpath : ctxpaths) {
-				HttpServlet servlet = new AsyncServlet(actor) ;
+				HttpServlet servlet = new AsyncServlet(actor);
 				for (String spath : ctxpath.split(",")) {
 					servlets.put(spath, servlet);
 					for (HttpService s : services) {

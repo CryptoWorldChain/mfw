@@ -7,7 +7,9 @@ public interface CMDService {
 
 	String[] getCmds();
 
-	public void onPacket(FramePacket pack, CompleteHandler handler);
+//	public void onPacket(FramePacket pack, CompleteHandler handler);
+
+	public void doPacketWithFilter(FramePacket pack, CompleteHandler handler);
 
 	String getModule();
 }

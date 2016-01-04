@@ -113,7 +113,12 @@ public class ExtHeader {
 		}
 		StringBuffer sb = new StringBuffer();
 		for (Entry<String, Object> pair : vkvs.entrySet()) {
-			if (pair.getValue() != null && !pair.getKey().startsWith(PackHeader.EXT_IGNORE) && pair.getValue() instanceof String) {
+			if (pair.getValue() != null  && pair.getValue() instanceof String) {
+				sb.append(pair.getKey()).append(EQUAL_CHAR).append(pair.getValue()).append(SPLIT_CHAR);
+			}
+		}
+		for (Entry<String, Object> pair : hiddenkvs.entrySet()) {
+			if (pair.getValue() != null  && pair.getValue() instanceof String) {
 				sb.append(pair.getKey()).append(EQUAL_CHAR).append(pair.getValue()).append(SPLIT_CHAR);
 			}
 		}

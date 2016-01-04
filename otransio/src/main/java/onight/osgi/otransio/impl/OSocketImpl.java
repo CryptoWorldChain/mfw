@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import jnr.posix.POSIXFactory;
 import lombok.Getter;
@@ -103,22 +104,6 @@ public class OSocketImpl implements Serializable {
 		log.info("nio stopped ... OK");
 	}
 
-	ArrayList<PacketFilter> listeners = new ArrayList<>();
-
-	@Bind(aggregate = true, optional = true)
-	public void bindProc(PacketFilter pl) {
-		if (!listeners.contains(pl)) {
-			listeners.add(pl);
-			log.info("Register PacketListern::" + pl);
-		}
-	}
-
-	@Unbind(aggregate = true, optional = true)
-	public void unbindProc(PacketFilter pl) {
-		log.info("Remove PacketListern::" + pl);
-		listeners.remove(pl);
-	}
-
 	@Bind(aggregate = true, optional = true)
 	public void bindPSender(PSenderService pl) {
 		log.info("Register PSender::" + pl + ",sender=" + sender);
@@ -164,38 +149,25 @@ public class OSocketImpl implements Serializable {
 		}
 	}
 
+
 	public void routePacket(FramePacket pack, final CompleteHandler handler) {
-		boolean prefilter = false;
-		for (PacketFilter pl : listeners) {
-			if (pl.preRoute(pack, handler)) {
-				prefilter = true;
-				break;
+
+		String destTO = pack.getExtStrProp(PackHeader.TO);
+		ModuleSession ms = null;
+		if (StringUtils.isNotBlank(destTO)) {// 固定给某个节点id的
+			ms = mss.byModuleAndNodeID(pack.getModule(), destTO);
+		} else {
+			ms = mss.byModule(pack.getModule());
+		}
+		if (ms != null) {
+			ms.onPacket(pack, handler);
+		} else {
+			// 没有找到对应的消息
+			if (pack.isSync()) {
+				handler.onFinished(PacketHelper.toPBReturn(pack, new UnknowModuleBody(pack.getModule() + ",to=" + destTO, pack)));
 			}
 		}
 
-		if (!prefilter) {
-			String destTO = pack.getExtStrProp(PackHeader.TO);
-			ModuleSession ms = null;
-			if (StringUtils.isNotBlank(destTO)) {// 固定给某个节点id的
-				ms = mss.byModuleAndNodeID(pack.getModule(), destTO);
-			} else {
-				ms = mss.byModule(pack.getModule());
-			}
-			if (ms != null) {
-				ms.onPacket(pack, handler);
-			} else {
-				// 没有找到对应的消息
-				if (pack.isSync()) {
-					handler.onFinished(PacketHelper.toPBReturn(pack, new UnknowModuleBody(pack.getModule() + ",to=" + destTO, pack)));
-				}
-			}
-		}
-
-		for (PacketFilter pl : listeners) {
-			if (pl.postRoute(pack, handler)) {
-				break;
-			}
-		}
 	}
 
 	public static void main(String[] args) {

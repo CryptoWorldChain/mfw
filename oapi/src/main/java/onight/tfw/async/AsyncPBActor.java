@@ -26,7 +26,7 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 		asyncContext.start(new Runnable() {
 			@Override
 			public void run() {
-				onPacket(pack, new CompleteHandler() {
+				doPacketWithFilter(pack, new CompleteHandler() {
 					@Override
 					public void onFinished(FramePacket retpack) {
 						try {

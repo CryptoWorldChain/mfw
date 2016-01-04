@@ -14,6 +14,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.annotation.iPojoBean;
 import onight.tfw.async.CompleteHandler;
+import onight.tfw.ntrans.api.annotation.ActorRequire;
 import onight.tfw.ojpa.api.IJPAClient;
 import onight.tfw.ojpa.api.OJpaDAO;
 import onight.tfw.orouter.api.IQClient;
@@ -98,8 +99,8 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	protected ISerializer jsons = SerializerFactory.getSerializer(SerializerFactory.SERIALIZER_JSON);
 
-	public void doWeb(HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack) throws IOException {
-		onPacket(pack, new CompleteHandler() {
+	public void doWeb(final HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack) throws IOException {
+		doPacketWithFilter(pack, new CompleteHandler() {
 			@Override
 			public void onFinished(FramePacket retpack) {
 				try {
@@ -130,6 +131,15 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 					}
 				} catch (IOException e) {
 					log.debug("doweb error:", e);
+				} finally {
+					try {
+						CompleteHandler handler = (CompleteHandler) req.getAttribute("__POST_HANDLER");
+						if (handler != null) {
+							handler.onFinished(retpack);
+						}
+					} catch (Exception e) {
+						log.debug("doweb filter error:", e);
+					}
 				}
 			}
 		});
@@ -158,7 +168,20 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 		return new String[] {};
 	}
 
+	@ActorRequire(name = "filterManager", scope = "global")
+	@Setter
+	@Getter
+	public FilterManager fm = new NoneFilterManager();
+
 	@Override
+	final public void doPacketWithFilter(FramePacket pack, CompleteHandler handler) {
+		if (fm.preRouteListner(getModule(), pack, handler)) {
+			return;
+		}
+		onPacket(pack, handler);
+		fm.postRouteListner(getModule(), pack, handler);
+	}
+
 	public void onPacket(FramePacket pack, CompleteHandler handler) {
 		if (handler != null) {
 			handler.onFinished(PacketHelper.toPBReturn(pack, new UnknowCMDBody("NOT IMPL", pack)));
@@ -184,7 +207,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 				@Override
 				public boolean onMessage(final String ex, Serializable wmsg) {
 					final FramePacket pack = PacketHelper.buildPacketFromTransBytes((byte[]) wmsg);
-					onPacket(pack, new CompleteHandler() {
+					doPacketWithFilter(pack, new CompleteHandler() {
 						@Override
 						public void onFinished(FramePacket packet) {
 							if (pack.isSync()) {

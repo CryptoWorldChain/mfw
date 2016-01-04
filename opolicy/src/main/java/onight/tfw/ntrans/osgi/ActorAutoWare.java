@@ -38,6 +38,12 @@ public class ActorAutoWare {
 			bundleAutoByBundleID.put(ref.getBundle().getBundleId(), baw);
 		}
 		baw.bindActor(service, ref);
+		for(BundleAutoWare bawexist:bundleAutoByBundleID.values()){
+			if(bawexist==baw)continue;
+			baw.checkWared(baw.requireList,bawexist.serviceByName,true);
+			bawexist.checkWared(bawexist.requireList, baw.serviceByName, true);
+		}
+		
 	}
 
 	@Unbind(optional=true,aggregate=true)
@@ -46,7 +52,6 @@ public class ActorAutoWare {
 		BundleAutoWare baw = bundleAutoByBundleID.get(ref.getBundle().getBundleId());
 		if (baw != null) {
 			baw.unbindActor(service, ref);
-
 		}
 
 	}
