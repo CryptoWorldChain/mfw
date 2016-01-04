@@ -3,8 +3,6 @@ package onight.tfw.async;
 import java.io.IOException;
 
 import javax.servlet.AsyncContext;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -23,7 +21,7 @@ import com.googlecode.protobuf.format.JsonFormat;
 public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 
 	@Override
-	public void doWeb(final ServletRequest req, final ServletResponse resp, final FramePacket pack) throws IOException {
+	public void doWeb(final HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack) throws IOException {
 		final AsyncContext asyncContext = req.startAsync();
 		asyncContext.start(new Runnable() {
 			@Override
@@ -41,14 +39,14 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 								String str = JsonFormat.printToString(msg);
 								retpack.getFixHead().genBytes();
 								String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-										+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExts()))) + "" //
+										+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
 										+ ",\"body\":" + str + "" + "}";
 
 								resp.getOutputStream().write(ret.getBytes("UTF-8"));
 
 							} else if (retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON && retpack.getBody() != null) {
 								String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-										+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExts()))) + "" //
+										+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
 										+ ",\"body\":" + new String(retpack.getBody()) + "" + "}";
 
 								resp.getOutputStream().write(ret.getBytes("UTF-8"));

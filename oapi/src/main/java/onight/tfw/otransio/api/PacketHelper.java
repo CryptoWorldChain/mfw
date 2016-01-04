@@ -4,8 +4,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.otransio.api.beans.ExtHeader;
@@ -31,7 +35,7 @@ public class PacketHelper {
 		ret.setExtHead(fp.getExtHead());
 		ret.setFixHead(fp.getFixHead());
 		ret.getFixHead().reset();
-//		ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
+		// ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
 		return ret;
 	}
 
@@ -55,25 +59,29 @@ public class PacketHelper {
 		ret.setFixHead(fh);
 		return ret;
 	}
+
 	public static FramePacket buildHeaderFromHttpGet(HttpServletRequest req) {
-		if(StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))return null;
-		return buildHeaderFromHttp(req,null);
+		if (StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))
+			return null;
+		return buildHeaderFromHttp(req, null);
 	}
 
 	public static FramePacket buildHeaderFromHttpPost(HttpServletRequest req) throws IOException {
-		if(StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))return null;
+		if (StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))
+			return null;
 		FramePacket ret = (FramePacket) req.getAttribute("__framepack");
-		if(ret!=null){
+		if (ret != null) {
 			return ret;
 		}
 		return buildHeaderFromHttp(req, HttpHelper.getRequestContentBytes(req));
 	}
+
 	static FramePacket buildHeaderFromHttp(HttpServletRequest req, byte[] postData) {
 		FramePacket ret = (FramePacket) req.getAttribute("__framepack");
-		if(ret!=null){
+		if (ret != null) {
 			return ret;
 		}
-		ret= new FramePacket();
+		ret = new FramePacket();
 		req.setAttribute("__framepack", ret);
 		ret.setFixHead(FixHeader.buildFrom(req));
 		ret.setExtHead(ExtHeader.buildFrom(req));
@@ -82,8 +90,14 @@ public class PacketHelper {
 		} else {
 			ret.setBody(postData);
 		}
-		
+
 		return ret;
+	}
+
+	static void buildHttpHeader(HttpServletRequest req, HttpServletResponse res, FramePacket packet) {
+		if (packet.getSession() != null) {
+			res.addCookie(new Cookie(ExtHeader.SESSIONID, packet.getSession().getSmid()));
+		}
 	}
 
 	static ObjectMapper mapper = new ObjectMapper();
@@ -100,7 +114,7 @@ public class PacketHelper {
 		fp.getFixHead().genBytes();
 		SimpleFramePack jsonpack = new SimpleFramePack();
 		jsonpack.setFh(new String(fp.getFixHead().genBytes()));
-		jsonpack.setEh(fp.getExts());
+		jsonpack.setEh(fp.getExtHead().getVkvs());
 		jsonpack.setBody(fp.getFbody());
 		return jsonpack;
 	}
@@ -155,8 +169,12 @@ public class PacketHelper {
 			ExtHeader eh = null;
 			if (dataNode.get("eh") != null) {
 				eh = new ExtHeader();
-				eh.setKvs(mapper.<HashMap<String, String>> readValue(dataNode.get("eh"), new TypeReference<HashMap<String, String>>() {
+				Map<String, Object> map = (mapper.<HashMap<String, Object>> readValue(dataNode.get("eh"), new TypeReference<HashMap<String, Object>>() {
 				}));
+				for (Entry<String, Object> entry : map.entrySet()) {
+					eh.append(entry.getKey(), entry.getValue());
+				}
+
 			}
 
 			FramePacket ret = new FramePacket();
@@ -180,8 +198,8 @@ public class PacketHelper {
 			}
 			byte bb[] = null;
 			if (header.getBodysize() > 0) {
-				 bb = new byte[header.getBodysize()];
- 				 System.arraycopy(transbytes, FixHeader.LENGTH + header.getExtsize(), bb, 0, header.getBodysize());
+				bb = new byte[header.getBodysize()];
+				System.arraycopy(transbytes, FixHeader.LENGTH + header.getExtsize(), bb, 0, header.getBodysize());
 			}
 			FramePacket pack = new FramePacket(header, ext, bb, header.getCmd() + header.getModule());
 			return pack;

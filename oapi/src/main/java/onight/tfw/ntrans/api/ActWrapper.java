@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -54,10 +52,10 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 		return "";
 	}
 
-//	@Getter
-//	@Setter
-//	@PSender
-//	protected IPacketSender sender;
+	// @Getter
+	// @Setter
+	// @PSender
+	// protected IPacketSender sender;
 
 	@Override
 	final public void sendMessage(String ex, Object wmsg) {
@@ -85,11 +83,11 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	@Override
 	final public String[] getWebPaths() {
-		List<String> ret=new ArrayList<>();
+		List<String> ret = new ArrayList<>();
 		for (String cmd : getCmds()) {
-			ret.add( ("/" + getModule() + "/pb" + cmd+".do").toLowerCase());
+			ret.add(("/" + getModule() + "/pb" + cmd + ".do").toLowerCase());
 		}
-		return ret.toArray(new String[]{});
+		return ret.toArray(new String[] {});
 	}
 
 	@Override
@@ -100,7 +98,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	protected ISerializer jsons = SerializerFactory.getSerializer(SerializerFactory.SERIALIZER_JSON);
 
-	public void doWeb(ServletRequest req, final ServletResponse resp, final FramePacket pack) throws IOException {
+	public void doWeb(HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack) throws IOException {
 		onPacket(pack, new CompleteHandler() {
 			@Override
 			public void onFinished(FramePacket retpack) {
@@ -114,24 +112,21 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 						String str = JsonFormat.printToString(msg);
 						retpack.getFixHead().genBytes();
 						String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-								+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExts()))) + "" //
+								+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
 								+ ",\"body\":" + str + "" + "}";
 
 						resp.getOutputStream().write(ret.getBytes("UTF-8"));
 
-					} else 
-					if(retpack.getFixHead().getEnctype()==SerializerFactory.SERIALIZER_JSON&&retpack.getBody()!=null)
-					{
+					} else if (retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON && retpack.getBody() != null) {
 						String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-								+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExts()))) + "" //
+								+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
 								+ ",\"body\":" + new String(retpack.getBody()) + "" + "}";
-
 						resp.getOutputStream().write(ret.getBytes("UTF-8"));
-
-//						
-					}else{
+						//
+					} else {
 						resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
 					}
+					pack.getExtHead().buildFor(resp);
 				} catch (IOException e) {
 					log.debug("doweb error:", e);
 				}
@@ -181,7 +176,6 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	public void registerMQ() {
 		if (!isResourceReady()) {
-
 			return;
 		}
 		for (String cmd : getCmds()) {
@@ -193,7 +187,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 						@Override
 						public void onFinished(FramePacket packet) {
 							if (pack.isSync()) {
-								String qid = pack.getExtProp(ex + ".QID");
+								String qid = pack.getExtStrProp(ex + ".QID");
 								if (StringUtils.isNotBlank(qid)) {
 									qService.sendMessage(qid, PacketHelper.toTransBytes(packet));
 								}

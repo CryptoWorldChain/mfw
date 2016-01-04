@@ -1,0 +1,16 @@
+
+version = '1.0.0'
+
+
+dependencies {
+	compile 'com.google.guava:guava:19.0'
+}
+
+jar {
+	manifest{
+		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
+		attributes( 'Import-Ignore':'com.googlecode.protobuf,com.google.protobuf,com.github.mauricio,io.netty.buffer')
+		attributes( 'DynamicImport-Package': '*')
+		attributes( 'Import-Lib': 'lib')
+	}
+}
