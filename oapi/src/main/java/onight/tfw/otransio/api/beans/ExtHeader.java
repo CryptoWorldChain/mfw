@@ -80,6 +80,9 @@ public class ExtHeader {
 	public Object append(String key, Object value) {
 		return getMap(key).put(key, value);
 	}
+	public Object remove(String key) {
+		return getMap(key).remove(key);
+	}
 
 	public void reset() {
 		this.data = null;

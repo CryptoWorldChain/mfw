@@ -174,7 +174,7 @@ public class OSocketImpl implements Serializable {
 		}
 
 		if (!prefilter) {
-			String destTO = pack.getExtProp(PackHeader.TO);
+			String destTO = pack.getExtStrProp(PackHeader.TO);
 			ModuleSession ms = null;
 			if (StringUtils.isNotBlank(destTO)) {// 固定给某个节点id的
 				ms = mss.byModuleAndNodeID(pack.getModule(), destTO);

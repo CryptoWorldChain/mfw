@@ -85,10 +85,10 @@ public class RemoteModuleSession extends ModuleSession {
 			packid = genPackID();
 			if (pack.getExtHead().isExist(packIDKey)) {
 				// 检查是否为响应包
-				String expackid=pack.getExtProp(packIDKey);
+				String expackid=pack.getExtStrProp(packIDKey);
 				future = packMaps.remove(expackid);
 				if (future != null) {
-					pack.getExts().remove(packIDKey);
+					pack.getExtHead().remove(packIDKey);
 					future.result(pack);
 				} else {
 					log.warn("unknow ack:" + expackid + ",module=" + this.getModule() + ",packid=" + pack.getExtProp(packIDKey));
