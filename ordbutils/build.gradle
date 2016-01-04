@@ -1,0 +1,51 @@
+
+version = '2.0.0'
+
+
+sourceSets {
+	main {
+		java {
+			srcDir 'src/main/java'
+			srcDir 'src/main/resources'
+//			srcDir 'src/gens/java'
+		}
+		resources {
+			srcDir 'src/resources'
+//			srcDir 'src/gens/resources'
+		}
+	}
+}
+
+dependencies {
+	includeInJar("org.springframework:spring-core:$springVersion") { exclude module: "commons-logging" }
+	includeInJar "org.springframework:spring-context-support:$springVersion"
+	includeInJar "org.springframework:spring-context:$springVersion"
+	includeInJar "org.springframework:spring-tx:$springVersion"
+	includeInJar "org.springframework:spring-jdbc:$springVersion"
+	
+	includeInJar "org.springframework:spring-oxm:$springVersion"
+//	includeInJar "org.springframework:spring-ibatis:2.0.8"
+	//ibatis3
+	compile "org.mybatis:mybatis:$mybatis"
+	includeInJar "org.mybatis:mybatis-spring:$mybatisSpring"
+//	includeInJar "org.apache.ibatis:ibatis-sqlmap:2.3.0"
+	//mybatis-generator
+//	includeInJar "org.mybatis.generator:mybatis-generator-core:1.3.2"
+	//commons-lang3
+	// Mappers
+	includeInJar "commons-beanutils:commons-beanutils-core:1.8.3"
+	includeInJar "cglib:cglib-nodep:3.2.0"
+	
+	includeInJar files('libs/ojdbc6.jar','libs/mysql-connector-java-5.1.37.jar','libs/c3p0-0.9.5.1.jar','libs/mchange-commons-java-0.2.10.jar')
+	
+	//	 testCompile 'junit:junit:4.12'
+}
+
+jar {
+	manifest{
+		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
+		attributes( 'Import-Ignore':'org.springframework,org.mybatis.spring,com.mchange.v2.c3p0,com.mysql.jdbc')
+		attributes( 'DynamicImport-Package': '*')
+		attributes( 'Import-Lib': 'lib')
+	}
+}

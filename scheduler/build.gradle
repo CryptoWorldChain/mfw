@@ -1,0 +1,26 @@
+
+
+dependencies {
+	includeInJar 'org.projectlombok:lombok:1.16.4'
+//	compile 'onight.tfw:onight.tfw.oapi:2.0.0'
+	compile 'org.apache.commons:commons-lang3:3.3.2'
+	testCompile 'junit:junit:4.8.2'
+}
+version = '1.0.0'
+jar {
+	manifest{
+		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
+		attributes( 'Import-Ignore':'org.glassfish.grizzly')
+		attributes( 'DynamicImport-Package': '*')
+		attributes( 'Import-Lib': 'lib')
+	}
+}
+//	install {
+//		repositories {
+//			mavenDeployer
+//			{ repository(url: "file:/x:/m2_repos/") }
+//		}
+//	}
+
+
+

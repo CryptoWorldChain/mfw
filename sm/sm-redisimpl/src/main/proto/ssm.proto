@@ -1,0 +1,89 @@
+
+
+syntax = "proto3";
+
+package onight.sm;
+
+
+message PBExtraInfo //账户信息
+{
+	string  act_no			=1;	//账户号
+	//==============
+	//==以下是备选的
+
+	string	act_pwd			=2;//密码（可以用)
+	string  act_name		=3;//账户名称
+	string  cust_id			=10;//客户号
+	string  mchnt_id		=20;//所属商户号
+	string  channel_id		=21;//所属渠道号
+	string  act_type		=30;//账户类型
+	string  catalog			=50;//机构类型
+	
+	string  create_time	   	=70;//创建时间
+	string  update_time	   	=80;//更新时间
+	string  memo	   		=90;//备注
+};
+
+message PBSSO	//登入
+{
+	string user_id = 1;
+	string login_id = 2;
+	string nickname = 3;
+	string email = 4;
+	string mobile = 5;
+	string third_loginid1 = 6;
+	string third_loginid2 = 7;
+	string reg_type = 8;
+	int32  status = 9;
+	string password = 10;
+	string trade_password = 11;
+	string update_time = 12;
+	string create_time = 13;
+
+	string  smid =20;//session的唯一id
+	string  res_id = 25;//资源id
+	PBExtraInfo  ext	=30;//冗余信息
+	
+};
+
+enum RetCode{
+		SUCCESS = 0;//成功
+		FAILED = -1;//失败
+	}
+
+message PBSSORet{//登入返回
+
+	string	login_id = 1;//登陆的id
+	string  smid =20;//session的唯一id
+	string  tokenid =30;//tokenid的唯一id
+	
+	RetCode	status = 40;//返回码
+	string 	code = 41;//状态信息
+	string 	desc = 42;//描述信息
+	
+	
+};
+
+
+enum TokenOp{
+		TOKEN_NEW=0;
+		TOKEN_CHECK=1;
+	};
+	
+message PBToken	//token操作
+{
+	TokenOp op=1;
+	string tokenid = 2;
+	string userid = 3;
+};
+message PBTokenRet	//token操作
+{
+	TokenOp op=1;
+	string tokenid = 2;
+	string userid = 3;
+	
+	RetCode	status = 40;//返回码
+	string 	code = 41;//状态信息
+	string 	desc = 42;//描述信息
+	
+};

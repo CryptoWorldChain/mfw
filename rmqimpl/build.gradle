@@ -1,0 +1,28 @@
+
+version = '2.0.0'
+
+sourceSets {
+	main {
+		java {
+			srcDir 'src/main/java'
+		}
+		resources { 
+			srcDir 'src/main/resources'
+		}
+	}
+}
+dependencies {
+	 includeInJar 'org.springframework.amqp:spring-rabbit:1.5.1.RELEASE'
+	 includeInJar 'com.rabbitmq:amqp-client:3.5.6'
+//	 testCompile 'junit:junit:4.12'
+	
+}
+
+jar {
+	manifest{
+		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
+		attributes( 'Import-Ignore':'org.springframework.amqp,com.rabbitmq.client')
+		attributes( 'DynamicImport-Package': '*')
+		attributes( 'Import-Lib': 'lib')
+	}
+}

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.springsource.ide.eclipse.gradle.classpathcontainer" exported="true">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.ipojo.manipulator/1.12.1/2252f5682193f01c1706461f95efae39127ec45e/org.apache.felix.ipojo.manipulator-1.12.1-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.ipojo.manipulator/1.12.1/907dc28c3895b0c121497dccd1e700a3f4ae3887/org.apache.felix.ipojo.manipulator-1.12.1.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.javassist/javassist/3.20.0-GA/d8fdc08a455bc0b28bc0bed1f0d032d935cee8e1/javassist-3.20.0-GA-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.javassist/javassist/3.20.0-GA/a9cbcdfb7e9f86fbc74d3afae65f2248bfbf82a0/javassist-3.20.0-GA.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.ipojo.annotations/1.12.1/9e156e0d035b33e789774647c556938cddaf18e7/org.apache.felix.ipojo.annotations-1.12.1-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.ipojo.annotations/1.12.1/cd7697bd461c903e3c938a11a2bb3d0ca453760c/org.apache.felix.ipojo.annotations-1.12.1.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.ipojo.api/1.12.1/9a7864551a4daf3525ede031f77c59c14fe52087/org.apache.felix.ipojo.api-1.12.1-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.ipojo.api/1.12.1/e27cd89972be13ea6d939c122c96ad909918a685/org.apache.felix.ipojo.api-1.12.1.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.main/5.4.0/4d296ca5b0d59d0b28a95abb40faa9781b23fcae/org.apache.felix.main-5.4.0-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.main/5.4.0/a0547aea4b6a7af9a4235d1d829122f3ccd0c87e/org.apache.felix.main-5.4.0.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-classic/1.1.3/f4915df0360e7529c61f9e78ef3a06c19238e62e/logback-classic-1.1.3-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-classic/1.1.3/d90276fff414f06cb375f2057f6778cd63c6082f/logback-classic-1.1.3.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm-all/5.0.2/90dc6bd89bd1989906d56bdf0268128a13d94e82/asm-all-5.0.2-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.ow2.asm/asm-all/5.0.2/973bac1ba8f8eddf06e180373134cb9f85f5f6f5/asm-all-5.0.2.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.ipojo.metadata/1.6.0/c99a94eb60c6e283d1378f469badd3c28c37d63/org.apache.felix.ipojo.metadata-1.6.0-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.ipojo.metadata/1.6.0/c13efc000ddc3af057c2faa3e7039489ce38e49e/org.apache.felix.ipojo.metadata-1.6.0.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-core/1.1.3/a69d9a62a693f391ad19d8ac19fa85a7a60cbc7c/logback-core-1.1.3-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-core/1.1.3/e3c02049f2dbbc764681b40094ecf0dcbc99b157/logback-core-1.1.3.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.7/acd62e31cc314266e73eebed0b6dd7ea974a0ed/slf4j-api-1.7.7-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.7/2b8019b6249bb05d81d3a3094e468753e2b21311/slf4j-api-1.7.7.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.framework/5.4.0/66ba4cc729dff5deb6a79fdeb392b4441ef10594/org.apache.felix.framework-5.4.0-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.felix/org.apache.felix.framework/5.4.0/eb85121a1f35e8c03cb2a6024fc3101e641456e9/org.apache.felix.framework-5.4.0.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+</classpath>

@@ -1,0 +1,12 @@
+package onight.pb.test;
+
+message ogpack
+{
+	required int32 type = 1;
+	extensions 100 to max;
+	
+}
+//证书
+message loginpack
+{
+}

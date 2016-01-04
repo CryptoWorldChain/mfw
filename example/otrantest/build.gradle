@@ -1,0 +1,39 @@
+version = '1.0.0'
+buildscript {
+	repositories { maven { url "https://plugins.gradle.org/m2/" } }
+	dependencies {  classpath 'com.google.protobuf:protobuf-gradle-plugin:0.7.0' }
+}
+
+apply plugin: "java"
+apply plugin: "com.google.protobuf"
+
+protobuf {
+	protoc{
+		//path = '/usr/local/Cellar/protobuf/2.6.1/bin/protoc'
+		artifact = 'com.google.protobuf:protoc:3.0.0-alpha-3'
+	}
+}
+
+dependencies {
+	includeInJar 'org.projectlombok:lombok:1.16.4'
+	compile 'com.google.protobuf:protobuf-java:3.0.0-alpha-3.1'
+	includeInJar 'org.glassfish.grizzly:grizzly-core:2.3.21'
+	includeInJar 'com.googlecode.protobuf-java-format:protobuf-java-format:1.2'
+	compile 'org.apache.commons:commons-lang3:3.3.2'
+	testCompile 'junit:junit:4.8.2'
+}
+
+
+sourceSets.main.java { //	srcDir 'src/main/java'
+	srcDir 'build/generated/source/proto/main/java' //	//srcDir 'src/protogens/main'
+	srcDir 'src/main/proto'
+}
+
+jar {
+	manifest{
+		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
+		attributes( 'Import-Ignore':'com.googlecode.protobuf,com.google.protobuf,com.esotericsoftware.kryo')
+		attributes( 'DynamicImport-Package': '*')
+		attributes( 'Import-Lib': 'lib')
+	}
+}

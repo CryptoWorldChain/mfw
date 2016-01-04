@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-modules id="moduleCoreId" project-version="2.0">
+	<wb-module deploy-name="sm-redisimpl">
+		<wb-resource deploy-path="/" source-path="src/main/java"/>
+		<wb-resource deploy-path="/" source-path="build/generated/source/proto/main/java"/>
+		<wb-resource deploy-path="/" source-path="src/main/proto"/>
+		<wb-resource deploy-path="/" source-path="src/main/scala"/>
+		<dependent-module deploy-path="../" handle="module:/classpath/lib//Users/brew/.gradle/caches/modules-2/files-2.1/org.scala-lang/scala-library/2.11.7/f75e7acabd57b213d6f61483240286c07213ec0e/scala-library-2.11.7.jar">
+			<dependency-type>uses</dependency-type>
+		</dependent-module>
+	</wb-module>
+</project-modules>

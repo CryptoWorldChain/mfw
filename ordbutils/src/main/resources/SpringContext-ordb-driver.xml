@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+                         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+                         http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+                          http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<!-- <property name="driverClass" value="com.mysql.jdbc.Driver" /> -->
+ 		<!-- <property name="jdbcUrl" value="jdbc:mysql://172.30.12.44:3316/msb?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=utf8" /> -->
+<!-- 		<property name="user" value="msbao" />
+		<property name="password" value="msbao" /> 
+ -->	
+ 	</bean>
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache" scope="prototype">
+		<constructor-arg index="0" ref="sqlSessionFactory" />
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<tx:annotation-driven proxy-target-class="true"
+		transaction-manager="transactionManager" />
+
+	<tx:advice id="MysqlAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="*elete*" propagation="REQUIRED" />
+			<tx:method name="*pdate*" propagation="REQUIRED" />
+			<tx:method name="*nsert*" propagation="REQUIRED" />
+			<tx:method name="*do*" propagation="REQUIRED" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 配置参与事务的类 -->
+	<aop:config>
+		<aop:pointcut id="allServiceMethod"
+			expression="execution(* onight.*.ordbgens.*.dao.*.*(..))" />
+		<aop:advisor pointcut-ref="allServiceMethod"
+			advice-ref="MysqlAdvice" />
+	</aop:config>
+
+
+
+</beans>

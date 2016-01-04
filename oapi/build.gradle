@@ -1,0 +1,31 @@
+
+version='2.1.0'
+
+apply plugin :'scala'
+
+dependencies {
+	compile 'org.apache.avro:avro:1.7.7'
+	compile "org.apache.commons:commons-lang3:3.3.2"
+	compile 'org.scala-lang:scala-library:2.11.7'
+	
+//	includeInJar 'com.esotericsoftware.kryo:kryo:2.24.0'
+	includeInJar 'com.googlecode.protobuf-java-format:protobuf-java-format:1.2'
+	compile 'com.google.protobuf:protobuf-java:3.0.0-alpha-3.1'
+	includeInJar  'org.projectlombok:lombok:1.16.4'
+	compile 'javax.servlet:javax.servlet-api:3.1.0'
+	compile 'org.ow2.spec.osgi:ow2-httpservice-1.2-spec:1.0.0'
+	compile 'org.slf4j:slf4j-api:1.7.7'
+	compile 'org.apache.felix:org.apache.felix.ipojo.annotations:1.12.1'
+	includeInJar 'com.github.jnr:jnr-posix:3.0.9'
+	compile 'commons-codec:commons-codec:1.10'
+	testCompile 'junit:junit:4.12'
+}
+
+jar {
+	manifest{
+		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
+		attributes( 'Import-Ignore':'com.googlecode.protobuf,com.google.protobuf,com.esotericsoftware.kryo,jnr.posix')
+		attributes( 'DynamicImport-Package': '*')
+		attributes( 'Import-Lib': 'lib')
+	}
+}

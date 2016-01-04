@@ -1,0 +1,24 @@
+
+
+syntax = "proto3";
+
+package onight.pb.test;
+
+
+message ogpack
+{
+	 int32 type = 1;
+}
+message loginpack 
+{
+	 string userid = 1;
+}
+
+
+message retloginpack 
+{
+	 string userid = 1;
+	 int32 retcode = 2;
+	 string status = 3;
+	 string desc = 4;
+}

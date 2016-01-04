@@ -1,0 +1,21 @@
+
+version = '1.0.0'
+
+apply plugin: 'ofw.actor'
+
+
+dependencies {
+	//	 testCompile 'junit:junit:4.12'
+	includeInJar "javax.transaction:jta:1.1"
+	compile 'com.google.guava:guava:19.0'
+	includeInJar "com.github.mauricio:mysql-async_2.11:0.2.18"
+}
+
+jar {
+	manifest{
+		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
+		attributes( 'Import-Ignore':'com.googlecode.protobuf,com.google.protobuf,com.github.mauricio,io.netty.buffer')
+		attributes( 'DynamicImport-Package': '*')
+		attributes( 'Import-Lib': 'lib')
+	}
+}

@@ -1,0 +1,38 @@
+buildscript { dependencies { classpath "onight.osgi:npojo:1.2.0" } }
+
+apply plugin: 'npojo'
+apply plugin: 'eclipse-wtp'
+
+
+subprojects {
+	apply plugin: 'npojo'
+	project.group='onight.tfw'
+	apply plugin: 'eclipse-wtp'
+
+	buildscript{
+		repositories { maven { url "https://plugins.gradle.org/m2/" } }
+		dependencies {
+			classpath 'com.google.protobuf:protobuf-gradle-plugin:0.7.0' }
+	}
+	
+	dependencies {
+		if(project.name!='oapi')
+		{
+//			compile project(":oapi")
+			compile ("onight.tfw:onight.tfw.oapi:2.1.0")
+			
+		}
+		compile 'onight.osgi:npojo:1.2.0'
+		
+		compile 'org.projectlombok:lombok:1.16.6'
+		compile 'org.apache.commons:commons-lang3:3.4'
+		compile 'org.slf4j:slf4j-api:1.7.7'
+		testCompile 'junit:junit:4.12'
+		compile 'org.apache.felix:org.apache.felix.ipojo.annotations:1.12.1'
+	}
+
+	version = '2.0.0'
+
+	jar { manifest.attributes provider: 'onight.tfs' }
+
+}
