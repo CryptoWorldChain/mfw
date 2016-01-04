@@ -57,10 +57,14 @@ object LoginService extends OLog with PBUtils with LService[PBSSO] {
         pack.putHeader(ExtHeader.SESSIONID, smid);
       } else {
         ret.setDesc("Password error").setCode("0002");
+              pack.getExtHead().remove(ExtHeader.SESSIONID)
+
       }
     } else {
       log.debug("result error:" + errorMessage)
       ret.setDesc(errorMessage).setCode(errorCode);
+            pack.getExtHead().remove(ExtHeader.SESSIONID)
+
 
     }
     handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));

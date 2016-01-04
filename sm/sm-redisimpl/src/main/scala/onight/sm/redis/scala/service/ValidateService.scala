@@ -25,7 +25,7 @@ import scala.concurrent.Await
 import onight.sm.redis.scala.SessionManager
 import onight.sm.Ssm.RetCode
 import onight.tfw.otransio.api.beans.ExtHeader
-
+ 
 @NActorProvider
 object ValidateActor extends SessionModules[PBSSO] {
   override def service = ValidateService
@@ -46,6 +46,7 @@ object ValidateService extends OLog with PBUtils with LService[PBSSO] {
     } else {
 //      log.debug("result error: session not found")
       ret.setDesc(session._2).setCode("0001").setLoginId(pbo.getLoginId) setStatus (RetCode.FAILED);
+      pack.getExtHead().remove(ExtHeader.SESSIONID)
     }
     handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
   }

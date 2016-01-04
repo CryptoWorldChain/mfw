@@ -24,6 +24,8 @@ import scala.None
 import scala.concurrent.Await
 import onight.sm.redis.scala.SessionManager
 import onight.sm.Ssm.RetCode
+import onight.tfw.otransio.api.beans.ExtHeader
+import onight.tfw.otransio.api.beans.CookieBean
 
 @NActorProvider
 object LogoutActor extends SessionModules[PBSSO] {
@@ -36,11 +38,13 @@ object LogoutService extends OLog with PBUtils with LService[PBSSO] {
   def onPBPacket(pack: FramePacket, pbo: PBSSO, handler: CompleteHandler) = {
     // ！！检查用户是否已经登录
     val ret = PBSSORet.newBuilder();
-    val session = SessionManager.logout(pbo.getSmid,pbo.getLoginId,pbo.getResId)
-    if (session._1!= null) {
+    val session = SessionManager.logout(pbo.getSmid, pbo.getLoginId, pbo.getResId)
+    if (session._1 != null) {
       ret.setCode("0000").setStatus(RetCode.SUCCESS) setLoginId (session._1.getLoginId());
+      pack.getExtHead.append(ExtHeader.SESSIONID,new CookieBean(pbo.getSmid,0))
+
     } else {
-//      log.debug("result error: session not found")
+      //      log.debug("result error: session not found")
       ret.setDesc(session._2).setCode("0001").setLoginId(pbo.getLoginId) setStatus (RetCode.FAILED);
     }
     handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
