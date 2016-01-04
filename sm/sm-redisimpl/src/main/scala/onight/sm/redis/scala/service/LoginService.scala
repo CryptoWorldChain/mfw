@@ -41,10 +41,8 @@ object LoginService extends OLog with PBUtils with LService[PBSSO] {
   
   def resultfunc(pack: FramePacket, pbo: PBSSO, handler: CompleteHandler, row: RowData)(implicit errorCode: String = "0002", errorMessage: String = "Unknow Error"): Unit = {
     val ret = PBSSORet.newBuilder();
-     
     if (row != null) {
       val loginId=pbo.getLoginId ;//+Math.abs((Math.random()*100)%100).asInstanceOf[Int];
-      
       VMDaos.dbCache.put(row("LOGIN_ID").asInstanceOf[String], row);
       //        log.debug("db.row=" + row + ",gua size=" + VMDaos.guCache.size());
       ret.setLoginId(pbo.getLoginId) setStatus (RetCode.FAILED)

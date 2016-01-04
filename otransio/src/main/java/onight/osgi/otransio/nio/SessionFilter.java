@@ -1,11 +1,9 @@
 package onight.osgi.otransio.nio;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import onight.osgi.otransio.impl.OSocketImpl;
 import onight.tfw.async.CompleteHandler;
-import onight.tfw.otransio.api.PacketListener;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.conf.PropHelper;
 
@@ -21,7 +19,6 @@ public class SessionFilter extends BaseFilter {
 	Logger log = LoggerFactory.getLogger(SessionFilter.class);
 
 	protected final AttributeBuilder attributeBuilder = Grizzly.DEFAULT_ATTRIBUTE_BUILDER;
-	ArrayList<PacketListener> listeners = new ArrayList<>();
 
 	private OSocketImpl oimpl;
 

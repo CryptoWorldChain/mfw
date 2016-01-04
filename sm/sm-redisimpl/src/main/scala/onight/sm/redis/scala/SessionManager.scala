@@ -43,8 +43,9 @@ object SessionManager extends OLog {
       //检查重复登录
       //      val exists = LoginIDRedisLoCache.redisLocalCache.getIfPresent(session.globalID());
       //      if (exists != null) exists.kickout(true)
-      LoginIDRedisLoCache.redisLocalCache.put(session.globalID(), session)
-      insertBox.put(session.globalID(), session)
+//      LoginIDRedisLoCache.redisLocalCache.put(session.globalID(), session)
+//      insertBox.put(session.globalID(), session)
+      LoginIDRedisLoCache.insert(session);
       //      if (rcsession != null) {
       //        //same session:insert into redis,
       //        if (!StringUtils.equals(session.getSmid(), rcsession.getSmid())) {

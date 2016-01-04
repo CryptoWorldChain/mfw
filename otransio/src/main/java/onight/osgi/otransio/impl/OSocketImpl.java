@@ -18,7 +18,7 @@ import onight.tfw.mservice.NodeHelper;
 import onight.tfw.otransio.api.PSenderService;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
-import onight.tfw.otransio.api.PacketListener;
+import onight.tfw.otransio.api.PacketFilter;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.beans.UnknowModuleBody;
 import onight.tfw.otransio.api.session.CMDService;
@@ -103,10 +103,10 @@ public class OSocketImpl implements Serializable {
 		log.info("nio stopped ... OK");
 	}
 
-	ArrayList<PacketListener> listeners = new ArrayList<>();
+	ArrayList<PacketFilter> listeners = new ArrayList<>();
 
 	@Bind(aggregate = true, optional = true)
-	public void bindProc(PacketListener pl) {
+	public void bindProc(PacketFilter pl) {
 		if (!listeners.contains(pl)) {
 			listeners.add(pl);
 			log.info("Register PacketListern::" + pl);
@@ -114,7 +114,7 @@ public class OSocketImpl implements Serializable {
 	}
 
 	@Unbind(aggregate = true, optional = true)
-	public void unbindProc(PacketListener pl) {
+	public void unbindProc(PacketFilter pl) {
 		log.info("Remove PacketListern::" + pl);
 		listeners.remove(pl);
 	}
@@ -166,7 +166,7 @@ public class OSocketImpl implements Serializable {
 
 	public void routePacket(FramePacket pack, final CompleteHandler handler) {
 		boolean prefilter = false;
-		for (PacketListener pl : listeners) {
+		for (PacketFilter pl : listeners) {
 			if (pl.preRoute(pack, handler)) {
 				prefilter = true;
 				break;
@@ -191,7 +191,7 @@ public class OSocketImpl implements Serializable {
 			}
 		}
 
-		for (PacketListener pl : listeners) {
+		for (PacketFilter pl : listeners) {
 			if (pl.postRoute(pack, handler)) {
 				break;
 			}
