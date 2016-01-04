@@ -17,5 +17,9 @@ public class TestClass {
 			e.printStackTrace();
 		}
 		
+		for(int i=0;i<100;i++){
+			System.out.println("insert into tfg.TFG_LOGIN_USER values('11"+i+"', 'abc"+i+"', 'test"+i+"', 'aab@cc.com', '136772730"+i+"', 'a', 'b', '1', '1', '000000', '000000', NULL, NULL);");
+		}
+		
 	}
 }

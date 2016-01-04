@@ -57,7 +57,7 @@ public class SessionIDGenerator {
 	}
 
 	public String generate(String userid) {
-		StringBuilder sb = new StringBuilder(32).append(randStr()).append(prefix).append(getCount()).append(SEP_CH).append(userid);
+		StringBuilder sb = new StringBuilder(32).append(genSum(userid)).append(randStr()).append(prefix).append(getCount()).append(SEP_CH).append(userid);
 		String v = sb.toString();
 		v = Base64.encodeBase64URLSafeString(v.getBytes());
 		char cs = genSum(v);
@@ -73,6 +73,7 @@ public class SessionIDGenerator {
 			return null;
 		return decode.substring(idx+1).trim();
 	}
+	
 
 	public String genToken(String userid, String desKey, String keyIdx) {
 		// StringBuilder sb = new StringBuilder(generate(userid));
@@ -87,7 +88,7 @@ public class SessionIDGenerator {
 		} catch (DesException e) {
 			e.printStackTrace();
 		}
-		v = v + keyIdx;
+		v = genSum(userid) + v + keyIdx;
 		cs = genSum(v);
 		return v + cs;
 	}
@@ -99,7 +100,7 @@ public class SessionIDGenerator {
 		try {
 			if (desKey.length() < 16)
 				desKey = StringUtils.rightPad(desKey, 16, SEP_CH);
-			String v = DESCoder.desDecrypt(vstring.substring(0, vstring.length() - 3), desKey);
+			String v = DESCoder.desDecrypt(vstring.substring(1, vstring.length() - 3), desKey);
 			if (!checkSum(v)) {
 				return null;
 			}
@@ -198,7 +199,7 @@ public class SessionIDGenerator {
 		}
 		System.out.println(checkSum("abccIelpyjSxe3"));
 		for (int i = 0; i < 10; i++) {
-			String smid = sid.genToken("a-" + i, "aabbcc", "AF");
+			String smid = sid.genToken("a-"+i, "aabbcc", "AF");
 			System.out.println("a-" + i + ":token:" + smid + ":check==" + sid.checkToken(smid, "aabbcc") + ":equal="
 					+ StringUtils.equals("a-" + i, sid.checkToken(smid, "aabbcc")));
 		}

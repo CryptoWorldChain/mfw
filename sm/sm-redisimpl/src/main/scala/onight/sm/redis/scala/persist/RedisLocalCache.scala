@@ -34,7 +34,7 @@ abstract class RedisLocalCache[T] {
       redisobj
     }
   }
-
+//这个函数性能很差
   def getAndSet(v: T): T = {
     getKey(v).intern().synchronized({
       redisLocalCache.put(getKey(v), v)

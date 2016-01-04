@@ -1,64 +1,72 @@
 package onight.sm.redis.scala
 
-import java.util.ArrayList
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.StringUtils
 import onight.oapi.scala.traits.OLog
 import onight.sm.redis.entity.LoginResIDSession
+import onight.sm.redis.entity.LoginResIDSession
 import onight.sm.redis.scala.persist.LoginIDRedisLoCache
 import onight.sm.redis.scala.persist.RedisDAOs
 import onight.tfw.mservice.NodeHelper
 import onight.tfw.mservice.ThreadContext
 import onight.tfw.ojpa.api.JpaContextConstants
-import java.util.concurrent.LinkedBlockingQueue
-import onight.sm.redis.entity.LoginResIDSession
-import onight.tfw.ojpa.api.KVExample
+import java.util.ArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 object SessionManager extends OLog {
-  val exec = new ScheduledThreadPoolExecutor(NodeHelper.getPropInstance.get("sm.check.thread", 50));
-  val opexec = new ScheduledThreadPoolExecutor(NodeHelper.getPropInstance.get("sm.op.thread", 5));
+  val exec = new ScheduledThreadPoolExecutor(NodeHelper.getPropInstance.get("sm.check.thread", 3));
+  val opexec = new ScheduledThreadPoolExecutor(NodeHelper.getPropInstance.get("sm.op.thread", 100));
   val BATCH_SIZE = NodeHelper.getPropInstance.get("sm.op.batchsize", 1000);
   val runningPool = new ConcurrentHashMap[String, LoginResIDSession]();
   val TimeOutSec = NodeHelper.getPropInstance.get("sm.log.timeoutsec", 30 * 60) //默认30分钟超时
   val TimeOutMS = TimeOutSec * 1000 //默认30分钟超时
   val OpDelaySec = NodeHelper.getPropInstance.get("sm.op.delaysec", 10) //默认5秒钟延迟操作redis
+  val InsertDelaySec = NodeHelper.getPropInstance.get("sm.insert.delaysec", 2) //默认5秒钟延迟操作redis
+
   //  val CleanDelaySec = NodeHelper.getPropInstance.get("sm.clean.delaysec", 30) //默认30秒清空redis中的超时缓存
 
   //  val deleteBox = new LinkedBlockingQueue[LoginResIDSession]();
   val checkBox = new ConcurrentHashMap[String, LoginResIDSession]();
-  //  val insertBox = new LinkedBlockingQueue[LoginResIDSession]();
+  val insertBox = new ConcurrentHashMap[String, LoginResIDSession]();
   //  val cleanBox = new ConcurrentHashMap[String, LoginResIDSession](); //smid被彻底从redis里面移除
 
   val NONE_RELATEID = "__";
 
+  exec.scheduleAtFixedRate(CheckRunner, OpDelaySec, OpDelaySec, TimeUnit.SECONDS)
+  exec.scheduleAtFixedRate(InsertRunner, OpDelaySec, InsertDelaySec, TimeUnit.SECONDS)
+
   def watchSMID(session: LoginResIDSession) = {
-    ThreadContext.setContext(JpaContextConstants.Cache_Timeout_Second, TimeOutSec * 10)
     try {
       session.setLastUpdateMS(System.currentTimeMillis())
       //检查重复登录
-      val rcsession = LoginIDRedisLoCache.getAndSet(session)
-      if (rcsession != null) {
-        //same session:insert into redis,
-        if (!StringUtils.equals(session.getSmid(), rcsession.getSmid())) {
-          log.info("UserSessionRelogin:KickoutOldSession:" + rcsession.getSmid());
-          rcsession.kickout(true);
-        } else {
-          log.debug("sameSessionRelogin")
-        }
-        //        logrcsession.kickout(false)
-        val example = new KVExample();
-        //        example.getCriterias.add(logrcsession);
-        //        example.setSelectCol("status")
-        //        LoginIDRedisLoCache.dao.deleteByExample(example);
-      }
+      //      val exists = LoginIDRedisLoCache.redisLocalCache.getIfPresent(session.globalID());
+      //      if (exists != null) exists.kickout(true)
+      LoginIDRedisLoCache.redisLocalCache.put(session.globalID(), session)
+      insertBox.put(session.globalID(), session)
+      //      if (rcsession != null) {
+      //        //same session:insert into redis,
+      //        if (!StringUtils.equals(session.getSmid(), rcsession.getSmid())) {
+      //          log.info("UserSessionRelogin:KickoutOldSession:" + rcsession.getSmid());
+      ////          rcsession.kickout(true);
+      //        } else {
+      //          log.debug("sameSessionRelogin")
+      //        }
+      //        //        logrcsession.kickout(false)
+      ////        val example = new KVExample();
+      //        //        example.getCriterias.add(logrcsession);
+      //        //        example.setSelectCol("status")
+      //        //        LoginIDRedisLoCache.dao.deleteByExample(example);
+      //      }
       //加入检查队列
-      checkBox.put(session.getSmid(), session)
-      exec.schedule(CheckRunner, TimeOutSec, TimeUnit.SECONDS); //超时检查
+
+      //      opexec.schedule(CheckRunner, InsertDelaySec, TimeUnit.SECONDS); //批量insert处理
+
+      //      exec.schedule(CheckRunner, TimeOutSec, TimeUnit.SECONDS); //超时检查
 
     } finally {
-      ThreadContext.cleanContext()
+      //      ThreadContext.cleanContext()
     }
   }
 
@@ -98,8 +106,22 @@ object SessionManager extends OLog {
     LoginIDRedisLoCache.delete(session)
   }
 
-  object CheckRunner extends Runnable {
+  abstract class Runner extends Runnable {
+    var isRunner = false;
+    def doSomething();
     def run() {
+      isRunner = true;
+      ThreadContext.setContext(JpaContextConstants.Cache_Timeout_Second, TimeOutSec * 1.5)
+      try {
+        doSomething()
+      } finally {
+        isRunner = false;
+        ThreadContext.cleanContext()
+      }
+    }
+  }
+  object CheckRunner extends Runner {
+    def doSomething() {
       var size = checkBox.size()
       val it = checkBox.values().iterator();
       while (size > 0 && it.hasNext()) {
@@ -107,10 +129,10 @@ object SessionManager extends OLog {
         size = size - 1;
         if (obj != null) {
           if (checkSMID(obj)) {
-            exec.schedule(CheckRunner,
-              Math.max(1, TimeOutSec - (System.currentTimeMillis() - obj.getLastUpdateMS()) / 1000), TimeUnit.SECONDS); //timeout的
+            //            exec.schedule(CheckRunner,
+            //              Math.max(1, TimeOutSec - (System.currentTimeMillis() - obj.getLastUpdateMS()) / 1000), TimeUnit.SECONDS); //timeout的
           } else {
-            checkBox.remove(obj.smid)
+            checkBox.remove(obj.globalID())
           }
         } else {
           size = 0;
@@ -119,15 +141,24 @@ object SessionManager extends OLog {
     }
   }
 
-  //  object InsertRunner extends Runnable {
-  //    def run() {
-  //      while (insertBox.size() > 0) {
-  //        val tmpList = new ArrayList[LoginResIDSession]();
-  //        insertBox.drainTo(tmpList, BATCH_SIZE);
-  //        RedisDAOs.smiddao.batchInsert(tmpList.asInstanceOf[java.util.List[Object]])
-  //      }
-  //    }
-  //  }
+  object InsertRunner extends Runner {
+    def doSomething() {
+      var size = insertBox.size()
+      val it = insertBox.values().iterator();
+      val tmpList = new ArrayList[LoginResIDSession]();
+      while (size > 0 && it.hasNext()) {
+        val obj = it.next();
+        size = size - 1;
+        if (obj != null && !obj.isKickout()) {
+          tmpList.add(obj);
+          checkBox.put(obj.globalID(), obj)
+        }
+        //        it.remove();
+        insertBox.remove(obj.globalID())
+      }
+      RedisDAOs.logiddao.batchInsert(tmpList.asInstanceOf[java.util.List[Object]]);
+    }
+  }
 
   //检查是否登录
   def checkAndUpdateSession(smid: String, loginId: String, resId: String): Tuple2[LoginResIDSession, String] = {
@@ -145,10 +176,9 @@ object SessionManager extends OLog {
         removeSession(session);
         return (null, "session_timeout");
       }
-      val lastup = session.lastUpdateMS;
       session.lastUpdateMS = System.currentTimeMillis();
-      checkBox.put(session.smid, session)
-      opexec.schedule(CheckRunner, Math.min(OpDelaySec, Math.max(1, (TimeOutMS - (System.currentTimeMillis() - lastup)) / 100)), TimeUnit.SECONDS); //timeout的
+      checkBox.put(session.globalID, session)
+//      opexec.schedule(CheckRunner, Math.min(OpDelaySec, Math.max(1, (TimeOutMS - (System.currentTimeMillis() - lastup)) / 100)), TimeUnit.SECONDS); //timeout的
       return (session, "OK");
     }
     (null, "not_login")

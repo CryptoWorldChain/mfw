@@ -33,17 +33,26 @@ object LoginService extends OLog with PBUtils with LService[PBSSO] {
 
   override def cmd: String = "SIN";
   //http://localhost:8081/ssm/pbsin.do?fh=VSINSSM000000J00&bd={%22login_id%22:%22abc%22,%22password%22:%22000000%22,%22op%22:0,%22res_id%22:%22android%22}&gcmd=SINSSM
-  //处理查询结果
+  //Requests per second:    16584.16 [#/sec] (mean)
+//Time per request:       60.298 [ms] (mean)
+//Time per request:       0.060 [ms] (mean, across all concurrent requests)
+//Transfer rate:          4262.07 [Kbytes/sec] received
+   //ab -k -r -c 1000 -t 60 "http://localhost:8081/ssm/pbsin.do?fh=VSINSSM000000J00&bd={%22login_id%22:%22abc%22,%22password%22:%22000000%22,%22op%22:0,%22res_id%22:%22android%22}&gcmd=SINSSM"
+  
   def resultfunc(pack: FramePacket, pbo: PBSSO, handler: CompleteHandler, row: RowData)(implicit errorCode: String = "0002", errorMessage: String = "Unknow Error"): Unit = {
     val ret = PBSSORet.newBuilder();
+     
     if (row != null) {
+      val loginId=pbo.getLoginId ;//+Math.abs((Math.random()*100)%100).asInstanceOf[Int];
+      
       VMDaos.dbCache.put(row("LOGIN_ID").asInstanceOf[String], row);
       //        log.debug("db.row=" + row + ",gua size=" + VMDaos.guCache.size());
       ret.setLoginId(pbo.getLoginId) setStatus (RetCode.FAILED)
       if (StringUtils.equals(row("PASSWORD").asInstanceOf[String], pbo.getPassword)) {
-        val smid = SMIDHelper.nextSMID(pbo.getLoginId+"/"+pbo.getResId)
-        ret.setCode("0000").setStatus(RetCode.SUCCESS) setLoginId (row("LOGIN_ID").asInstanceOf[String]) setSmid (smid)
-        val session = LoginResIDSession(smid,pbo.getUserId, pbo.getLoginId, pbo.getPassword, pbo.getResId, pbo.getExt.toString());
+        
+        val smid = SMIDHelper.nextSMID(loginId+"/"+pbo.getResId)
+        ret.setCode("0000").setStatus(RetCode.SUCCESS) setLoginId (loginId) setSmid (smid)
+        val session = LoginResIDSession(smid,pbo.getUserId, loginId, pbo.getPassword, pbo.getResId, pbo.getExt.toString());
         SessionManager.watchSMID(session)
       } else {
         ret.setDesc("Password error").setCode("0002");
