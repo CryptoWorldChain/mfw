@@ -34,6 +34,7 @@ public class ExtHeader {
 	Map<String, Object> ignorekvs = new HashMap<String, Object>();
 	Map<String, Object> vkvs = new HashMap<String, Object>();
 
+	
 	private ExtHeader(byte[] data, int offset, int len) {
 		appendFrom(data, offset, len);
 		genBytes();
@@ -80,6 +81,7 @@ public class ExtHeader {
 	public Object append(String key, Object value) {
 		return getMap(key).put(key, value);
 	}
+
 	public Object remove(String key) {
 		return getMap(key).remove(key);
 	}
@@ -160,7 +162,11 @@ public class ExtHeader {
 		ExtHeader ret = new ExtHeader();
 		for (Map.Entry<String, String[]> kv : req.getParameterMap().entrySet()) {
 			if (!kv.getKey().equals(PackHeader.HTTP_PARAM_FIX_HEAD) && !kv.getKey().equals(PackHeader.HTTP_PARAM_BODY_DATA)) {
-				ret.append(kv.getKey(), kv.getValue()[0]);
+//				if (PackHeader.GCMD.equals(kv.getKey())) {
+//					ret.append(PackHeader.H_IGN_GCMD, kv.getValue()[0]);
+//				} else {
+					ret.append(kv.getKey(), kv.getValue()[0]);
+//				}
 			}
 		}
 		if (req.getCookies() != null) {
@@ -185,18 +191,24 @@ public class ExtHeader {
 
 	public static void addCookie(HttpServletResponse res, String key, Object value) {
 		if (value != null) {
+			Cookie cookie=null;
 			if (value instanceof String && StringUtils.isNotBlank((String) value)) {
-				res.addCookie(new Cookie(key, (String) value));
+				cookie=new Cookie(key, (String) value); 
 			} else {
-				res.addCookie(new Cookie(key, Base64.encodeBase64URLSafeString(SerializerUtil.toBytes(value))));
+				cookie=(new Cookie(key, Base64.encodeBase64URLSafeString(SerializerUtil.toBytes(value))));
 			}
+			cookie.setDomain(PackHeader.CookieDomain);
+			cookie.setHttpOnly(true);
+			cookie.setMaxAge(PackHeader.CookieExpire);
+			res.addCookie(cookie);
+
 		}
 	}
 
 	public void buildFor(HttpServletResponse res) {
 		addCookie(res, "_" + PackHeader.HTTP_PARAM_FIX_HEAD, get(PackHeader.HTTP_PARAM_FIX_HEAD));
 		for (Entry<String, Object> pair : hiddenkvs.entrySet()) {
-			if (pair.getKey().startsWith(PackHeader.EXT_HIDDEN) && !pair.getKey().startsWith(PackHeader.EXT_IGNORE)) {
+			if (pair.getKey().startsWith(PackHeader.EXT_HIDDEN)&&!pair.getKey().startsWith(PackHeader.EXT_IGNORE_RESPONSE) ) {
 				addCookie(res, pair.getKey(), pair.getValue());
 			}
 		}

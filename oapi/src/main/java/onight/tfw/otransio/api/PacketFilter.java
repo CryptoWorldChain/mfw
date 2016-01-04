@@ -8,7 +8,7 @@ import onight.tfw.otransio.api.beans.FramePacket;
  * @author brew
  *
  */
-public interface PacketListener {
+public interface PacketFilter {
 
 	public boolean preRoute(FramePacket pack, CompleteHandler handler);
 

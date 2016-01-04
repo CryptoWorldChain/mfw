@@ -34,6 +34,7 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 								resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
 								return;
 							}
+							retpack.getExtHead().buildFor(resp);
 							if (retpack.getFbody() != null & retpack.getFbody() instanceof Message) {
 								Message msg = (Message) retpack.getFbody();
 								String str = JsonFormat.printToString(msg);

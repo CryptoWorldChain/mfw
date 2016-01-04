@@ -107,6 +107,8 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 						resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
 						return;
 					}
+					retpack.getExtHead().buildFor(resp);
+
 					if (retpack.getFbody() != null & retpack.getFbody() instanceof Message) {
 						Message msg = (Message) retpack.getFbody();
 						String str = JsonFormat.printToString(msg);
@@ -126,7 +128,6 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 					} else {
 						resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
 					}
-					pack.getExtHead().buildFor(resp);
 				} catch (IOException e) {
 					log.debug("doweb error:", e);
 				}
