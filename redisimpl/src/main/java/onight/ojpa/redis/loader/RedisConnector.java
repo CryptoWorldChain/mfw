@@ -48,7 +48,7 @@ public class RedisConnector  {
 		log.info("Redis启动...");
 		factory = jRedisFactory(addr,port,poolsize);
 	
-		template = new RedisTemplate<String, Object>();
+		template = new FastRedisTemplate<String, Object>();
 		template.setConnectionFactory(factory);
 		template.afterPropertiesSet();
 		long size = exec(new RedisCallback<Long>() {

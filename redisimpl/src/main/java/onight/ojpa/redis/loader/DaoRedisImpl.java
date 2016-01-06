@@ -23,6 +23,7 @@ import onight.tfw.outils.serialize.TransBeanSerializer.BeanMap;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.RedisTemplate;
 
 @Slf4j
 public class DaoRedisImpl extends NoneDomainDao {

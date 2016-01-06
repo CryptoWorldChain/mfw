@@ -20,8 +20,8 @@ public class StringType {
 		abstract Object newOne(String str);
 	}
 
-	static ConcurrentHashMap<Class, Character> class2Type = new ConcurrentHashMap<Class, Character>();
-	static ConcurrentHashMap<Character, Factory> type2Class = new ConcurrentHashMap<Character, Factory>();
+	static Map<Class, Character> class2Type = new HashMap<Class, Character>();
+	static Map<Character, Factory> type2Class = new HashMap<Character, Factory>();
 
 	@Data
 	@AllArgsConstructor
