@@ -25,6 +25,7 @@ import onight.sm.redis.scala.persist.LoginIDRedisLoCache
 import onight.sm.redis.entity.LoginResIDSession
 import onight.tfw.otransio.api.PackHeader
 import onight.tfw.otransio.api.beans.ExtHeader
+import onight.sm.Ssm.PBCommand
 
 @NActorProvider
 object LoginActor extends SessionModules[PBSSO] {
@@ -33,7 +34,8 @@ object LoginActor extends SessionModules[PBSSO] {
 
 object LoginService extends OLog with PBUtils with LService[PBSSO] {
 
-  override def cmd: String = "SIN";
+  override def cmd: String = PBCommand.SIN.name();
+
   //http://localhost:8081/ssm/pbsin.do?fh=VSINSSM000000J00&bd={%22login_id%22:%22abc%22,%22password%22:%22000000%22,%22op%22:0,%22res_id%22:%22android%22}&gcmd=SINSSM
   //Requests per second:    16584.16 [#/sec] (mean)
   //Time per request:       60.298 [ms] (mean)
@@ -43,6 +45,7 @@ object LoginService extends OLog with PBUtils with LService[PBSSO] {
 
   def resultfunc(pack: FramePacket, pbo: PBSSO, handler: CompleteHandler, row: RowData)(implicit errorCode: String = "0002", errorMessage: String = "Unknow Error"): Unit = {
     val ret = PBSSORet.newBuilder();
+
     if (row != null) {
       val loginId = pbo.getLoginId; //+Math.abs((Math.random()*100)%100).asInstanceOf[Int];
       VMDaos.dbCache.put(row("LOGIN_ID").asInstanceOf[String], row);
@@ -52,19 +55,18 @@ object LoginService extends OLog with PBUtils with LService[PBSSO] {
 
         val smid = SMIDHelper.nextSMID(loginId + "/" + pbo.getResId)
         ret.setCode("0000").setStatus(RetCode.SUCCESS) setLoginId (loginId) setSmid (smid)
-        val session = LoginResIDSession(smid, pbo.getUserId, loginId, pbo.getPassword, pbo.getResId, pbo.getExt.toString());
+        val session = LoginResIDSession(smid, pbo.getUserId, loginId, pbo.getPassword, pbo.getResId, null);
         SessionManager.watchSMID(session)
         pack.putHeader(ExtHeader.SESSIONID, smid);
       } else {
         ret.setDesc("Password error").setCode("0002");
-              pack.getExtHead().remove(ExtHeader.SESSIONID)
+        pack.getExtHead().remove(ExtHeader.SESSIONID)
 
       }
     } else {
       log.debug("result error:" + errorMessage)
       ret.setDesc(errorMessage).setCode(errorCode);
-            pack.getExtHead().remove(ExtHeader.SESSIONID)
-
+      pack.getExtHead().remove(ExtHeader.SESSIONID)
 
     }
     handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));

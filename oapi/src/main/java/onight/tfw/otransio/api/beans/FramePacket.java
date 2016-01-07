@@ -1,12 +1,9 @@
 package onight.tfw.otransio.api.beans;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import onight.tfw.otransio.api.ActorSession;
+import onight.tfw.async.OFuture;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.outils.serialize.ISerializer;
 import onight.tfw.outils.serialize.SerializerFactory;
@@ -35,11 +32,24 @@ public class FramePacket {
 	@JsonIgnore
 	transient String globalCMD;
 
-	@JsonIgnore
-	transient HashMap<String, Object> payloads = new HashMap<String, Object>();
-
 	public Object getExtProp(String key) {
 		return extHead.get(key);
+	}
+
+	public OFuture<FramePacket> getExtPropFuture(String key) {
+		Object ret = getExtProp(key);
+		if (ret instanceof OFuture) {
+			return (OFuture<FramePacket>) ret;
+		}
+		return new OFuture(ret);
+	}
+
+	public OFuture<FramePacket> getSession() {
+		return getExtPropFuture(ExtHeader.PACK_SESSION);
+	}
+
+	public void putSession(OFuture<FramePacket> sessionfuture) {
+		getExtHead().append(ExtHeader.PACK_SESSION, sessionfuture);
 	}
 
 	public String getExtStrProp(String key) {
@@ -57,14 +67,14 @@ public class FramePacket {
 		return extHead.append(key, value);
 	}
 
-//	public Map<String, Object> getExts() {
-//		if (extHead != null) {
-//			return extHead.kvs;
-//		} else {
-//			return null;
-//		}
-//	}
-	
+	// public Map<String, Object> getExts() {
+	// if (extHead != null) {
+	// return extHead.kvs;
+	// } else {
+	// return null;
+	// }
+	// }
+
 	public boolean isSync() {
 		return fixHead.isSync();
 	}
@@ -77,14 +87,9 @@ public class FramePacket {
 		return fixHead.getModule();
 	}
 
-	public ActorSession getSession() {
-		Object obj = getExtProp(ExtHeader.PACK_SESSION);
-		if (obj != null) {
-			return (ActorSession) obj;
-		} else {
-			return null;
-		}
-	}
+	// public ActorSession getSession() {
+	// return extHead.getSession();
+	// }
 
 	public String getModuleAndCMD() {
 		if (globalCMD == null) {

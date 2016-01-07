@@ -39,15 +39,15 @@ public class PacketHelper {
 		return ret;
 	}
 
-	public static FramePacket genASyncPack(String cmd, String module, FrameBody body) {
+	public static FramePacket genASyncPack(String cmd, String module, Object body) {
 		return genPack(cmd, module, body, false, (byte) 0);
 	}
 
-	public static FramePacket genSyncPack(String cmd, String module, FrameBody body) {
+	public static FramePacket genSyncPack(String cmd, String module, Object body) {
 		return genPack(cmd, module, body, true, (byte) 0);
 	}
 
-	public static FramePacket genPack(String cmd, String module, FrameBody body, boolean isSync, byte pio) {
+	public static FramePacket genPack(String cmd, String module, Object body, boolean isSync, byte pio) {
 		FramePacket ret = new FramePacket();
 		ret.setFbody(body);
 		FixHeader fh = new FixHeader();
@@ -94,11 +94,6 @@ public class PacketHelper {
 		return ret;
 	}
 
-	static void buildHttpHeader(HttpServletRequest req, HttpServletResponse res, FramePacket packet) {
-		if (packet.getSession() != null) {
-			res.addCookie(new Cookie(ExtHeader.SESSIONID, packet.getSession().getSmid()));
-		}
-	}
 
 	static ObjectMapper mapper = new ObjectMapper();
 	static ISerializer transSIO = SerializerFactory.getSerializer(SerializerFactory.SERIALIZER_TRANSBEAN);

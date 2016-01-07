@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ntrans.api.PBActor;
+import onight.tfw.otransio.api.IPacketSender;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.ExceptionBody;
 import onight.tfw.otransio.api.beans.FramePacket;

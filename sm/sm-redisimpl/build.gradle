@@ -9,6 +9,8 @@ dependencies {
 	includeInJar "javax.transaction:jta:1.1"
 	compile 'com.google.guava:guava:19.0'
 	includeInJar "com.github.mauricio:mysql-async_2.11:0.2.18"
+	includeInJar 'com.googlecode.protobuf-java-format:protobuf-java-format:1.4'
+	
 }
 
 jar {

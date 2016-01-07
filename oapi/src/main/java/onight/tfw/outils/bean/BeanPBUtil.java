@@ -3,21 +3,25 @@ package onight.tfw.outils.bean;
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.outils.serialize.TransBeanSerializer;
 
+import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
+import com.google.protobuf.MapEntry;
 import com.google.protobuf.Message;
 
 @Slf4j
 public class BeanPBUtil {
-
 	private HashMap<Class, HashMap<String, BeanFieldInfo>> beanFields = new HashMap<>();
 
 	public String field2PBName(Field field) {
@@ -47,8 +51,10 @@ public class BeanPBUtil {
 						PropertyDescriptor pd;
 						try {
 							pd = new PropertyDescriptor(field.getName(), clazz);
-							props.put(field2PBName(field), new BeanFieldInfo(field.getName(), pd.getReadMethod(), pd.getWriteMethod(), pd.getPropertyType(),
-									TransBeanSerializer.isBaseType(pd.getPropertyType()), field));
+							BeanFieldInfo bfi=new BeanFieldInfo(field.getName(), pd.getReadMethod(), pd.getWriteMethod(), pd.getPropertyType(),
+									TransBeanSerializer.isBaseType(pd.getPropertyType()), field);
+							props.put(field2PBName(field), bfi);
+							props.put(field.getName(), bfi);
 						} catch (IntrospectionException e) {
 							log.warn("cannot init BeanProp:for class=" + clazz + ",field=" + field.getName());
 						}
@@ -60,6 +66,19 @@ public class BeanPBUtil {
 		return props;
 	}
 
+	public  Object pbValue2Java(Object obj, Class dstClass) {
+		if (obj instanceof Message) {
+			try {
+				return copyFromPB((Message) obj, dstClass.newInstance());
+			} catch (Exception e) {
+			}
+		}else if (obj instanceof EnumValueDescriptor){
+			EnumValueDescriptor evd=(EnumValueDescriptor)obj;
+			return evd.getNumber();
+		}
+		return obj;
+	}
+
 	public <T> T copyFromPB(Message fromMsg, T dst) {
 		HashMap<String, BeanFieldInfo> bfis = extractMethods(dst.getClass());
 		if (bfis != null) {
@@ -67,9 +86,31 @@ public class BeanPBUtil {
 				BeanFieldInfo bf = bfis.get(fv.getKey().getName());
 				if (bf != null) {
 					try {
-						bf.setM.invoke(dst, fv.getValue());
+
+						if (fv.getValue() instanceof List) {
+							List list = (List) fv.getValue();
+							if (list.size() > 0) {
+								if (list.get(0) instanceof MapEntry) {
+									Map<Object, Object> map = (Map<Object, Object>) bf.getFieldType().newInstance();
+									ParameterizedType parameterizedType = (ParameterizedType) ((bf.getField().getGenericType()));
+									for (MapEntry entry : (List<MapEntry>) fv.getValue()) {
+										map.put(pbValue2Java(entry.getKey(),(Class)parameterizedType.getActualTypeArguments()[0]), pbValue2Java(entry.getValue(),(Class)parameterizedType.getActualTypeArguments()[1]));
+									}
+									bf.getSetM().invoke(dst, map);
+								} else {
+									ArrayList olist = new ArrayList();
+									ParameterizedType parameterizedType = (ParameterizedType) ((bf.getField().getGenericType()));
+									for (Object obj : list) {
+										olist.add(pbValue2Java(obj,(Class)parameterizedType.getActualTypeArguments()[0]));
+									}
+									bf.getSetM().invoke(dst, olist);
+								}
+							}
+						} else {
+							bf.getSetM().invoke(dst, pbValue2Java(fv.getValue(),bf.getField().getType()));
+						}
 					} catch (Exception e) {
-						log.debug("cannot invoke SetMethod:for class=" + dst.getClass() + ",field=" + bf.getFieldName());
+						log.debug("cannot invoke SetMethod:for class=" + dst.getClass() + ",field=" + bf.getFieldName() + "," + fv.getValue().getClass(), e);
 					}
 				}
 			}
@@ -83,21 +124,23 @@ public class BeanPBUtil {
 			for (Entry<String, BeanFieldInfo> bf : bfis.entrySet()) {
 				Object v = null;
 				try {
-					v = bf.getValue().getM.invoke(src, null);
+					v = bf.getValue().getGetM().invoke(src, null);
 				} catch (Exception e) {
 					log.debug("cannot invoke getMethod:for class=" + src.getClass() + ",field=" + bf.getKey());
 				}
 				if (v != null) {
 					FieldDescriptor fd = msgBuilder.getDescriptorForType().findFieldByName(bf.getKey());
+					if(fd==null){
+						continue;
+					}
 					try {
 						msgBuilder.setField(fd, v);
 					} catch (Exception e) {
-						if(fd.getType()==Type.STRING)
-						{
+						if (fd.getType() == Type.STRING) {
 							try {
 								msgBuilder.setField(fd, v.toString());
 							} catch (Exception e1) {
-								log.debug("cannot invoke setfield class=" + src.getClass() + ",field=" + bf.getKey()+",fd="+fd+",v="+v);
+								log.debug("cannot invoke setfield class=" + src.getClass() + ",field=" + bf.getKey() + ",fd=" + fd + ",v=" + v);
 							}
 						}
 					}

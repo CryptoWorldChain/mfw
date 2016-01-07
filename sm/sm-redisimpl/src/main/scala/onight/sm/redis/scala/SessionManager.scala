@@ -43,9 +43,9 @@ object SessionManager extends OLog {
       //检查重复登录
       //      val exists = LoginIDRedisLoCache.redisLocalCache.getIfPresent(session.globalID());
       //      if (exists != null) exists.kickout(true)
-//      LoginIDRedisLoCache.redisLocalCache.put(session.globalID(), session)
-//      insertBox.put(session.globalID(), session)
-      LoginIDRedisLoCache.insert(session);
+      LoginIDRedisLoCache.redisLocalCache.put(session.globalID(), session)
+      insertBox.put(session.globalID(), session)
+      //      LoginIDRedisLoCache.insert(session);
       //      if (rcsession != null) {
       //        //same session:insert into redis,
       //        if (!StringUtils.equals(session.getSmid(), rcsession.getSmid())) {
@@ -162,10 +162,13 @@ object SessionManager extends OLog {
   }
 
   //检查是否登录
-  def checkAndUpdateSession(smid: String, loginId: String, resId: String): Tuple2[LoginResIDSession, String] = {
+  def checkAndUpdateSession(smid: String, newsession: LoginResIDSession=null): Tuple2[LoginResIDSession, String] = {
     val tkgid = SMIDHelper.fetchUID(smid);
-    val searchSession = LoginResIDSession(loginId, resId);
-    if (!StringUtils.equals(searchSession.globalID(), tkgid)) {
+    if(StringUtils.isBlank(tkgid)){
+      return (null, "smid_error_0")
+    }
+    val searchSession = LoginResIDSession(tkgid);
+    if (searchSession == null) {
       return (null, "smid_error_1")
     }
     val session = LoginIDRedisLoCache.get(searchSession);
@@ -173,13 +176,22 @@ object SessionManager extends OLog {
       if (session.isKickout() || !StringUtils.equals(session.getSmid(), smid)) {
         return (null, "smid_error_2");
       }
+
       if (System.currentTimeMillis() - session.lastUpdateMS > TimeOutMS) {
         removeSession(session);
         return (null, "session_timeout");
       }
+      if (newsession != null) {
+//        if (!StringUtils.equals(session.smid, newsession.smid) ||
+//          !StringUtils.equals(session.loginId, newsession.loginId) ||
+//          !StringUtils.equals(session.resId, newsession.resId)) {
+//          return (null, "smid_error_3:not_the_same_session");
+//        }
+        session.kvs.putAll(newsession.getKvs());
+      }
       session.lastUpdateMS = System.currentTimeMillis();
       checkBox.put(session.globalID, session)
-//      opexec.schedule(CheckRunner, Math.min(OpDelaySec, Math.max(1, (TimeOutMS - (System.currentTimeMillis() - lastup)) / 100)), TimeUnit.SECONDS); //timeout的
+      //      opexec.schedule(CheckRunner, Math.min(OpDelaySec, Math.max(1, (TimeOutMS - (System.currentTimeMillis() - lastup)) / 100)), TimeUnit.SECONDS); //timeout的
       return (session, "OK");
     }
     (null, "not_login")

@@ -26,6 +26,7 @@ import onight.sm.redis.scala.SessionManager
 import onight.sm.Ssm.RetCode
 import onight.tfw.otransio.api.beans.ExtHeader
 import onight.tfw.otransio.api.beans.CookieBean
+import onight.sm.Ssm.PBCommand
 
 @NActorProvider
 object LogoutActor extends SessionModules[PBSSO] {
@@ -34,7 +35,7 @@ object LogoutActor extends SessionModules[PBSSO] {
 
 object LogoutService extends OLog with PBUtils with LService[PBSSO] {
 
-  override def cmd: String = "OUT";
+  override def cmd: String = PBCommand.OUT.name();
   def onPBPacket(pack: FramePacket, pbo: PBSSO, handler: CompleteHandler) = {
     // ！！检查用户是否已经登录
     val ret = PBSSORet.newBuilder();

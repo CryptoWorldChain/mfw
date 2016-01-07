@@ -7,7 +7,7 @@ import java.util.concurrent.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.async.CallBack;
 import onight.tfw.async.CompleteHandler;
-import onight.tfw.otransio.api.IPacketSender;
+import onight.tfw.async.FutureSender;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.beans.FramePacket;
 
@@ -15,7 +15,7 @@ import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Futures;
 
 @Slf4j
-public class OTransSender implements IPacketSender {
+public class OTransSender extends FutureSender {
 
 	OSocketImpl osock;
 

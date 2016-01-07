@@ -12,5 +12,7 @@ include 'scheduler'
 include 'sm:sm-api'
 include 'sm:sm-redisimpl'
 include 'sm:sm-igniteimpl'
+include 'sm:sm-proxy'
+
 include 'example:otrantest'
 rootProject.name = 'onight'

@@ -47,13 +47,21 @@ public class ExtHeader {
 	}
 
 	public String getSMID() {
-		Object obj = get(PACK_SESSION);
+		Object obj = get(SESSIONID);
 		if (obj != null) {
-			return ((ActorSession) obj).getSmid();
+			return (String)obj;
 		}
 		return null;
 	}
-
+	
+//	public ActorSession getSession() {
+//		Object obj = get(PACK_SESSION);
+//		if (obj != null) {
+//			return (ActorSession)obj;
+//		}
+//		return null;
+//	}
+	
 	public void appendFrom(byte[] data, int offset, int len) {
 		if (data == null) {
 			return;

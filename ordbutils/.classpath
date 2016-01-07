@@ -140,7 +140,17 @@
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.scala-lang/scala-library/2.11.7/b3cf65e92414af4ce51ad3507147cc9f31fd708c/scala-library-2.11.7-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.scala-lang/scala-library/2.11.7/f75e7acabd57b213d6f61483240286c07213ec0e/scala-library-2.11.7.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.avro/avro/1.7.7/7d8cd1047bfd01f73c71c10c1467e2242282d574/avro-1.7.7-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.apache.avro/avro/1.7.7/3548c0bc136e71006f3fc34e22d34a29e5069e50/avro-1.7.7.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/commons-codec/commons-codec/1.10/11fb3d88ae7e3b757d70237064210ceb954a5a04/commons-codec-1.10-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/commons-codec/commons-codec/1.10/4b95f4897fa13f2cd904aee711aeafc0c5295cd8/commons-codec-1.10.jar">
 		<attributes>
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
@@ -225,22 +235,22 @@
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/brew/Documents/KJ/MING/svn/onight/ordbutils/libs/ojdbc6.jar">
+	<classpathentry kind="lib" path="/Users/brew/Documents/KJ/MING/git/tfw/ordbutils/libs/ojdbc6.jar">
 		<attributes>
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/brew/Documents/KJ/MING/svn/onight/ordbutils/libs/mysql-connector-java-5.1.37.jar">
+	<classpathentry kind="lib" path="/Users/brew/Documents/KJ/MING/git/tfw/ordbutils/libs/mysql-connector-java-5.1.37.jar">
 		<attributes>
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/brew/Documents/KJ/MING/svn/onight/ordbutils/libs/c3p0-0.9.5.1.jar">
+	<classpathentry kind="lib" path="/Users/brew/Documents/KJ/MING/git/tfw/ordbutils/libs/c3p0-0.9.5.1.jar">
 		<attributes>
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/brew/Documents/KJ/MING/svn/onight/ordbutils/libs/mchange-commons-java-0.2.10.jar">
+	<classpathentry kind="lib" path="/Users/brew/Documents/KJ/MING/git/tfw/ordbutils/libs/mchange-commons-java-0.2.10.jar">
 		<attributes>
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>

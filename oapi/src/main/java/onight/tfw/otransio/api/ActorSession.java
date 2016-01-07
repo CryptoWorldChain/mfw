@@ -1,6 +1,6 @@
 package onight.tfw.otransio.api;
 
-import java.util.Enumeration;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.Data;
@@ -9,29 +9,28 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class ActorSession {
-
-	long loginMS;
 	String smid;
+	String loginId;
+	String resId;// 资源id
+	
 	long lastUpdateMS;
-	int maxInactiveInterval;
+	long loginMS;
+	String status;
+//	int maxInactiveInterval;
+	Map<String, Object> kvs = new ConcurrentHashMap<String, Object>();
+	
 	boolean validate = true;
 
-	ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<String, Object>();
-
 	public Object getAttribute(String name) {
-		return attributes.get(name);
-	}
-
-	public Enumeration<String> getAttributeNames() {
-		return attributes.keys();
+		return kvs.get(name);
 	}
 
 	public Object setAttribute(String key, Object value) {
-		return attributes.put(key, value);
+		return kvs.put(key, value);
 	}
 
 	public Object removeAttribute(String name) {
-		return attributes.get(name);
+		return kvs.get(name);
 	}
 
 	public void invalidate() {

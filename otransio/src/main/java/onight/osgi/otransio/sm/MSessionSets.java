@@ -1,12 +1,11 @@
 package onight.osgi.otransio.sm;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
 import lombok.Data;
 import onight.osgi.otransio.sm.RemoteModuleBean.ModuleBean;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
-import onight.tfw.otransio.api.beans.FixHeader;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.session.ModuleSession;
 import onight.tfw.outils.pool.ReusefulMapPool;
@@ -21,7 +20,7 @@ public class MSessionSets {
 		this.currentNodeID = currentNodeID;
 	}
 
-	ConcurrentHashMap<String, ReusefulMapPool<String, ModuleSession>> sessionByModule = new ConcurrentHashMap<>();
+	HashMap<String, ReusefulMapPool<String, ModuleSession>> sessionByModule = new HashMap<>();
 
 	// ConcurrentHashMap<String,HashSet<ModuleSession>> connsByNodeID=new
 	// ConcurrentHashMap<String, HashSet<ModuleSession>>();

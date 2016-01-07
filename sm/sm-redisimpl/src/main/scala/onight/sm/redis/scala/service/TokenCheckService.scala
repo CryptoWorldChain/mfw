@@ -13,6 +13,7 @@ import onight.sm.redis.scala.TokensManager
 import onight.tfw.async.CompleteHandler
 import onight.tfw.otransio.api.PacketHelper
 import onight.tfw.otransio.api.beans.FramePacket
+import onight.sm.Ssm.PBCommand
 
 @NActorProvider
 object TokenCheckActor extends SessionModules[PBToken] {
@@ -21,7 +22,7 @@ object TokenCheckActor extends SessionModules[PBToken] {
 
 object TokenCheckService extends OLog with PBUtils with LService[PBToken] {
 
-  override def cmd: String = "TKC";
+  override def cmd: String = PBCommand.TKC.name();
 // ab -k -r -c 100 -t 60 "http://localhost:8081/ssm/pbtkc.do?fh=VTKNSSC000000J00&bd={%22userid%22:%22aabb%22,%22tokenid%22:%22YHvZ_qvDqR_13urDuQCwAmHZ7bACeM3Kzp1%22}&gcmd=TKNSSC"
 // tps: 15k
   

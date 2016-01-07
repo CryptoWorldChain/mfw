@@ -13,6 +13,7 @@ import onight.sm.redis.scala.TokensManager
 import onight.tfw.async.CompleteHandler
 import onight.tfw.otransio.api.PacketHelper
 import onight.tfw.otransio.api.beans.FramePacket
+import onight.sm.Ssm.PBCommand
 
 @NActorProvider
 object TokenGenActor extends SessionModules[PBToken] {
@@ -21,7 +22,7 @@ object TokenGenActor extends SessionModules[PBToken] {
 
 object TokenGenService extends OLog with PBUtils with LService[PBToken] {
 
-  override def cmd: String = "TKN";
+  override def cmd: String = PBCommand.TKN.name();
   //http://localhost:8081/ssm/pbtkn.do?fh=VTKNSSM000000J00&bd={%22userid%22:%22aabb%22}&gcmd=TKNSSM
   //压力测试，tps在14k左右，
   //ab -k -n 1000000 -r -c 1000 -t 60  "http://localhost:8081/ssm/pbtkn.do?fh=VTKNSSM000000J00&bd={%22userid%22:%22aabb%22}&gcmd=TKNSSM"

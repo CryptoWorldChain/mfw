@@ -4,25 +4,48 @@ syntax = "proto3";
 
 package onight.sm;
 
-
-message PBExtraInfo //账户信息
-{
-	string  act_no			=1;	//账户号
-	//==============
-	//==以下是备选的
-
-	string	act_pwd			=2;//密码（可以用)
-	string  act_name		=3;//账户名称
-	string  cust_id			=10;//客户号
-	string  mchnt_id		=20;//所属商户号
-	string  channel_id		=21;//所属渠道号
-	string  act_type		=30;//账户类型
-	string  catalog			=50;//机构类型
+enum PBModule{
+	SSM = 0;
+}
+enum PBCommand{
+	SIN  = 0;
+	VLD  = 1;
+	OUT = 2;
+	GET = 3;//获取session信息
+	SET = 4;//设置session的信息
 	
-	string  create_time	   	=70;//创建时间
-	string  update_time	   	=80;//更新时间
-	string  memo	   		=90;//备注
+	TKN = 10;
+	TKC = 11;
+}
+
+
+message PBToken	//token操作
+{
+	TokenOp op=1;
+	string tokenid = 2;
+	string userid = 3;
 };
+
+
+message PBSession{
+	string smid = 1;
+	uint64 loginMS = 2;
+	uint64 lastUpdateMS = 3;
+	uint32 max_inactive_interval = 4;
+	bool validate = 5;
+	repeated string kvs_keys = 6;
+	repeated string kvs_values = 7;
+	map<string,string> kvs = 8;
+	string login_id = 10;
+	string  res_id = 11;//资源id
+	
+	
+	RetCode	status = 40;//返回码
+	repeated PBCommand cmds = 50;
+	PBToken token = 60;
+	repeated PBToken tokens = 70;
+}
+
 
 message PBSSO	//登入
 {
@@ -42,8 +65,7 @@ message PBSSO	//登入
 
 	string  smid =20;//session的唯一id
 	string  res_id = 25;//资源id
-	PBExtraInfo  ext	=30;//冗余信息
-	
+	PBSession session = 30;//session信息
 };
 
 enum RetCode{
@@ -54,13 +76,14 @@ enum RetCode{
 message PBSSORet{//登入返回
 
 	string	login_id = 1;//登陆的id
-	string  smid =20;//session的唯一id
-	string  tokenid =30;//tokenid的唯一id
+	string  smid = 2;//session的唯一id
+	string  tokenid =3;//tokenid的唯一id
+	
+		PBSession session = 30;//session信息
 	
 	RetCode	status = 40;//返回码
 	string 	code = 41;//状态信息
 	string 	desc = 42;//描述信息
-	
 	
 };
 
@@ -70,12 +93,7 @@ enum TokenOp{
 		TOKEN_CHECK=1;
 	};
 	
-message PBToken	//token操作
-{
-	TokenOp op=1;
-	string tokenid = 2;
-	string userid = 3;
-};
+
 message PBTokenRet	//token操作
 {
 	TokenOp op=1;
