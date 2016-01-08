@@ -7,7 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import onight.tfw.async.CallBack;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.beans.FramePacket;
+import onight.tfw.outils.bean.BeanPBUtil;
 import onight.tfw.outils.bean.ClassUtils;
+import onight.tfw.outils.bean.JsonPBUtil;
 import onight.tfw.outils.serialize.SerializerFactory;
 
 import com.google.protobuf.AbstractMessage.Builder;
@@ -58,10 +60,10 @@ public abstract class NActor<T> extends ActWrapper implements NPacketProccsor, A
 				}
 			} else if (pack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON) {
 				try {
-					String jsonTxt = new String(pack.getBody(), "UTF-8");
 					Builder builder = getPBBuilder();
 					if (builder != null) {
-						JsonFormat.merge(jsonTxt, builder);
+						JsonPBUtil.json2PB(pack.getBody(), builder);
+//						JsonFormat.merge(jsonTxt, builder);
 						return (T) builder.build();
 					}
 					return null;
@@ -81,14 +83,14 @@ public abstract class NActor<T> extends ActWrapper implements NPacketProccsor, A
 	public Builder getPBBuilder() {
 		if (bm == null) {
 			try {
-				bm = getBeanType().getMethod("newBuilder", null);
+				bm = getBeanType().getMethod("newBuilder");
 			} catch (Exception e) {
 				log.warn("cannot found pb builder for class" + getBeanType(), e);
 			}
 		}
 		if(bm!=null)
 		try {
-			return (Builder) bm.invoke(null, null);
+			return (Builder) bm.invoke(null);
 		} catch (Exception e) {
 			log.warn("cannot found pb builder for class" + getBeanType(), e);
 		}

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import onight.tfw.async.OFuture;
 import onight.tfw.otransio.api.PackHeader;
+import onight.tfw.outils.bean.JsonPBFormat;
 import onight.tfw.outils.serialize.ISerializer;
 import onight.tfw.outils.serialize.SerializerFactory;
 import onight.tfw.outils.serialize.SerializerUtil;
@@ -12,7 +13,6 @@ import onight.tfw.outils.serialize.SerializerUtil;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.google.protobuf.Message;
-import com.googlecode.protobuf.format.JsonFormat;
 
 @Data
 @NoArgsConstructor
@@ -105,7 +105,7 @@ public class FramePacket {
 			}
 			if (fbody instanceof Message && fixHead.getEnctype() == SerializerFactory.SERIALIZER_JSON) {//
 				// pb 2 json
-				body = JsonFormat.printToString((Message) fbody).getBytes();
+				body = new JsonPBFormat().printToString((Message) fbody).getBytes(); 
 			} else {
 				body = SerializerUtil.toBytes(sio.serialize(fbody));
 			}

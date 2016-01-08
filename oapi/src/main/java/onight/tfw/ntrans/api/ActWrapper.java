@@ -27,6 +27,7 @@ import onight.tfw.otransio.api.beans.ExceptionBody;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.beans.UnknowCMDBody;
 import onight.tfw.otransio.api.session.CMDService;
+import onight.tfw.outils.bean.JsonPBFormat;
 import onight.tfw.outils.serialize.ISerializer;
 import onight.tfw.outils.serialize.SerializerFactory;
 import onight.tfw.outils.serialize.SerializerUtil;
@@ -35,7 +36,6 @@ import onight.tfw.proxy.IActor;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.protobuf.Message;
-import com.googlecode.protobuf.format.JsonFormat;
 
 @iPojoBean
 @Slf4j
@@ -112,7 +112,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 					if (retpack.getFbody() != null & retpack.getFbody() instanceof Message) {
 						Message msg = (Message) retpack.getFbody();
-						String str = JsonFormat.printToString(msg);
+						String str = new JsonPBFormat().printToString(msg);
 						retpack.getFixHead().genBytes();
 						String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
 								+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //

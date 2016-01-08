@@ -15,7 +15,7 @@ import onight.tfw.otransio.api.beans.FramePacket;
  * @author brew
  *
  */
-@Slf4j
+@Slf4j 
 public abstract class PBActor<T extends Message> extends NActor<T>  {
 
 	@Override

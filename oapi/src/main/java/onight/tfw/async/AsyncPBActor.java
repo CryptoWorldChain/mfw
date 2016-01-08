@@ -8,15 +8,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ntrans.api.PBActor;
-import onight.tfw.otransio.api.IPacketSender;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.ExceptionBody;
 import onight.tfw.otransio.api.beans.FramePacket;
+import onight.tfw.outils.bean.JsonPBFormat;
 import onight.tfw.outils.serialize.SerializerFactory;
 import onight.tfw.outils.serialize.SerializerUtil;
 
 import com.google.protobuf.Message;
-import com.googlecode.protobuf.format.JsonFormat;
 
 @Slf4j
 public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
@@ -38,7 +37,7 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 							retpack.getExtHead().buildFor(resp);
 							if (retpack.getFbody() != null & retpack.getFbody() instanceof Message) {
 								Message msg = (Message) retpack.getFbody();
-								String str = JsonFormat.printToString(msg);
+								String str = new JsonPBFormat().printToString(msg);
 								retpack.getFixHead().genBytes();
 								String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
 										+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //

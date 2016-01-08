@@ -1,19 +1,12 @@
 package onight.tfw.outils.serialize;
 
 import java.net.InetAddress;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import jnr.posix.POSIXFactory;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-
-import com.sun.crypto.provider.AESCipher;
-
-import sun.misc.CRC16;
-import sun.security.krb5.internal.crypto.crc32;
-import sun.security.provider.MD5;
-import sun.security.provider.SHA;
-import jnr.posix.POSIXFactory;
 
 public class SessionIDGenerator {
 
