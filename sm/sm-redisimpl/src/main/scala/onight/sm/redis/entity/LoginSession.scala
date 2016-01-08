@@ -45,19 +45,25 @@ object LoginResIDSession {
     ret.loginId = session.loginId
     ret.resId = session.resId
     ret.lastUpdateMS = session.lastUpdateMS;
-    ret.kvs=session.kvs;
+    ret.kvs = session.kvs;
     ret.status = session.status;
     ret
   }
   def apply(login_res: String) = {
     val arrs = login_res.split("/");
-    if (arrs.length != 2) {
+    if (arrs.length > 2) {
       null;
+    } else {
+      val ret = new LoginResIDSession()
+      ret.loginId = arrs(0)
+      if (arrs.length == 1) {
+        ret.resId = "";
+      } else {
+
+        ret.resId = arrs(1)
+      }
+      ret
     }
-    val ret = new LoginResIDSession()
-    ret.loginId = arrs(0)
-    ret.resId = arrs(1)
-    ret
   }
 
   def apply(loginId: String, resId: String) = {

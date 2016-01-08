@@ -88,9 +88,9 @@ object SessionManager extends OLog {
       log.info("SessionTimeOut:logid:" + session.getLoginId() + ":userid:" + session.getUserId() + ":lastup:" + session.getLastUpdateMS() + ":logtime:" + session.getLoginMS())
       false
     } else { //redis里面被别的集群节点更新过了
-      if (rsession.getLastUpdateMS() != session.getLastUpdateMS()) {
+      if (!rsession.getLastUpdateMS().equals(session.getLastUpdateMS())) {
         ThreadContext.setContext(JpaContextConstants.Cache_Timeout_Second, TimeOutSec)
-        log.debug("update Session:"+session.smid+":gid:"+session.globalID())
+        log.debug("update Session:"+session.smid+":gid:"+session.globalID()+",rsession="+rsession+",session = "+session)
         val upsession = LoginResIDSession(session, true);
         val rsessionv = RedisDAOs.logiddao.getAndSet(upsession);
         if (rsessionv.isKickout()) {

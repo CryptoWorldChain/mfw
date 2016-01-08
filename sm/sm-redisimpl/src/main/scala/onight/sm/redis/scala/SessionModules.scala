@@ -28,7 +28,7 @@ abstract class SessionModules[T <: Message] extends AsyncPBActor[T] with OLog {
     try {
       service.onPBPacket(pack, pbo, handler)
     } catch {
-      case t: Throwable => log.error("fato:", t)
+      case t: Throwable => { log.error("fato:", t); throw  t; }
     }
   }
   override def getCmds(): Array[String] = {
@@ -47,7 +47,7 @@ object SMIDHelper {
   }
   val sessionidGenerator = new SessionIDGenerator(NodeHelper.getCurrNodeID);
   def nextSMID(implicit userid: String = ""): String = sessionidGenerator.generate(userid)
-   def fetchUID(implicit token: String = ""): String = SessionIDGenerator.fetchid(token)
+  def fetchUID(implicit token: String = ""): String = SessionIDGenerator.fetchid(token)
   def nextToken(userid: String = "", key: String = "ofw20"): String = sessionidGenerator.genToken(userid, key, cureTimeIdx)
   def checkToken(token: String = "", key: String = "ofw20"): String = sessionidGenerator.checkToken(token, key)
 }

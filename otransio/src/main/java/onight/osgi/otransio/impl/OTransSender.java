@@ -52,9 +52,11 @@ public class OTransSender extends FutureSender {
 
 	@Override
 	public void asyncSend(FramePacket fp, final CallBack<FramePacket> cb) {
+		fp.genBodyBytes();
 		osock.routePacket(fp, new CompleteHandler() {
 			@Override
 			public void onFinished(FramePacket packet) {
+				packet.genBodyBytes();
 				cb.onSuccess(packet);
 			}
 		});

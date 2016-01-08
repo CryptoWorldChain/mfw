@@ -59,7 +59,8 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 							}
 						}
 					});
-					conn.write(mss.getLocalModulesPacket());
+					FramePacket pack=mss.getLocalModulesPacket();
+					conn.write(pack);
 					this.addObject(conn);
 				} else {
 					createOneConnection(maxtries + 1);

@@ -43,6 +43,12 @@ public class PacketHelper {
 		return genPack(cmd, module, body, false, (byte) 0);
 	}
 
+	public static FramePacket genASyncPBPack(String cmd, String module, Object body) {
+		FramePacket pack = genPack(cmd, module, body, false, (byte) 0);
+		pack.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
+		return pack;
+	}
+
 	public static FramePacket genSyncPack(String cmd, String module, Object body) {
 		return genPack(cmd, module, body, true, (byte) 0);
 	}
@@ -56,7 +62,9 @@ public class PacketHelper {
 		fh.setPrio(pio);
 		fh.setVer('V');
 		fh.setSync(isSync);
+		fh.setEnctype(SerializerFactory.SERIALIZER_TRANSBEAN);
 		ret.setFixHead(fh);
+		ret.setExtHead(new ExtHeader());
 		return ret;
 	}
 
@@ -94,7 +102,6 @@ public class PacketHelper {
 		return ret;
 	}
 
-
 	static ObjectMapper mapper = new ObjectMapper();
 	static ISerializer transSIO = SerializerFactory.getSerializer(SerializerFactory.SERIALIZER_TRANSBEAN);
 	static {
@@ -130,7 +137,6 @@ public class PacketHelper {
 		byte[] extb = fp.genExtBytes();
 		fp.getFixHead().setExtsize(extb.length);
 		fp.getFixHead().setBodysize(bodyb.length);
-		fp.getFixHead().setEnctype(SerializerFactory.SERIALIZER_TRANSBEAN);
 		try (ByteArrayOutputStream bout = new ByteArrayOutputStream(fp.getFixHead().getTotalSize());) {
 			bout.write(fp.getExtHead().genBytes());
 			if (extb.length > 0) {

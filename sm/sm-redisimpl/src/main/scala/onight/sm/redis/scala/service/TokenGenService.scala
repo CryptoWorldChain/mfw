@@ -30,12 +30,16 @@ object TokenGenService extends OLog with PBUtils with LService[PBToken] {
     //    log.debug("guava==" + VMDaos.guCache.getIfPresent(pbo.getLogid()));
     val ret = PBTokenRet.newBuilder();
     try {
-      val token = TokensManager.genToken(pbo.getUserid)
-      log.debug("genTOken:userid:" + pbo.getUserid + ":token:" + token)
-      if (token != null) {
-        ret.setCode("0000").setStatus(RetCode.SUCCESS).setOp(pbo.getOp).setTokenid(token);
+      if (pbo == null) {
+        ret.setDesc("Packet_Error").setCode("0003") setStatus (RetCode.FAILED);
       } else {
-        ret.setCode("0001").setStatus(RetCode.FAILED).setOp(pbo.getOp);
+        val token = TokensManager.genToken(pbo.getUserid)
+        log.debug("genTOken:userid:" + pbo.getUserid + ":token:" + token)
+        if (token != null) {
+          ret.setCode("0000").setStatus(RetCode.SUCCESS).setOp(pbo.getOp).setTokenid(token);
+        } else {
+          ret.setCode("0001").setStatus(RetCode.FAILED).setOp(pbo.getOp);
+        }
       }
     } catch {
       case error: Throwable => {

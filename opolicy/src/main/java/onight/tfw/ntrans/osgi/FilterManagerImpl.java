@@ -6,6 +6,7 @@ import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.annotation.iPojoBean;
 import onight.tfw.async.CompleteHandler;
+import onight.tfw.ntrans.api.ActWrapper;
 import onight.tfw.ntrans.api.ActorService;
 import onight.tfw.ntrans.api.FilterManager;
 import onight.tfw.otransio.api.PacketFilter;
@@ -48,6 +49,7 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 
 	@Unbind(aggregate = true, optional = true)
 	public void unbindProc(PacketFilter pl) {
+		if(pl!=null&&pl.modules()!=null)
 		for (String module : pl.modules()) {
 			ArrayList<PacketFilter> list = filterByModule.get(module);
 			if (list != null && list.remove(pl)) {
@@ -57,11 +59,12 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 	}
 
 	@Override
-	public boolean preRouteListner(String module, FramePacket pack, CompleteHandler handler) {
+	public boolean preRouteListner(ActWrapper actor, FramePacket pack, CompleteHandler handler) {
+		String module = actor.getModule();
 		ArrayList<PacketFilter> listeners = filterByModule.get(module);
 		if (listeners != null) {
 			for (PacketFilter pl : listeners) {
-				if (pl.preRoute(module, pack, handler)) {
+				if (pl.preRoute(actor, pack, handler)) {
 					return true;
 				}
 			}
@@ -70,11 +73,12 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 	}
 
 	@Override
-	public boolean postRouteListner(String module, FramePacket pack, CompleteHandler handler) {
+	public boolean postRouteListner(ActWrapper actor, FramePacket pack, CompleteHandler handler) {
+		String module = actor.getModule();
 		ArrayList<PacketFilter> listeners = filterByModule.get(module);
 		if (listeners != null) {
 			for (PacketFilter pl : listeners) {
-				if (pl.postRoute(module, pack, handler)) {
+				if (pl.postRoute(actor, pack, handler)) {
 					return true;
 				}
 			}

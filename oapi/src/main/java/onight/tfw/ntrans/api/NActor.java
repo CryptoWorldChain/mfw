@@ -48,7 +48,7 @@ public abstract class NActor<T> extends ActWrapper implements NPacketProccsor, A
 	}
 
 	public T getPBBody(FramePacket pack) {
-		if (pack.getBody().length > 0) {
+		if (pack.getBody()!=null&&pack.getBody().length > 0) {
 			if (pack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_PROTOBUF) {
 				try {
 					if (getPBBuilder() != null) {

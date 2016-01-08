@@ -28,7 +28,7 @@ public class ExtHeader {
 	public final static String EQUAL_CHAR = "=";
 	// public final static String HTTP_COOKIE_NAME = "__exth";
 	public final static String SESSIONID = PackHeader.EXT_HIDDEN + "_smid";
-	public final static String PACK_SESSION = PackHeader.EXT_IGNORE + "__session";
+	public final static String PACK_SESSION = PackHeader.EXT_IGNORE_RESPONSE + "__session";
 
 	Map<String, Object> hiddenkvs = new HashMap<String, Object>();
 	Map<String, Object> ignorekvs = new HashMap<String, Object>();
@@ -219,7 +219,8 @@ public class ExtHeader {
 			} else {
 				cookie = (new Cookie(key, Base64.encodeBase64URLSafeString(SerializerUtil.toBytes(value))));
 			}
-
+			cookie.setPath("/");
+			cookie.setMaxAge(7*24*3600);
 			res.addCookie(cookie);
 
 		}
@@ -229,7 +230,11 @@ public class ExtHeader {
 		addCookie(res, "_" + PackHeader.HTTP_PARAM_FIX_HEAD, get(PackHeader.HTTP_PARAM_FIX_HEAD));
 		for (Entry<String, Object> pair : hiddenkvs.entrySet()) {
 			if (pair.getKey().startsWith(PackHeader.EXT_HIDDEN) && !pair.getKey().startsWith(PackHeader.EXT_IGNORE_RESPONSE)) {
-				addCookie(res, pair.getKey(), pair.getValue());
+				try {
+					addCookie(res, pair.getKey(), pair.getValue());
+				} catch (Exception e) {
+//					e.printStackTrace();
+				}
 			}
 		}
 	}

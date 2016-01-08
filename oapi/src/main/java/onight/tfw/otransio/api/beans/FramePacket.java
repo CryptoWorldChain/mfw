@@ -1,5 +1,7 @@
 package onight.tfw.otransio.api.beans;
 
+import java.io.ByteArrayOutputStream;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,7 +21,7 @@ import com.google.protobuf.Message;
 @AllArgsConstructor
 public class FramePacket {
 	FixHeader fixHead;
-	ExtHeader extHead;
+	ExtHeader extHead = new ExtHeader();
 
 	@JsonIgnore
 	protected byte[] body;
@@ -103,9 +105,14 @@ public class FramePacket {
 			if (sio == null) {
 				sio = SerializerFactory.getSerializer(fixHead.getEnctype());
 			}
-			if (fbody instanceof Message && fixHead.getEnctype() == SerializerFactory.SERIALIZER_JSON) {//
-				// pb 2 json
-				body = new JsonPBFormat().printToString((Message) fbody).getBytes(); 
+			if (fbody instanceof Message && (fixHead.getEnctype() == SerializerFactory.SERIALIZER_JSON)) {
+				try (ByteArrayOutputStream bout = new ByteArrayOutputStream();) {
+					new JsonPBFormat().print((Message) fbody, bout);
+					body = bout.toByteArray();
+					bout.close();
+				} catch (Exception e) {
+
+				}
 			} else {
 				body = SerializerUtil.toBytes(sio.serialize(fbody));
 			}
