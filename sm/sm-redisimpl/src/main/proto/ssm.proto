@@ -33,17 +33,12 @@ message PBSession{
 	uint64 lastUpdateMS = 3;
 	uint32 max_inactive_interval = 4;
 	bool validate = 5;
-	repeated string kvs_keys = 6;
-	repeated string kvs_values = 7;
-	map<string,string> kvs = 8;
-	string login_id = 10;
-	string  res_id = 11;//资源id
-	
+	map<string,string> kvs = 6;
+	string login_id = 7;
+	string  res_id = 8;//资源id
 	
 	RetCode	status = 40;//返回码
-	repeated PBCommand cmds = 50;
-	PBToken token = 60;
-	repeated PBToken tokens = 70;
+	
 }
 
 

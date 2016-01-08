@@ -10,8 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-
 @Data
 @NoArgsConstructor
 public class ActorSessionTest {
@@ -28,13 +26,12 @@ public class ActorSessionTest {
 	List<Token> tokens=new ArrayList<Token>();
 
 	Set<String> kvs_keys;
-	Collection<Object> kvs_values;
+	Collection<String> kvs_values;
 	int status;
 	
 	List<Integer> command;
 	
-	@JsonIgnore
-	ConcurrentHashMap<String, Object> kvs = new ConcurrentHashMap<String, Object>();
+	ConcurrentHashMap<String, String> kvs = new ConcurrentHashMap<String, String>();
 
 	public void mapkvs() {
 		kvs_keys = kvs.keySet();
@@ -49,7 +46,7 @@ public class ActorSessionTest {
 		return kvs.keys();
 	}
 
-	public Object setAttribute(String key, Object value) {
+	public Object setAttribute(String key, String value) {
 		return kvs.put(key, value);
 	}
 

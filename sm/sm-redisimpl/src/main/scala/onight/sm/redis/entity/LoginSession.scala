@@ -44,7 +44,9 @@ object LoginResIDSession {
     val ret = new LoginResIDSession();
     ret.loginId = session.loginId
     ret.resId = session.resId
-    ret.lastUpdateMS = System.currentTimeMillis();
+    ret.lastUpdateMS = session.lastUpdateMS;
+    ret.kvs=session.kvs;
+    ret.status = session.status;
     ret
   }
   def apply(login_res: String) = {

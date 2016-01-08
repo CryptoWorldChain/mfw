@@ -11,9 +11,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import onight.tfw.outils.serialize.SerializerUtil;
 import onight.tfw.outils.serialize.TransBeanSerializer.BeanMap;
-
+@Slf4j
 public class StringType {
 
 	public static interface Factory {
@@ -175,7 +176,7 @@ public class StringType {
 		if (foldkeys.length == index + 1) {
 			dist.put(foldkeys[index].substring(1), value);
 		} else {
-			System.out.println("foldKeys:" + foldkeys[index]);
+//			log.debug("foldKeys:" + foldkeys[index]);
 			char type=foldkeys[index+1].charAt(0);
 			HashMap<String, Object> nextmap = (HashMap<String, Object>) dist.get(foldkeys[index].substring(1));
 			if (nextmap == null) {

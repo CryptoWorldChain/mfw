@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.mservice.ThreadContext;
@@ -17,13 +15,11 @@ import onight.tfw.ojpa.api.OJpaDAO;
 import onight.tfw.ojpa.api.TransactionExecutor;
 import onight.tfw.ojpa.api.exception.JPAException;
 import onight.tfw.outils.serialize.SerializerUtil;
-import onight.tfw.outils.serialize.TransBeanSerializer;
 import onight.tfw.outils.serialize.TransBeanSerializer.BeanMap;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.core.RedisTemplate;
 
 @Slf4j
 public class DaoRedisImpl extends NoneDomainDao {

@@ -10,20 +10,20 @@ import com.google.protobuf.ExtensionRegistry;
 import com.googlecode.protobuf.format.JsonFormat;
 import com.googlecode.protobuf.format.JsonFormat.ParseException;
 
-public class TestPBMap {
+public class TestPBJSON {
 
 	public static void main(String[] args) {
 
 		ActorSessionTest session = new ActorSessionTest();
-		session.setLoginMS(1000002);
+//		session.setLoginMS(1000002);
 		session.setAttribute("aaabb", new Token(1, "ccccc", "userid").tokenid);
 		session.setAttribute("aaabb1", new Token(1, "cccccddd", "userid").tokenid);
 		session.setAttribute("aaabb2",new Token(1, "eeeee", "userid").tokenid);
-		session.setSmid("ifsffda");
-		session.setStatus(RetCode.FAILED_VALUE);
-		session.setToken(new Token(1, "tokenid", "userid"));
-		session.getTokens().add(new Token(TokenOp.TOKEN_CHECK_VALUE, "tokenid", "userid"));
-		session.getTokens().add(new Token(TokenOp.TOKEN_NEW_VALUE, "tokenid", "userid"));
+//		session.setSmid("ifsffda");
+//		session.setStatus(RetCode.FAILED_VALUE);
+//		session.setToken(new Token(1, "tokenid", "userid"));
+//		session.getTokens().add(new Token(TokenOp.TOKEN_CHECK_VALUE, "tokenid", "userid"));
+//		session.getTokens().add(new Token(TokenOp.TOKEN_NEW_VALUE, "tokenid", "userid"));
 		session.mapkvs();
 		String jsonTxt = new String((byte[]) SerializerFactory.getSerializer(SerializerFactory.SERIALIZER_JSON).serialize(session));
 		System.out.println("Json::" + jsonTxt);
@@ -32,18 +32,11 @@ public class TestPBMap {
 		
 		try {
 			util.json2PB(jsonTxt, builder);
-			// JsonFormat.merge(jsonTxt, builder);
-//			JsonFormat jsonFormat = new JsonFormat();
-//			jsonFormat.merge(jsonTxt,ExtensionRegistry.getEmptyRegistry(), builder);
 			PBSession pbsess = builder.build();
 			System.out.println("pbss=="+pbsess);
-			System.out.println("token.op=="+pbsess.getLoginMS());
-			System.out.println("attr="+pbsess.getKvs().get("aaabb2").getClass());
-			BeanPBUtil pbutil=new BeanPBUtil();
-			ActorSessionTest as=pbutil.copyFromPB(pbsess, new ActorSessionTest());
-			pbsess=pbutil.toPB(PBSession.newBuilder(), as);
-			System.out.println(as);
-			System.out.println("pbsess=="+pbsess);
+			JsonPBFormat jf=new JsonPBFormat();
+			String str=jf.printToString(pbsess);
+			System.out.println(str);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
