@@ -1,8 +1,7 @@
 package onight.scala.test;
 
-import static com.googlecode.protobuf.format.util.TextUtils.unsignedToString;
-
 import java.io.IOException;
+import java.math.BigInteger;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.Iterator;
@@ -17,7 +16,6 @@ import com.googlecode.protobuf.format.JsonFormat;
 
 public class JsonPBFormat extends JsonFormat {
 
-	@Override
 	public void printField(FieldDescriptor field, Object value, JsonGenerator generator) throws IOException {
 		printSingleField(field, value, generator);
 	}
@@ -60,8 +58,8 @@ public class JsonPBFormat extends JsonFormat {
 			if (field.isMapField()) {
 				generator.print("{");
 				for (Iterator<?> iter = ((List<?>) value).iterator(); iter.hasNext();) {
-					MapEntry map=(MapEntry)(iter.next());
-					generator.print("\""+map.getKey()+"\":");
+					MapEntry map = (MapEntry) (iter.next());
+					generator.print("\"" + map.getKey() + "\":");
 					printFieldValue(map.getDescriptorForType().getFields().get(1), map.getValue(), generator);
 					if (iter.hasNext()) {
 						generator.print(",");
@@ -259,4 +257,16 @@ public class JsonPBFormat extends JsonFormat {
 		}
 		return "\\u" + Integer.toHexString(ch);
 	}
+
+	private static String unsignedToString(long value) {
+		if (value >= 0) {
+			return Long.toString(value);
+		} else {
+			// Pull off the most-significant bit so that BigInteger doesn't
+			// think
+			// the number is negative, then set it again using setBit().
+			return BigInteger.valueOf(value & 0x7FFFFFFFFFFFFFFFL).setBit(63).toString();
+		}
+	}
+
 }

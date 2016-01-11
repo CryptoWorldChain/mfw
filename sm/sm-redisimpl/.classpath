@@ -68,6 +68,11 @@
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/com.googlecode.protobuf-java-format/protobuf-java-format/1.4/e6c64967db7ccbf2455d4bb120527a81cb8f2950/protobuf-java-format-1.4-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/com.googlecode.protobuf-java-format/protobuf-java-format/1.4/b81e7d188c2cc766bc150bd3c77154178b3541d5/protobuf-java-format-1.4.jar">
+		<attributes>
+			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/javax.transaction/jta/1.1/d5dad66d06246bd2e1e369cebff27faa9beb065a/jta-1.1-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/javax.transaction/jta/1.1/2ca09f0b36ca7d71b762e14ea2ff09d5eac57558/jta-1.1.jar">
 		<attributes>
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
@@ -174,11 +179,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/org.tukaani/xz/1.0/f95e32a5d2dd8da643c4419814415b9704312993/xz-1.0-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/org.tukaani/xz/1.0/ecff5cb8b1189514c9d1d8d68eb77ac372e000c9/xz-1.0.jar">
-		<attributes>
-			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry sourcepath="/Users/brew/.gradle/caches/modules-2/files-2.1/com.googlecode.protobuf-java-format/protobuf-java-format/1.4/e6c64967db7ccbf2455d4bb120527a81cb8f2950/protobuf-java-format-1.4-sources.jar" kind="lib" path="/Users/brew/.gradle/caches/modules-2/files-2.1/com.googlecode.protobuf-java-format/protobuf-java-format/1.4/b81e7d188c2cc766bc150bd3c77154178b3541d5/protobuf-java-format-1.4.jar">
 		<attributes>
 			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
 		</attributes>
