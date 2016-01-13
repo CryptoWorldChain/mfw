@@ -153,7 +153,10 @@ public class ActorManager {
 			for (String ctxpath : ctxpaths) {
 				servlets.remove(ctxpath);
 				for (HttpService s : services) {
-					s.unregister(ctxpath);
+					try {
+						s.unregister(ctxpath);
+					} catch (Exception e) {
+					}
 					log.info("注销servlet成功" + ctxpath);
 				}
 			}
