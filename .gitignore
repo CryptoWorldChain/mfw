@@ -3,4 +3,4 @@ bin
 .gradle
 classes
 .cache
-
+.cache-*
