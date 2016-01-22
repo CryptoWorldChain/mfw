@@ -7,16 +7,10 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
-
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
-import org.codehaus.jackson.map.DeserializationConfig.Feature;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.outils.serialize.TransBeanSerializer;
@@ -129,6 +123,7 @@ public class BeanPBUtil {
 	}
 
 	public <T> T toPB(Message.Builder msgBuilder, Object src) {
+		
 		HashMap<String, BeanFieldInfo> bfis = extractMethods(src.getClass());
 		if (bfis != null) {
 			for (Entry<String, BeanFieldInfo> bf : bfis.entrySet()) {
