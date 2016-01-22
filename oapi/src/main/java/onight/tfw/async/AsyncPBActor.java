@@ -22,6 +22,9 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 
 	@Override
 	public void doWeb(final HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack) throws IOException {
+		resp.setCharacterEncoding("UTF-8");
+		resp.setHeader("Content-type", "text/json;charset=UTF-8");  
+
 		final AsyncContext asyncContext = req.startAsync();
 		asyncContext.start(new Runnable() {
 			@Override

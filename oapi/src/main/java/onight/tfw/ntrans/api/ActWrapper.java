@@ -101,6 +101,9 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	public void doWeb(final HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack) throws IOException {
 		try {
+			resp.setCharacterEncoding("UTF-8");
+			resp.setHeader("Content-type", "text/json;charset=UTF-8");  
+
 			doPacketWithFilter(pack, new CompleteHandler() {
 				@Override
 				public void onFinished(FramePacket retpack) {
