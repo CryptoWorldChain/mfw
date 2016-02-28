@@ -26,6 +26,7 @@ import onight.sm.redis.entity.LoginResIDSession
 import onight.tfw.otransio.api.PackHeader
 import onight.tfw.otransio.api.beans.ExtHeader
 import onight.sm.Ssm.PBCommand
+import onight.tfw.outils.conf.PropHelper
 
 @NActorProvider
 object LoginActor extends SessionModules[PBSSO] {
@@ -72,8 +73,10 @@ object LoginService extends OLog with PBUtils with LService[PBSSO] {
     handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
   }
 
+  
   def onPBPacket(pack: FramePacket, pbo: PBSSO, handler: CompleteHandler) = {
     //    log.debug("guava==" + VMDaos.guCache.getIfPresent(pbo.getLogid()));
+    
     if (pbo == null) {
       val ret = PBSSORet.newBuilder();
       ret.setDesc("Packet_Error").setCode("0003") setStatus (RetCode.FAILED);

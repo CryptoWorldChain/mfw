@@ -3,12 +3,14 @@ package onight.tfw.outils.conf;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.util.Map.Entry;
 import java.util.Properties;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.lang3.StringUtils;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleReference;
 
@@ -39,8 +41,26 @@ public class PropHelper {
 			}
 		}
 		configFile = new File(config);
-		log.debug("configFile::" + config + "::FF==" + configFile.exists());
 		init();
+		for (String subdir : get("include", "").split(",")) {
+			if (StringUtils.isBlank(subdir))
+				continue;
+			File dir = new File(configFile.getParent()+File.separator+subdir);
+			if (dir.isDirectory()) {
+				for (File f : dir.listFiles(new FilenameFilter() {
+
+					@Override
+					public boolean accept(File dir, String name) {
+						return name.endsWith("properties");
+					}
+				})) {
+					addFileProps(f);
+				}
+			}else if(dir.isFile()&&dir.getName().endsWith("properties")){
+				addFileProps(dir);
+			}
+		}
+		log.debug("configFile::" + config + "::FF==" + configFile.exists());
 	}
 
 	public PropHelper(BundleContext context) {
@@ -50,10 +70,14 @@ public class PropHelper {
 	Properties local_props = new Properties();
 
 	public void init() {
-		if (configFile.exists()) {
+		addFileProps(configFile);
+	}
+
+	public void addFileProps(File file) {
+		if (file.exists()) {
 			Properties propsConf = new Properties();
 			try {
-				InputStream in = new BufferedInputStream(new FileInputStream(configFile));
+				InputStream in = new BufferedInputStream(new FileInputStream(file));
 				propsConf.load(in);
 				in.close();
 			} catch (Exception e) {
@@ -61,6 +85,7 @@ public class PropHelper {
 			}
 			local_props.putAll(propsConf);
 
+			if (file == configFile)
 			{// try ext
 				Properties extpropsConf = new Properties();
 				String extconfig = "./conf/ofwext.properties";
@@ -82,7 +107,6 @@ public class PropHelper {
 					}
 					local_props.putAll(extpropsConf);
 				}
-
 			}
 		}
 	}

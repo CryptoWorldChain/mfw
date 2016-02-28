@@ -9,6 +9,8 @@ enum PBModule{
 }
 enum PBCommand{
 	SIN  = 0;
+	 
+	
 	VLD  = 1;
 	OUT = 2;
 	GET = 3;//获取session信息
@@ -16,6 +18,8 @@ enum PBCommand{
 	
 	TKN = 10;
 	TKC = 11;
+	
+	OIN = 20;//基于jdbc的登录，可以是oracle或者是mysql
 }
 
 
@@ -74,7 +78,7 @@ message PBSSORet{//登入返回
 	string  smid = 2;//session的唯一id
 	string  tokenid =3;//tokenid的唯一id
 	
-		PBSession session = 30;//session信息
+	PBSession session = 30;//session信息
 	
 	RetCode	status = 40;//返回码
 	string 	code = 41;//状态信息

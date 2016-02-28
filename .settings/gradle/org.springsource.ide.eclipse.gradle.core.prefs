@@ -1,5 +1,5 @@
 #org.springsource.ide.eclipse.gradle.core.preferences.GradleProjectPreferences
-#Wed Jan 06 08:47:32 CST 2016
-build.family.org.gradle.tooling.model.eclipse.HierarchicalEclipseProject=;example;example/otrantest;oapi;opolicy;ordbutils;otransio;redisimpl;rmqimpl;scheduler;sm;sm/sm-api;sm/sm-igniteimpl;sm/sm-proxy;sm/sm-redisimpl;
+#Fri Feb 26 20:52:03 CST 2016
+build.family.org.gradle.tooling.model.eclipse.HierarchicalEclipseProject=;oapi;opolicy;sm;sm/sm-redisimpl;
 org.springsource.ide.eclipse.gradle.linkedresources=
 org.springsource.ide.eclipse.gradle.rootprojectloc=
