@@ -19,7 +19,7 @@ object VMDaos {
     .expireAfterWrite(pconfig.get("ssm.vmcache.expire", 60), TimeUnit.SECONDS)
     .build();
 
-    val pwdCache: Cache[String, String] = CacheBuilder.newBuilder().maximumSize(pconfig.get("ssm.vmcache.dbmax.pwd", 1000000)) //
+    val pwdCache: Cache[String, Map[String, Any]] = CacheBuilder.newBuilder().maximumSize(pconfig.get("ssm.vmcache.dbmax.pwd", 1000000)) //
     .expireAfterWrite(pconfig.get("ssm.vmcache.expire", 60), TimeUnit.SECONDS)
     .build();
   //  LoadingCache[Key, Graph] graphs = CacheBuilder.newBuilder()

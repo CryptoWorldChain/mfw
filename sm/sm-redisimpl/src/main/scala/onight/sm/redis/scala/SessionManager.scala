@@ -14,6 +14,7 @@ import onight.tfw.mservice.ThreadContext
 import onight.tfw.ojpa.api.JpaContextConstants
 import java.util.ArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.HashMap
 
 object SessionManager extends OLog {
   val exec = new ScheduledThreadPoolExecutor(NodeHelper.getPropInstance.get("sm.check.thread", 3));
@@ -188,7 +189,15 @@ object SessionManager extends OLog {
 //          !StringUtils.equals(session.resId, newsession.resId)) {
 //          return (null, "smid_error_3:not_the_same_session");
 //        }
-        session.kvs.putAll(newsession.getKvs());
+        if(session.kvs==null){
+          log.debug("none for kvs:"+session);
+          session.kvs=new HashMap();
+        }
+        if(newsession.getKvs()==null){
+          log.debug("new session.kvs is null:")
+        }else{
+          session.kvs.putAll(newsession.getKvs());
+        }
       }
       session.lastUpdateMS = System.currentTimeMillis();
       checkBox.put(session.globalID, session)
