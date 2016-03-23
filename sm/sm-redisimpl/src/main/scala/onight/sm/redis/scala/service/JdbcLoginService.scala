@@ -57,7 +57,7 @@ object JdbcLoginService extends OLog with PBUtils with LService[PBSSO] {
     val ret = PBSSORet.newBuilder();
 
     if (retfields != null && retfields.get("PASSWORD") != None) {
-      VMDaos.pwdCache.put(loginType._1, retfields);
+      VMDaos.pwdCache.put(loginType._2, retfields);
       //        log.debug("db.row=" + row + ",gua size=" + VMDaos.guCache.size());
       if (!retfields.contains("LOGIN_ID")) {
         log.debug("result error:LOGINID_Not_Found:" + retfields)
@@ -65,7 +65,7 @@ object JdbcLoginService extends OLog with PBUtils with LService[PBSSO] {
         pack.getExtHead().remove(ExtHeader.SESSIONID)
       } else {
         val loginId = retfields.get("LOGIN_ID").get.asInstanceOf[String]
-        ret.setLoginId(pbo.getLoginId) setStatus (RetCode.FAILED)
+        ret.setLoginId(loginId) setStatus (RetCode.FAILED)
         if (StringUtils.equals(retfields.get("PASSWORD").get.asInstanceOf[String], pbo.getPassword)) {
           val smid = SMIDHelper.nextSMID(loginId + "/" + pbo.getResId)
           ret.setCode("0000").setStatus(RetCode.SUCCESS) setLoginId (loginId) setSmid (smid)
@@ -106,7 +106,7 @@ object JdbcLoginService extends OLog with PBUtils with LService[PBSSO] {
         ret.setDesc("Packet_Error").setCode("0003") setStatus (RetCode.FAILED);
         handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
       } else {
-        val cachepwd = VMDaos.pwdCache.getIfPresent(loginType._1);
+        val cachepwd = VMDaos.pwdCache.getIfPresent(loginType._2);
         if (cachepwd != null) {
           resultfunc(pack, pbo, handler, loginType, cachepwd);
         } else {
