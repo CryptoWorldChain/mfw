@@ -4,3 +4,5 @@ bin
 classes
 .cache
 .cache-*
+.DS_Store
+.DS_Store?
