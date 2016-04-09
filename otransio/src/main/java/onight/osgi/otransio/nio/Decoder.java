@@ -53,7 +53,7 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 			return TransformationResult.createIncompletedResult(input);
 		}
 		headerStore.remove(storage);
-		ExtHeader ext = null;
+		ExtHeader ext = new ExtHeader();
 		if (header.getExtsize() > 0) {
 			byte extbytes[] = new byte[header.getExtsize()];
 			input.get(extbytes);

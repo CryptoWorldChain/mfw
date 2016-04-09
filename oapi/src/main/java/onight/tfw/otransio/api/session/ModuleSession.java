@@ -20,7 +20,10 @@ public class ModuleSession extends PSession {
 			service.doPacketWithFilter(pack, new CompleteHandler() {
 				@Override
 				public void onFinished(FramePacket packet) {
-					handler.onFinished(packet);
+					if(handler!=null)
+					{
+						handler.onFinished(packet);
+					}
 				}
 			});
 		}

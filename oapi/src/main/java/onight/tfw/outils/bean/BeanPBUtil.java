@@ -5,6 +5,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -78,6 +79,9 @@ public class BeanPBUtil {
 			EnumValueDescriptor evd = (EnumValueDescriptor) obj;
 			return evd.getNumber();
 		}
+		if(obj instanceof Double && dstClass == BigDecimal.class){
+			return new BigDecimal(((Double)obj).doubleValue());
+		}
 //		System.out.println("::obj=" + obj + ",dstclass=" + dstClass + ",objclas=" + obj.getClass());
 		return obj;
 	}
@@ -129,7 +133,7 @@ public class BeanPBUtil {
 			for (Entry<String, BeanFieldInfo> bf : bfis.entrySet()) {
 				Object v = null;
 				try {
-					v = bf.getValue().getGetM().invoke(src, null);
+					v = bf.getValue().getGetM().invoke(src);
 				} catch (Exception e) {
 					log.debug("cannot invoke getMethod:for class=" + src.getClass() + ",field=" + bf.getKey());
 				}

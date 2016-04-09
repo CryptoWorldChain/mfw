@@ -114,7 +114,11 @@ public class FixHeader {
 			LengthUtils.int2Byte2(extsize, data, 8);
 			LengthUtils.int2Byte3(bodysize, data, 10);
 		}
-		data[7] = (byte) (data[7] + '0');
+		if(data[7]<10){
+			data[7] =  (byte) (data[7] + '0');
+		}else{
+			data[7] =  (byte) (data[7] + 'A' - '0' );
+		}
 		data[13] = (byte) enctype;
 		data[14] = (byte) (prio + '0');
 		data[15] = (byte) (reserved + '0');
@@ -125,7 +129,11 @@ public class FixHeader {
 		ver = (char) data[0];
 		cmd = new String(data, 1, 3).trim();
 		module = new String(data, 4, 3).trim();
-		flag = data[7] - '0';
+		if(data[7]<='9'){
+			flag =  (byte) (data[7] - '0');
+		}else{
+			flag =  (byte) (data[7] - 'A' + 10 );
+		}
 		if ((flag & 0x3) == 2) {// 去字节方式
 			extsize = LengthUtils.byte2Int(data[8], data[9]);
 			bodysize = LengthUtils.byte2Int(data[10], data[11], data[12]);

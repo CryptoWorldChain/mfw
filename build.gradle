@@ -24,7 +24,7 @@ subprojects {
 	dependencies {
 		if(project.name!='oapi') {
 			//			compile project(":oapi")
-			compile ("onight.tfw:onight.tfw.oapi:2.1.1")
+			compile ("onight.tfw:onight.tfw.oapi:2.1.3")
 
 		}
 		compile 'onight.osgi:npojo:1.2.0'

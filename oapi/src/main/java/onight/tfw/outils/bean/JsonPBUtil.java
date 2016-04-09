@@ -28,7 +28,7 @@ public class JsonPBUtil {
 	}
 
 	public static Object getValue(FieldDescriptor fd, JsonNode node, Message.Builder builder) {
-		if (fd.isRepeated() && node.isArray()) {
+		if (fd.isRepeated() &&(node.isArray() || node.isObject() )) {
 			Iterator<JsonNode> it = (Iterator<JsonNode>) node.iterator();
 			Message.Builder subbuilder = null;
 			while (it.hasNext()) {
@@ -51,7 +51,10 @@ public class JsonPBUtil {
 			return null;
 		}
 		if (fd.getJavaType().equals(JavaType.STRING)) {
-			return node.asText();
+			if(!node.isTextual()){
+				return node.toString();
+			}
+			else return node.asText();
 		}
 		if (fd.getJavaType().equals(JavaType.INT)) {
 			return node.asInt();

@@ -4,14 +4,14 @@ dependencies {
 	includeInJar 'org.projectlombok:lombok:1.16.4'
 	includeInJar 'org.mousio:etcd4j:2.7.0'
 //	includeInJar 'com.daedafusion:jetcd:1.0'
-	includeInJar 'org.glassfish.grizzly:grizzly-core:2.3.22'
-	includeInJar 'org.glassfish.grizzly:grizzly-websockets:2.3.22'
-	includeInJar 'org.glassfish.grizzly:grizzly-http-server:2.3.22'
+	includeInJar 'org.glassfish.grizzly:grizzly-core:2.3.24'
+	includeInJar 'org.glassfish.grizzly:grizzly-websockets:2.3.24'
+	includeInJar 'org.glassfish.grizzly:grizzly-http-server:2.3.24'
 	includeInJar 'com.github.jnr:jnr-posix:3.0.9'
 	compile 'org.apache.commons:commons-lang3:3.3.2'
 	testCompile 'junit:junit:4.8.2'
 }
-version = '2.0.0'
+version = '2.0.1'
 jar {
 	manifest{
 		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')

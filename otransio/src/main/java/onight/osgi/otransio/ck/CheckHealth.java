@@ -9,6 +9,7 @@ import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.beans.FixHeader;
 import onight.tfw.otransio.api.beans.FramePacket;
 
+import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.CloseListener;
 import org.glassfish.grizzly.Closeable;
 import org.glassfish.grizzly.Connection;
@@ -42,6 +43,7 @@ public class CheckHealth {
 		header.setBodysize(0);
 		header.setExtsize(0);
 		header.setEnctype('T');
+		header.genBytes();
 		hbpack.setFixHead(header);
 
 	}
