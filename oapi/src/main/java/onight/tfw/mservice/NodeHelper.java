@@ -35,10 +35,10 @@ public class NodeHelper {
 
 	public static String getCurrNodeID() {
 		
-		getPropInstance().get("otrans.node.id", POSIXFactory.getPOSIX().getpid() + "." + getHostName());
+		return getPropInstance().get("otrans.node.id", POSIXFactory.getPOSIX().getpid() + "." + getHostName());
 		// mss = new MSessionSets(params.get("otrans.node.id",
 		// context.getBundle().getBundleId() + "." +
 		// ));
-		return "";
+//		return "";
 	}
 }

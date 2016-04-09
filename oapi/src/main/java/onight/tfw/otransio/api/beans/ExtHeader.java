@@ -129,6 +129,7 @@ public class ExtHeader {
 				sb.append(pair.getKey()).append(EQUAL_CHAR).append(pair.getValue()).append(SPLIT_CHAR);
 			}
 		}
+		
 		try {
 			data = sb.toString().getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e) {

@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import onight.osgi.otransio.impl.OSocketImpl;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.PacketHelper;
@@ -39,13 +40,16 @@ public class RemoteModuleSession extends ModuleSession {
 
 	AtomicLong counter = new AtomicLong(0);
 
-	final String rand = "r_" + String.format("%05d", (int) (Math.random() * 100000)) + "_";
+	final String rand = "r_"
+			+ String.format("%05d", (int) (Math.random() * 100000)) + "_";
 
 	private String genPackID() {
-		return rand + System.currentTimeMillis() + "_" + counter.incrementAndGet();
+		return rand + System.currentTimeMillis() + "_"
+				+ counter.incrementAndGet();
 	}
 
-	public RemoteModuleSession(String moduleid, String remoteNodeID, MSessionSets mss) {
+	public RemoteModuleSession(String moduleid, String remoteNodeID,
+			MSessionSets mss) {
 		super(moduleid);
 		this.mss = mss;
 		this.remoteNodeID = remoteNodeID;
@@ -56,8 +60,10 @@ public class RemoteModuleSession extends ModuleSession {
 		if (conn != null && connsPool.addObject(conn)) {
 			conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 				@Override
-				public void onClosed(Closeable closeable, ICloseType type) throws IOException {
-					log.info("RemoteModuleSession remove Connection!:" + closeable);
+				public void onClosed(Closeable closeable, ICloseType type)
+						throws IOException {
+					log.info("RemoteModuleSession remove Connection!:"
+							+ closeable);
 					if (closeable instanceof Connection) {
 						removeConnection((Connection) closeable);
 					}
@@ -82,26 +88,59 @@ public class RemoteModuleSession extends ModuleSession {
 		FutureImpl<FramePacket> future = null;
 		String packid = null;
 		if (pack.isSync()) {
-			packid = genPackID();
+			
 			if (pack.getExtHead().isExist(packIDKey)) {
 				// 检查是否为响应包
-				String expackid=pack.getExtStrProp(packIDKey);
+				String expackid = pack.getExtStrProp(packIDKey);
 				future = packMaps.remove(expackid);
 				if (future != null) {
-					pack.getExtHead().remove(packIDKey);
+					Object opackid = pack.getExtHead().remove(packIDKey);
+					Object ofrom = pack.getExtHead().remove(OSocketImpl.PACK_FROM);
+					Object oto = pack.getExtHead().remove(OSocketImpl.PACK_TO);
+					log.debug("oldfrom = "+ofrom+",oto="+oto+",opackid="+opackid);
 					future.result(pack);
 				} else {
-					log.warn("unknow ack:" + expackid + ",module=" + this.getModule() + ",packid=" + pack.getExtProp(packIDKey));
-					handler.onFinished(PacketHelper.toPBReturn(pack, new LoopPackBody(packIDKey, pack)));
+					log.warn("unknow ack:" + expackid + ",module="
+							+ this.getModule() + ",packid="
+							+ pack.getExtProp(packIDKey));
+					handler.onFinished(PacketHelper.toPBReturn(pack,
+							new LoopPackBody(packIDKey, pack)));
 				}
 				return;
 			}
+			packid = genPackID();
 			future = Futures.createSafeFuture();
 			pack.putHeader(packIDKey, packid);
 			packMaps.put(packid, future);
-			log.debug("sendPack:packid=" + packid + ",@nodid=" + mss.currentNodeID + ",module=" + this + ",maps.size=" + packMaps.size());
+			pack.putHeader(OSocketImpl.PACK_FROM, remoteNodeID);
+			future.addCompletionHandler(new CompletionHandler<FramePacket>() {
+				@Override
+				public void updated(FramePacket result) {
+				}
+
+				@Override
+				public void failed(Throwable throwable) {
+					handler.onFinished(PacketHelper.toPBReturn(pack,
+							new SendFailedBody(packIDKey, pack)));
+				}
+
+				@Override
+				public void completed(FramePacket result) {
+					handler.onFinished(result);
+				}
+
+				@Override
+				public void cancelled() {
+					handler.onFinished(PacketHelper.toPBReturn(pack,
+							new SendFailedBody(packIDKey, pack)));
+				}
+			});
+			log.debug("sendPack:packid=" + packid + ",@nodid="
+					+ mss.currentNodeID + ",module=" + this + ",maps.size="
+					+ packMaps.size());
 		} else {
-			log.debug("postPack:=" + ",@nodid=" + mss.currentNodeID + ",module=" + this + ",maps.size=" + packMaps.size());
+			log.debug("postPack:=" + ",@nodid=" + mss.currentNodeID
+					+ ",module=" + this + ",maps.size=" + packMaps.size());
 		}
 		// 发送到远程
 		for (int i = 0; i < 3; i++) {
@@ -116,35 +155,13 @@ public class RemoteModuleSession extends ModuleSession {
 
 			} catch (Exception e) {
 				log.error("sendMessageError:" + pack, e);
-				if(packid!=null){
+				if (packid != null) {
 					packMaps.remove(packid);
 				}
 				throw new MessageException(e);
 			}
 		}
-		if (pack.isSync()) {// 如果是同步接口，则要等返回
-			future.addCompletionHandler(new CompletionHandler<FramePacket>() {
-				@Override
-				public void updated(FramePacket result) {
-				}
 
-				@Override
-				public void failed(Throwable throwable) {
-					handler.onFinished(PacketHelper.toPBReturn(pack, new SendFailedBody(packIDKey, pack)));
-				}
-
-				@Override
-				public void completed(FramePacket result) {
-					handler.onFinished(result);
-				}
-
-				@Override
-				public void cancelled() {
-					handler.onFinished(PacketHelper.toPBReturn(pack, new SendFailedBody(packIDKey, pack)));
-				}
-			});
-			// connsPool.get().write(message, completionHandler);
-		}
 	}
 
 }

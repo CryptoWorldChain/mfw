@@ -27,6 +27,7 @@ public class OTransSender extends FutureSender {
 	@Override
 	public FramePacket send(FramePacket fp, long timeoutMS) throws MessageException {
 		final FutureImpl<FramePacket> future = Futures.createSafeFuture();
+		
 		osock.routePacket(fp, new CompleteHandler() {
 			@Override
 			public void onFinished(FramePacket packet) {

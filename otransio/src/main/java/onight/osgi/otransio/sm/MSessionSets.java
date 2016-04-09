@@ -21,6 +21,7 @@ public class MSessionSets {
 	}
 
 	HashMap<String, ReusefulMapPool<String, ModuleSession>> sessionByModule = new HashMap<>();
+	HashMap<String, ModuleSession> localsessionByModule = new HashMap<>();
 
 	// ConcurrentHashMap<String,HashSet<ModuleSession>> connsByNodeID=new
 	// ConcurrentHashMap<String, HashSet<ModuleSession>>();
@@ -51,11 +52,18 @@ public class MSessionSets {
 	}
 
 	public FramePacket getLocalModulesPacket() {
-		return PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN, PackHeader.REMOTE_MODULE, rmb);
+		return PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN,
+				PackHeader.REMOTE_MODULE, rmb);
+	}
+	
+	public ModuleSession getLocalModuleSession(String moduleid){
+		return localsessionByModule.get(moduleid);
 	}
 
-	public synchronized ModuleSession addModule(String moduleid, String nodeid, Connection conn) {
-		ReusefulMapPool<String, ModuleSession> pool = sessionByModule.get(moduleid);
+	public synchronized ModuleSession addModule(String moduleid, String nodeid,
+			Connection conn) {
+		ReusefulMapPool<String, ModuleSession> pool = sessionByModule
+				.get(moduleid);
 		if (pool == null) {
 			pool = new ReusefulMapPool<String, ModuleSession>();
 			sessionByModule.put(moduleid, pool);
@@ -64,6 +72,7 @@ public class MSessionSets {
 		if (ms == null) {
 			if (nodeid.equals(currentNodeID)) {
 				ms = new ModuleSession(moduleid);
+				localsessionByModule.put(moduleid, ms);
 			} else {
 				ms = new RemoteModuleSession(moduleid, nodeid, this);
 			}
@@ -76,8 +85,10 @@ public class MSessionSets {
 		return ms;
 	}
 
-	public synchronized void addOutogingModule(ModuleSession session, String nodeid) {
-		ReusefulMapPool<String, ModuleSession> pool = sessionByModule.get(session.getModule());
+	public synchronized void addOutogingModule(ModuleSession session,
+			String nodeid) {
+		ReusefulMapPool<String, ModuleSession> pool = sessionByModule
+				.get(session.getModule());
 		if (pool == null) {
 			pool = new ReusefulMapPool<String, ModuleSession>();
 			sessionByModule.put(session.getModule(), pool);
@@ -90,7 +101,8 @@ public class MSessionSets {
 	}
 
 	public synchronized void removeModule(String module, String nodeid) {
-		ReusefulMapPool<String, ModuleSession> pool = sessionByModule.get(module);
+		ReusefulMapPool<String, ModuleSession> pool = sessionByModule
+				.get(module);
 		if (pool != null) {
 			pool.removeByKey(nodeid);
 			if (pool.size() <= 0) {

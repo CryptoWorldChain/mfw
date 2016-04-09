@@ -50,6 +50,11 @@ public class SessionFilter extends BaseFilter {
 					if(conn.isOpen())
 					{
 						try {
+							String packfrom = vpacket.getExtStrProp(OSocketImpl.PACK_FROM);
+							log.debug("get Pack callback from :"+packfrom);
+							vpacket.putHeader(OSocketImpl.PACK_TO, packfrom);
+							vpacket.getExtHead().reset();
+							vpacket.getExtHead().genBytes();
 							conn.write(vpacket);
 						} catch (Exception e) {
 							log.error("write back error:"+vpacket+",pack="+pack+",ctx="+ctx+",filter="+ctx.getFilterChain(),e);

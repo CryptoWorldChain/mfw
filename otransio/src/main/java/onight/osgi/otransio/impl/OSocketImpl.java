@@ -51,6 +51,9 @@ public class OSocketImpl implements Serializable {
 
 	@Getter
 	private PropHelper params;
+
+	public static String PACK_FROM = PackHeader.EXT_HIDDEN + "_" + "from";
+	public static String PACK_TO = PackHeader.EXT_HIDDEN + "_" + "to";
 	BundleContext context;
 
 	public OSocketImpl(BundleContext context) {
@@ -134,7 +137,8 @@ public class OSocketImpl implements Serializable {
 		mss.removeLocalModule(service.getModule());
 	}
 
-	public void onPacket(FramePacket pack, final CompleteHandler handler, Connection<?> conn) {
+	public void onPacket(FramePacket pack, final CompleteHandler handler,
+			Connection<?> conn) {
 		if (PackHeader.REMOTE_LOGIN.equals(pack.getCMD())) {// 来自远端的登录
 			RemoteModuleBean rmb = pack.parseBO(RemoteModuleBean.class);
 			if (rmb != null) {
@@ -143,28 +147,42 @@ public class OSocketImpl implements Serializable {
 				}
 			}
 		} else if (PackHeader.CMD_HB.equals(pack.getCMD())) {// 来自远端的心跳线
-			log.trace("[HB] From " + conn.getPeerAddress() + " , to " + conn.getLocalAddress());
+			log.trace("[HB] From " + conn.getPeerAddress() + " , to "
+					+ conn.getLocalAddress());
 		} else {
 			routePacket(pack, handler);
 		}
 	}
 
+	public void routeOutPacket(FramePacket pack, final CompleteHandler handler) {
+
+		pack.putHeader(PACK_FROM, "");
+
+		routePacket(pack, handler);
+	}
 
 	public void routePacket(FramePacket pack, final CompleteHandler handler) {
 
-		String destTO = pack.getExtStrProp(PackHeader.TO);
+		String destTO = pack.getExtStrProp(PACK_TO);
 		ModuleSession ms = null;
 		if (StringUtils.isNotBlank(destTO)) {// 固定给某个节点id的
 			ms = mss.byModuleAndNodeID(pack.getModule(), destTO);
 		} else {
-			ms = mss.byModule(pack.getModule());
+			if (pack.getExtProp(PACK_FROM) != null) {
+				ms = mss.getLocalModuleSession(pack.getModule());
+			}
+			else {
+				ms = mss.byModule(pack.getModule());
+			}
 		}
 		if (ms != null) {
 			ms.onPacket(pack, handler);
 		} else {
 			// 没有找到对应的消息
 			if (pack.isSync()) {
-				handler.onFinished(PacketHelper.toPBReturn(pack, new UnknowModuleBody(pack.getModule() + ",to=" + destTO, pack)));
+				handler.onFinished(PacketHelper.toPBReturn(pack,
+						new UnknowModuleBody(
+								pack.getModule() + ",to=" + destTO, pack)));
 			}
 		}
 
@@ -173,7 +191,8 @@ public class OSocketImpl implements Serializable {
 	public static void main(String[] args) {
 		System.out.println("pid=" + POSIXFactory.getPOSIX().getpid());
 		try {
-			System.out.println("pid=" + InetAddress.getLocalHost().getHostName());
+			System.out.println("pid="
+					+ InetAddress.getLocalHost().getHostName());
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
