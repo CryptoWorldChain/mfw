@@ -61,31 +61,39 @@ object JdbcLoginService extends OLog with PBUtils with LService[PBSSO] {
       //        log.debug("db.row=" + row + ",gua size=" + VMDaos.guCache.size());
       if (!retfields.contains("LOGIN_ID")) {
         log.debug("result error:LOGINID_Not_Found:" + retfields)
-        ret.setDesc("LOGINID_Not_Found").setCode("0003");
+        ret.setDesc("LOGINID_Not_Found").setBizcode("0003");
         pack.getExtHead().remove(ExtHeader.SESSIONID)
       } else {
         val loginId = retfields.get("LOGIN_ID").get.asInstanceOf[String]
-        ret.setLoginId(loginId) setStatus (RetCode.FAILED)
+        ret.setRetcode(RetCode.FAILED)
         if (StringUtils.equals(retfields.get("PASSWORD").get.asInstanceOf[String], pbo.getPassword)) {
           val smid = SMIDHelper.nextSMID(loginId + "/" + pbo.getResId)
-          ret.setCode("0000").setStatus(RetCode.SUCCESS) setLoginId (loginId) setSmid (smid)
-          ret.setDesc(
-            retfields.foldLeft("")((a, b) =>
-              if (StringUtils.equalsIgnoreCase(b._1, "PASSWORD"))
-                a + b._1 + "=" + "******" + ";"
-              else
-                a + b._1 + "=" + b._2 + ";"))
+          val remainmap = PBRowDataHelper.copyMFields(ret, retfields);
+          remainmap.map(kv => {
+            if (!StringUtils.equalsIgnoreCase(kv._1, "PASSWORD")&&
+                !StringUtils.equalsIgnoreCase(kv._1, "TRADE_PASSWORD")) {
+              ret.addUnknowsKey(kv._1)
+              ret.addUnknowsValue(String.valueOf(kv._2))
+            }
+          })
+          ret.setBizcode("0000").setRetcode(RetCode.SUCCESS) setLoginId (loginId) setSmid (smid)
+          //          ret.setDesc(
+          //            remainmap.foldLeft("")((a, b) =>
+          //              if (StringUtils.equalsIgnoreCase(b._1, "PASSWORD"))
+          //                a + b._1 + "=" + "******" + ";"
+          //              else
+          //                a + b._1 + "=" + b._2 + ";"))
           val session = LoginResIDSession(smid, pbo.getUserId, loginId, pbo.getPassword, pbo.getResId, null);
           SessionManager.watchSMID(session)
           pack.putHeader(ExtHeader.SESSIONID, smid);
         } else {
-          ret.setDesc("Password error").setCode("0002");
+          ret.setDesc("Password error").setBizcode("0002");
           pack.getExtHead().remove(ExtHeader.SESSIONID)
         }
       }
     } else {
       log.debug("result error:" + errorMessage)
-      ret.setDesc(errorMessage).setCode(errorCode);
+      ret.setDesc(errorMessage).setBizcode(errorCode);
       pack.getExtHead().remove(ExtHeader.SESSIONID)
 
     }
@@ -96,14 +104,14 @@ object JdbcLoginService extends OLog with PBUtils with LService[PBSSO] {
     //    log.debug("guava==" + VMDaos.guCache.getIfPresent(pbo.getLogid()));
     if (pbo == null) {
       val ret = PBSSORet.newBuilder();
-      ret.setDesc("Packet_Error").setCode("0003") setStatus (RetCode.FAILED);
+      ret.setDesc("Packet_Error").setBizcode("0003") setRetcode (RetCode.FAILED);
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
     } else {
       val loginType = JDBCDaos.getLoginType(pbo);
       if (loginType == null) {
         val ret = PBSSORet.newBuilder();
 
-        ret.setDesc("Packet_Error").setCode("0003") setStatus (RetCode.FAILED);
+        ret.setDesc("Packet_Error").setBizcode("0003") setRetcode (RetCode.FAILED);
         handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
       } else {
         val cachepwd = VMDaos.pwdCache.getIfPresent(loginType._2);

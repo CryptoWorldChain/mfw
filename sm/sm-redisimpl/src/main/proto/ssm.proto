@@ -77,12 +77,37 @@ message PBSSORet{//登入返回
 	string	login_id = 1;//登陆的id
 	string  smid = 2;//session的唯一id
 	string  tokenid =3;//tokenid的唯一id
+	string	user_id = 4;//用户的内部ID
+	string	email = 5;//用户的内部ID
+	string mobile = 6;
+	string reg_type = 7;
+	int32  status = 8;
+	string nickname = 9;
 	
+	string  res_id = 10;//资源id
+	
+	
+	string ext0 = 20;
+	string ext1 = 21;
+	string ext2 = 22;
+	string ext3 = 23; 
+	string ext4 = 24;
+	string ext5 = 25;
+	double ext6 = 26;
+	double ext7 = 27;
+	int64 ext8 = 28;
+	int64 ext9 = 29;
+	
+	repeated string unknows_key = 50;
+	repeated string unknows_value = 51;
 	PBSession session = 30;//session信息
 	
-	RetCode	status = 40;//返回码
-	string 	code = 41;//状态信息
-	string 	desc = 42;//描述信息
+	RetCode	retcode = 40;//返回码
+	string 	bizcode = 41;//状态信息
+	string 	desc = 42;//描述信息 
+	
+	map<string,string> unknows = 61;
+	
 	
 };
 

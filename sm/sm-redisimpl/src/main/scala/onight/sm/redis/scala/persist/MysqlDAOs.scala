@@ -13,7 +13,7 @@ object MysqlDAOs {
     val MOBILE: String = null,
     val THIRD_LOGINID1: String = null,
     val THIRD_LOGINID2: String = null,
-    val USER_ID: Option[Int] = None,
+    val USER_ID: String = null,
     val PASSWORD: String = null, val TRADE_PASSWORD: String = null, val STATUS: Option[Int] = None)
 
   object ALoginUserDAO extends SimpleDAO[KOLoginUser] {

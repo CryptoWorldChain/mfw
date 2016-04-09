@@ -27,6 +27,8 @@ import onight.tfw.otransio.api.PackHeader
 import onight.tfw.otransio.api.beans.ExtHeader
 import onight.sm.Ssm.PBCommand
 import onight.tfw.outils.conf.PropHelper
+import onight.sm.Ssm.PBSSORet
+import scala.collection.JavaConversions._
 
 @NActorProvider
 object LoginActor extends SessionModules[PBSSO] {
@@ -44,6 +46,7 @@ object LoginService extends OLog with PBUtils with LService[PBSSO] {
   //Transfer rate:          4262.07 [Kbytes/sec] received
   //ab -k -r -c 1000 -t 60 "http://localhost:8081/ssm/pbsin.do?fh=VSINSSM000000J00&bd={%22login_id%22:%22abc%22,%22password%22:%22000000%22,%22op%22:0,%22res_id%22:%22android%22}&gcmd=SINSSM"
 
+  
   def resultfunc(pack: FramePacket, pbo: PBSSO, handler: CompleteHandler, row: RowData)(implicit errorCode: String = "0002", errorMessage: String = "Unknow Error"): Unit = {
     val ret = PBSSORet.newBuilder();
 
@@ -51,35 +54,34 @@ object LoginService extends OLog with PBUtils with LService[PBSSO] {
       val loginId = pbo.getLoginId; //+Math.abs((Math.random()*100)%100).asInstanceOf[Int];
       VMDaos.dbCache.put(row("LOGIN_ID").asInstanceOf[String], row);
       //        log.debug("db.row=" + row + ",gua size=" + VMDaos.guCache.size());
-      ret.setLoginId(pbo.getLoginId) setStatus (RetCode.FAILED)
+      ret.setRetcode(RetCode.FAILED)
       if (StringUtils.equals(row("PASSWORD").asInstanceOf[String], pbo.getPassword)) {
-
+        PBRowDataHelper.copyFields(ret, row);
         val smid = SMIDHelper.nextSMID(loginId + "/" + pbo.getResId)
-        ret.setCode("0000").setStatus(RetCode.SUCCESS) setLoginId (loginId) setSmid (smid)
+        ret.setBizcode("0000").setRetcode(RetCode.SUCCESS) setLoginId (loginId) setSmid (smid)
         val session = LoginResIDSession(smid, pbo.getUserId, loginId, pbo.getPassword, pbo.getResId, null);
         SessionManager.watchSMID(session)
         pack.putHeader(ExtHeader.SESSIONID, smid);
       } else {
-        ret.setDesc("Password error").setCode("0002");
+        ret.setDesc("Password error").setBizcode("0002");
         pack.getExtHead().remove(ExtHeader.SESSIONID)
 
       }
     } else {
       log.debug("result error:" + errorMessage)
-      ret.setDesc(errorMessage).setCode(errorCode);
+      ret.setDesc(errorMessage).setBizcode(errorCode);
       pack.getExtHead().remove(ExtHeader.SESSIONID)
 
     }
     handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
   }
 
-  
   def onPBPacket(pack: FramePacket, pbo: PBSSO, handler: CompleteHandler) = {
     //    log.debug("guava==" + VMDaos.guCache.getIfPresent(pbo.getLogid()));
-    
+
     if (pbo == null) {
       val ret = PBSSORet.newBuilder();
-      ret.setDesc("Packet_Error").setCode("0003") setStatus (RetCode.FAILED);
+      ret.setDesc("Packet_Error").setBizcode("0003") setRetcode (RetCode.FAILED);
       handler.onFinished(PacketHelper.toPBReturn(pack, ret.build()));
     } else {
       val row = VMDaos.dbCache.getIfPresent(pbo.getLoginId);
