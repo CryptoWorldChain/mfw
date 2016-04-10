@@ -79,13 +79,17 @@ public class SpringContextLoader {
 
 	public Resource[] loadResource(String locationPattern) {
 		List<Resource> ret = new ArrayList<Resource>();
-		if (locationPattern.startsWith(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX)) {
-			int rootstartidx = locationPattern.indexOf(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX)
+		if (locationPattern
+				.startsWith(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX)) {
+			int rootstartidx = locationPattern
+					.indexOf(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX)
 					+ ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX.length();
 			int rootendidx = locationPattern.lastIndexOf("/");
-			String rootpath = locationPattern.substring(rootstartidx, rootendidx);
+			String rootpath = locationPattern.substring(rootstartidx,
+					rootendidx);
 			String filePattern = locationPattern.substring(rootendidx + 1);
-			Enumeration<URL> en = bundleContext.getBundle().findEntries(rootpath, filePattern, true);
+			Enumeration<URL> en = bundleContext.getBundle().findEntries(
+					rootpath, filePattern, true);
 			while (en.hasMoreElements()) {
 				URL url = en.nextElement();
 				log.debug("find Resource:" + url);
@@ -100,11 +104,13 @@ public class SpringContextLoader {
 	ConcurrentHashMap<String, ConcurrentHashMap<String, Object>> beanMappersByBundle = new ConcurrentHashMap<String, ConcurrentHashMap<String, Object>>();
 
 	String getMapperBeanName(Object mapper, String scope) {
-		return scope + "." + StringUtils.uncapitalize(mapper.getClass().getName());
+		return scope + "."
+				+ StringUtils.uncapitalize(mapper.getClass().getName());
 	}
 
 	public void registerMapper(Object mapper, String scope) {
-		ConcurrentHashMap<String, Object> beans = beanMappersByBundle.get(scope);
+		ConcurrentHashMap<String, Object> beans = beanMappersByBundle
+				.get(scope);
 		if (beans == null) {
 			beans = new ConcurrentHashMap<String, Object>();
 			beanMappersByBundle.put(scope, beans);
@@ -113,7 +119,8 @@ public class SpringContextLoader {
 		org.mybatis.spring.SqlSessionFactoryBean bean;
 
 		MapperFactoryBean mfb = new MapperFactoryBean(mapper.getClass());
-		mfb.setSqlSessionFactory((SqlSessionFactory) appContext.getBean("sqlSessionFactory"));
+		mfb.setSqlSessionFactory((SqlSessionFactory) appContext
+				.getBean("sqlSessionFactory"));
 		mfb.setMapperInterface(mapper.getClass());
 		mfb.setAddToConfig(false);
 
@@ -127,18 +134,25 @@ public class SpringContextLoader {
 
 	public void unregisterMapper(Object mapper, String scope) {
 
-		ConcurrentHashMap<String, Object> beans = beanMappersByBundle.get(scope);
+		ConcurrentHashMap<String, Object> beans = beanMappersByBundle
+				.get(scope);
 		if (beans == null) {
 			return;
 		}
 		Object mfb = beans.remove(getMapperBeanName(mapper, scope));
 		if (mfb == null) {
-			log.debug("cannot unregister mapper: bean object not found:" + getMapperBeanName(mapper, scope));
+			log.debug("cannot unregister mapper: bean object not found:"
+					+ getMapperBeanName(mapper, scope));
 			return;
 		}
 		ConfigurableApplicationContext configContext = (ConfigurableApplicationContext) appContext;
 		ConfigurableBeanFactory beanRegistry = configContext.getBeanFactory();
-		beanRegistry.destroyBean(scope + "." + StringUtils.uncapitalize(mapper.getClass().getName()), mfb);
+		beanRegistry
+				.destroyBean(
+						scope
+								+ "."
+								+ StringUtils.uncapitalize(mapper.getClass()
+										.getName()), mfb);
 		log.info("Registry SQLMapper :" + mapper);
 
 	}
@@ -168,14 +182,19 @@ public class SpringContextLoader {
 		HashSet<String> newconfigs = new HashSet<String>();
 		newconfigs.addAll(Arrays.asList(contextConfigs));
 
-		for (String config : Arrays.asList(new String[] { "/SpringContext-ordb-common.xml", "/SpringContext-ordb-driver.xml", })) {
+		for (String config : Arrays.asList(new String[] {
+				"/SpringContext-ordb-common.xml",
+				"/SpringContext-ordb-driver.xml", })) {
 			if (!configs.contains(newconfigs)) {
-				configs.add(SpringContextLoader.class.getResource(config).toString());
+				configs.add(SpringContextLoader.class.getResource(config)
+						.toString());
 			}
 		}
 		// bundle://42.0:18/SpringContext-ordb-common.xml
-		String bundleid = SpringContextLoader.class.getResource("/SpringContext-ordb-common.xml").getHost();
-		loadContext = bundleContext.getBundle(Integer.parseInt(bundleid.split("\\.")[0])).getBundleContext();
+		String bundleid = SpringContextLoader.class.getResource(
+				"/SpringContext-ordb-common.xml").getHost();
+		loadContext = bundleContext.getBundle(
+				Integer.parseInt(bundleid.split("\\.")[0])).getBundleContext();
 		// bundleContext.getBundle()
 		for (String config : newconfigs) {
 			if (configs.contains(config)) {
@@ -185,11 +204,14 @@ public class SpringContextLoader {
 			if (url == null) {
 				throw new RuntimeException(" cannot load config file:" + config);
 			}
-			configs.add(bundleContext.getBundle().getResource(config).toString());
+			configs.add(bundleContext.getBundle().getResource(config)
+					.toString());
 		}
 
-		appContext = new ClassPathXmlApplicationContext((configs.toArray(new String[] {}))) {
-			protected void initBeanDefinitionReader(XmlBeanDefinitionReader reader) {
+		appContext = new ClassPathXmlApplicationContext(
+				(configs.toArray(new String[] {}))) {
+			protected void initBeanDefinitionReader(
+					XmlBeanDefinitionReader reader) {
 				super.initBeanDefinitionReader(reader);
 				reader.setValidationMode(XmlBeanDefinitionReader.VALIDATION_NONE);
 				reader.setBeanClassLoader(getClassLoader());
@@ -202,7 +224,8 @@ public class SpringContextLoader {
 			}
 
 			@Override
-			public Resource[] getResources(String locationPattern) throws IOException {
+			public Resource[] getResources(String locationPattern)
+					throws IOException {
 				Resource res[] = super.getResources(locationPattern);
 				if (res == null || res.length == 0) {
 					return loadResource(locationPattern);
@@ -220,18 +243,23 @@ public class SpringContextLoader {
 
 		org.mybatis.spring.SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
 
-		ComboPooledDataSource ds = (ComboPooledDataSource) appContext.getBean("dataSource");
-		ds.setJdbcUrl(propHelper.get("ofw.ordb.url", "jdbc:mysql://localhost:3306/msb?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=utf8"));
+		ComboPooledDataSource ds = (ComboPooledDataSource) appContext
+				.getBean("dataSource");
+		ds.setJdbcUrl(propHelper
+				.get("ofw.ordb.url",
+						"jdbc:mysql://localhost:3306/msb?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=utf8"));
 		ds.setUser(propHelper.get("ofw.ordb.usr", "msbao"));
 		ds.setPassword(propHelper.get("ofw.ordb.pwd", "msbao"));
 		ds.setMaxPoolSize(propHelper.get("ofw.ordb.maxpool", 100));
 		ds.setMinPoolSize(propHelper.get("ofw.ordb.minpool", 10));
 		ds.setMaxIdleTime(propHelper.get("ofw.ordb.maxidletime", 1800));
 		ds.setMaxStatements(propHelper.get("ofw.ordb.maxstatements", 0));
-		ds.setMaxStatementsPerConnection(propHelper.get("ofw.ordb.maxstatementsperconn", 0));
+		ds.setMaxStatementsPerConnection(propHelper.get(
+				"ofw.ordb.maxstatementsperconn", 0));
 
 		try {
-			ds.setDriverClass(propHelper.get("ofw.ordb.driver", "com.mysql.jdbc.Driver"));
+			ds.setDriverClass(propHelper.get("ofw.ordb.driver",
+					"com.mysql.jdbc.Driver"));
 		} catch (PropertyVetoException e) {
 			log.error("Driver Error");
 			e.printStackTrace();
@@ -239,27 +267,32 @@ public class SpringContextLoader {
 		log.info("ORDBURL=" + ds.getJdbcUrl());
 
 		String names[] = appContext.getBeanDefinitionNames();
-		log.info("total beans:" + names.length + ",springcontext=" + appContext + "@" + this);
+		log.info("total beans:" + names.length + ",springcontext=" + appContext
+				+ "@" + this);
 
 		for (String name : names) {
 			// log.debug("name::"+name);
 		}
-		// txManager = (PlatformTransactionManager)
-		// appContext.getBean("transactionManager");
-		// log.info("txManager=" + txManager);
+		txManager = (PlatformTransactionManager) appContext
+				.getBean("transactionManager");
+		log.info("txManager=" + txManager);
 
 	}
 
 	public void registerDaoBeans() {
-		Map<String, Object> beans = appContext.getBeansWithAnnotation(Tab.class);
+		Map<String, Object> beans = appContext
+				.getBeansWithAnnotation(Tab.class);
 
 		for (Entry<String, Object> bean : beans.entrySet()) {
 			if (bean.getValue() instanceof ExtendDaoSupper) {
 				// if(bean.getKey().equals("custdao_usercount"))
-				daos.put(bean.getKey(), new ORDBDataService((ExtendDaoSupper) bean.getValue(), txManager));
-				log.debug("regist ordb dao bean:" + bean.getKey() + "@" + bean.getValue() + ",tx=" + txManager);
+				daos.put(bean.getKey(), new ORDBDataService(
+						(ExtendDaoSupper) bean.getValue(), txManager));
+				log.debug("regist ordb dao bean:" + bean.getKey() + "@"
+						+ bean.getValue() + ",tx=" + txManager);
 			} else {
-				log.debug("unknow dao bean:" + bean.getKey() + "@" + bean.getValue());
+				log.debug("unknow dao bean:" + bean.getKey() + "@"
+						+ bean.getValue());
 			}
 		}
 	}
