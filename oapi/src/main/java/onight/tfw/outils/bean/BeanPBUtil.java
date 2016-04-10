@@ -6,7 +6,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +84,20 @@ public class BeanPBUtil {
 		}
 		if(obj instanceof Double && dstClass == BigDecimal.class){
 			return new BigDecimal(((Double)obj).doubleValue());
+		}
+		if(obj instanceof String && dstClass == Date.class){
+			String str = String.valueOf(obj);
+			try {
+				return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(str);
+			} catch (ParseException e) {
+				try {
+					return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse(str);
+				} catch (ParseException e1) {
+					log.debug("set datetime error:"+obj,e1);
+					return null;
+				}
+			}
+			
 		}
 //		System.out.println("::obj=" + obj + ",dstclass=" + dstClass + ",objclas=" + obj.getClass());
 		return obj;
@@ -201,6 +218,14 @@ public class BeanPBUtil {
 			return (T) msgBuilder.build();
 		}
 		return (T) msgBuilder.build();
+	}
+	public static void main(String[] args) {
+		try {
+			System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(String.valueOf("2016-04-01 23:59:50")));
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace(); 
+		}
 	}
 
 }
