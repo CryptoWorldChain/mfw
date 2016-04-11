@@ -372,7 +372,7 @@ public class ORDBDataService extends SerializedDomainDao {
 
 	@Override
 	public Object increAnGetInt(CASCriteria<?> counterCri) throws JPAException {
-		String tablename = "T_" + transNames(counterCri.getTable());
+		String tablename = counterCri.getTable();
 		String colname = transNames(counterCri.getColumn());
 		String sql = "UPDATE " + tablename + " SET " + colname + "=" + colname + "+" + counterCri.getIncrements() + " WHERE " + counterCri.getWhereCause();
 		return doBySQL(sql);
