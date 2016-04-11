@@ -423,7 +423,8 @@ public class ORDBDataService extends SerializedDomainDao {
 
 	@Override
 	public Object selectOneByExample(Object example) {
-		return daoSupport.selectOneByExample(example);
+		return serial(daoSupport.selectOneByExample(localExample(example)));
+//		return daoSupport.selectOneByExample(example);
 	}
 
 	@Override
