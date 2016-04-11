@@ -151,8 +151,8 @@ public class OJpaDAO<T> implements DomainDaoSupport<T> {
 	}
 
 	@Override
-	public Object selectOneByExample(Object key) {
-		return daosupport.selectOneByExample(key);
+	public Object selectOneByExample(Object example) {
+		return daosupport.selectOneByExample(SerializerUtil.serialize(example));
 	}
 
 	@Override
