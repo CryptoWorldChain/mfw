@@ -24,16 +24,28 @@ public class JsonPBUtil {
 	static {
 		mapper.configure(Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		mapper.configure(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS, false);
-		mapper.configure(SerializationConfig.Feature.WRITE_NULL_PROPERTIES, false);
+		mapper.configure(SerializationConfig.Feature.WRITE_NULL_PROPERTIES,
+				false);
 	}
 
-	public static Object getValue(FieldDescriptor fd, JsonNode node, Message.Builder builder) {
-		if (fd.isRepeated() &&(node.isArray() || node.isObject() )) {
-			Iterator<JsonNode> it = (Iterator<JsonNode>) node.iterator();
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static Object getValue(FieldDescriptor fd, JsonNode node,
+			Message.Builder builder) {
+		if (fd.isMapField() && fd.getJavaType().equals(JavaType.MESSAGE)
+				&& !node.isArray()) {
+			json2PBMap(fd, node, builder);
+			return null;
+		}
+		if (fd.isRepeated() && (node.isArray() || node.isObject())) {
+			Iterator<JsonNode> it = node.getElements();
 			Message.Builder subbuilder = null;
+
 			while (it.hasNext()) {
+
 				JsonNode itnode = it.next();
+
 				Object v = null;
+
 				if (fd.getJavaType().equals(JavaType.MESSAGE)) {
 					subbuilder = builder.newBuilderForField(fd);
 					json2PB(itnode, subbuilder);
@@ -51,10 +63,10 @@ public class JsonPBUtil {
 			return null;
 		}
 		if (fd.getJavaType().equals(JavaType.STRING)) {
-			if(!node.isTextual()){
+			if (!node.isTextual()) {
 				return node.toString();
-			}
-			else return node.asText();
+			} else
+				return node.asText();
 		}
 		if (fd.getJavaType().equals(JavaType.INT)) {
 			return node.asInt();
@@ -72,7 +84,8 @@ public class JsonPBUtil {
 			return node.asBoolean();
 		}
 		if (fd.getJavaType().equals(JavaType.ENUM)) {
-			EnumValueDescriptor evd = fd.getEnumType().findValueByNumber(node.asInt());
+			EnumValueDescriptor evd = fd.getEnumType().findValueByNumber(
+					node.asInt());
 			return evd;
 		}
 		if (fd.getJavaType().equals(JavaType.MESSAGE)) {
@@ -95,7 +108,8 @@ public class JsonPBUtil {
 			JsonNode tree = mapper.readTree(jsonTxt);
 			json2PB(tree, msgBuilder);
 		} catch (Exception e) {
-			log.warn("error in json2PB:jsonTxt=" + jsonTxt + ",builder=" + msgBuilder, e);
+			log.warn("error in json2PB:jsonTxt=" + jsonTxt + ",builder="
+					+ msgBuilder, e);
 		}
 	}
 
@@ -105,15 +119,19 @@ public class JsonPBUtil {
 			JsonNode tree = mapper.readTree(jsonbytes);
 			json2PB(tree, msgBuilder);
 		} catch (Exception e) {
-			log.warn("error in json2PB:jsonTxt=" + new String(jsonbytes) + ",builder=" + msgBuilder, e);
+			log.warn("error in json2PB:jsonTxt=" + new String(jsonbytes)
+					+ ",builder=" + msgBuilder, e);
 		}
 	}
 
-	public static void json2PBMap(FieldDescriptor fd, JsonNode node, Message.Builder msgBuilder) {
-		Iterator<Map.Entry<String, JsonNode>> it = (Iterator<Map.Entry<String, JsonNode>>) node.getFields();
+	public static void json2PBMap(FieldDescriptor fd, JsonNode node,
+			Message.Builder msgBuilder) {
+		Iterator<Map.Entry<String, JsonNode>> it = (Iterator<Map.Entry<String, JsonNode>>) node
+				.getFields();
 		while (it.hasNext()) {
 			Map.Entry<String, JsonNode> item = it.next();
-			MapEntry.Builder mb = (MapEntry.Builder) msgBuilder.newBuilderForField(fd);
+			MapEntry.Builder mb = (MapEntry.Builder) msgBuilder
+					.newBuilderForField(fd);
 			FieldDescriptor fd2 = mb.getDescriptorForType().getFields().get(1);
 			mb.setKey(item.getKey().trim());
 			mb.setValue(getValue(fd2, item.getValue(), mb));
@@ -123,20 +141,16 @@ public class JsonPBUtil {
 
 	public static void json2PB(JsonNode tree, Message.Builder msgBuilder) {
 		try {
-			List<FieldDescriptor> fds = msgBuilder.getDescriptorForType().getFields();
-			// System.out.println("tree==" + tree);
-			// System.out.println("fds==" + fds);
+			List<FieldDescriptor> fds = msgBuilder.getDescriptorForType()
+					.getFields();
+
 			for (FieldDescriptor fd : fds) {
 				JsonNode node = tree.get(fd.getName());
 				if (node == null)
 					continue;
-				// System.out.println("fd.name=" + fd.getName() + ",javatype=" +
-				// fd.getJavaType());
 				Object v = getValue(fd, node, msgBuilder);
 				if (v != null) {
 					msgBuilder.setField(fd, v);
-					// } else {
-					// System.out.println("v==null:" + fd + ",node=" + node);
 				}
 			}
 		} catch (Exception e) {
