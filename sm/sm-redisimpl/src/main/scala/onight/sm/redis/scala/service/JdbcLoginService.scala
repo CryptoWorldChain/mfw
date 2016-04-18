@@ -70,8 +70,8 @@ object JdbcLoginService extends OLog with PBUtils with LService[PBSSO] {
           val smid = SMIDHelper.nextSMID(loginId + "/" + pbo.getResId)
           val remainmap = PBRowDataHelper.copyMFields(ret, retfields);
           remainmap.map(kv => {
-            if (!StringUtils.equalsIgnoreCase(kv._1, "PASSWORD")&&
-                !StringUtils.equalsIgnoreCase(kv._1, "TRADE_PASSWORD")) {
+            if (!StringUtils.equalsIgnoreCase(kv._1, "PASSWORD") &&
+              !StringUtils.equalsIgnoreCase(kv._1, "TRADE_PASSWORD")) {
               ret.addUnknowsKey(kv._1)
               ret.addUnknowsValue(String.valueOf(kv._2))
             }
@@ -84,6 +84,10 @@ object JdbcLoginService extends OLog with PBUtils with LService[PBSSO] {
           //              else
           //                a + b._1 + "=" + b._2 + ";"))
           val session = LoginResIDSession(smid, pbo.getUserId, loginId, pbo.getPassword, pbo.getResId, null);
+          if (pbo.getSession != null && pbo.getSession.getMaxInactiveInterval > 0) {
+            session.setMaxInactiveInterval(pbo.getSession.getMaxInactiveInterval)
+          }
+
           SessionManager.watchSMID(session)
           pack.putHeader(ExtHeader.SESSIONID, smid);
         } else {

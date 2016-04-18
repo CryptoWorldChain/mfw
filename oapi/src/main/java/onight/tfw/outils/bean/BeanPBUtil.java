@@ -45,30 +45,24 @@ public class BeanPBUtil {
 	public HashMap<String, BeanFieldInfo> extractMethods(Class<?> clazz) {
 		HashMap<String, BeanFieldInfo> props = beanFields.get(clazz);
 		if (props == null && clazz.getClassLoader() != null) {
-			String uniqueName = clazz.getClassLoader().getClass().getName()
-					+ clazz.getName();
+			String uniqueName = clazz.getClassLoader().getClass().getName() + clazz.getName();
 			synchronized (uniqueName.intern()) {
 				props = beanFields.get(clazz);
 				if (props == null) {
 					props = new HashMap<>();
-					for (Field field : TransBeanSerializer
-							.allDeclaredField(clazz)) {
+					for (Field field : TransBeanSerializer.allDeclaredField(clazz)) {
 						if (Modifier.isTransient(field.getModifiers())) {
 							continue;
 						}
 						PropertyDescriptor pd;
 						try {
 							pd = new PropertyDescriptor(field.getName(), clazz);
-							BeanFieldInfo bfi = new BeanFieldInfo(
-									field.getName(), pd.getReadMethod(),
-									pd.getWriteMethod(), pd.getPropertyType(),
-									TransBeanSerializer.isBaseType(pd
-											.getPropertyType()), field);
+							BeanFieldInfo bfi = new BeanFieldInfo(field.getName(), pd.getReadMethod(), pd.getWriteMethod(), pd.getPropertyType(),
+									TransBeanSerializer.isBaseType(pd.getPropertyType()), field);
 							props.put(field2PBName(field), bfi);
 							props.put(field.getName(), bfi);
 						} catch (IntrospectionException e) {
-							log.warn("cannot init BeanProp:for class=" + clazz
-									+ ",field=" + field.getName());
+							log.warn("cannot init BeanProp:for class=" + clazz + ",field=" + field.getName());
 						}
 					}
 					beanFields.put(clazz, props);
@@ -97,8 +91,7 @@ public class BeanPBUtil {
 				return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(str);
 			} catch (ParseException e) {
 				try {
-					return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
-							.parse(str);
+					return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse(str);
 				} catch (ParseException e1) {
 					log.debug("set datetime error:" + obj, e1);
 					return null;
@@ -114,8 +107,7 @@ public class BeanPBUtil {
 	public <T> T copyFromPB(Message fromMsg, T dst) {
 		HashMap<String, BeanFieldInfo> bfis = extractMethods(dst.getClass());
 		if (bfis != null) {
-			for (Entry<FieldDescriptor, Object> fv : fromMsg.getAllFields()
-					.entrySet()) {
+			for (Entry<FieldDescriptor, Object> fv : fromMsg.getAllFields().entrySet()) {
 				BeanFieldInfo bf = bfis.get(fv.getKey().getName());
 				if (bf != null) {
 					try {
@@ -123,48 +115,28 @@ public class BeanPBUtil {
 							List list = (List) fv.getValue();
 							if (list.size() > 0) {
 								if (list.get(0) instanceof MapEntry) {
-									Map<Object, Object> map = (Map<Object, Object>) bf
-											.getFieldType().newInstance();
-									ParameterizedType parameterizedType = (ParameterizedType) ((bf
-											.getField().getGenericType()));
-									for (MapEntry entry : (List<MapEntry>) fv
-											.getValue()) {
-										map.put(pbValue2Java(
-												entry.getKey(),
-												(Class) parameterizedType
-														.getActualTypeArguments()[0]),
-												pbValue2Java(
-														entry.getValue(),
-														(Class) parameterizedType
-																.getActualTypeArguments()[1]));
+									Map<Object, Object> map = (Map<Object, Object>) bf.getFieldType().newInstance();
+									ParameterizedType parameterizedType = (ParameterizedType) ((bf.getField().getGenericType()));
+									for (MapEntry entry : (List<MapEntry>) fv.getValue()) {
+										map.put(pbValue2Java(entry.getKey(), (Class) parameterizedType.getActualTypeArguments()[0]),
+												pbValue2Java(entry.getValue(), (Class) parameterizedType.getActualTypeArguments()[1]));
 									}
 									bf.getSetM().invoke(dst, map);
 								} else {
 									ArrayList olist = new ArrayList();
-									ParameterizedType parameterizedType = (ParameterizedType) ((bf
-											.getField().getGenericType()));
+									ParameterizedType parameterizedType = (ParameterizedType) ((bf.getField().getGenericType()));
 									// System.out.println("atype:"+);
 									for (Object obj : list) {
-										olist.add(pbValue2Java(
-												obj,
-												(Class) parameterizedType
-														.getActualTypeArguments()[0]));
+										olist.add(pbValue2Java(obj, (Class) parameterizedType.getActualTypeArguments()[0]));
 									}
 									bf.getSetM().invoke(dst, olist);
 								}
 							}
 						} else {
-							bf.getSetM().invoke(
-									dst,
-									pbValue2Java(fv.getValue(), bf.getField()
-											.getType()));
+							bf.getSetM().invoke(dst, pbValue2Java(fv.getValue(), bf.getField().getType()));
 						}
 					} catch (Exception e) {
-						log.debug(
-								"cannot invoke SetMethod:for class="
-										+ dst.getClass() + ",field="
-										+ bf.getFieldName() + ","
-										+ fv.getValue().getClass(), e);
+						log.debug("cannot invoke SetMethod:for class=" + dst.getClass() + ",field=" + bf.getFieldName() + "," + fv.getValue().getClass(), e);
 					}
 				}
 			}
@@ -181,12 +153,10 @@ public class BeanPBUtil {
 				try {
 					v = bf.getValue().getGetM().invoke(src);
 				} catch (Exception e) {
-					log.debug("cannot invoke getMethod:for class="
-							+ src.getClass() + ",field=" + bf.getKey());
+					log.debug("cannot invoke getMethod:for class=" + src.getClass() + ",field=" + bf.getKey());
 				}
 				if (v != null) {
-					FieldDescriptor fd = msgBuilder.getDescriptorForType()
-							.findFieldByName(bf.getKey());
+					FieldDescriptor fd = msgBuilder.getDescriptorForType().findFieldByName(bf.getKey());
 					if (fd == null)
 						continue;
 					try {
@@ -195,10 +165,8 @@ public class BeanPBUtil {
 								Message.Builder subbuilder = null;
 								for (Object lv : (List) v) {
 									Object pv = null;
-									if (fd.getJavaType().equals(
-											JavaType.MESSAGE)) {
-										subbuilder = msgBuilder
-												.newBuilderForField(fd);
+									if (fd.getJavaType().equals(JavaType.MESSAGE)) {
+										subbuilder = msgBuilder.newBuilderForField(fd);
 										toPB(subbuilder, lv);
 										pv = subbuilder.build();
 									} else {
@@ -207,23 +175,16 @@ public class BeanPBUtil {
 									if (v != null) {
 										msgBuilder.addRepeatedField(fd, pv);
 									} else if (subbuilder != null) {
-										msgBuilder.addRepeatedField(fd,
-												subbuilder.build());
+										msgBuilder.addRepeatedField(fd, subbuilder.build());
 									}
 								}
 							} else if (v instanceof Map) {
-								for (Map.Entry item : (Set<Map.Entry>) ((Map) v)
-										.entrySet()) {
-									MapEntry.Builder mb = (MapEntry.Builder) msgBuilder
-											.newBuilderForField(fd);
-									FieldDescriptor fd2 = mb
-											.getDescriptorForType().getFields()
-											.get(1);
+								for (Map.Entry item : (Set<Map.Entry>) ((Map) v).entrySet()) {
+									MapEntry.Builder mb = (MapEntry.Builder) msgBuilder.newBuilderForField(fd);
+									FieldDescriptor fd2 = mb.getDescriptorForType().getFields().get(1);
 									mb.setKey(item.getKey());
 									if (fd2.getJavaType() == JavaType.MESSAGE) {
-										mb.setValue(toPB(
-												mb.newBuilderForField(fd2),
-												item.getValue()));
+										mb.setValue(toPB(mb.newBuilderForField(fd2), item.getValue()));
 									} else {
 										mb.setValue(item.getValue());
 									}
@@ -232,14 +193,12 @@ public class BeanPBUtil {
 								}
 							}
 						} else if (fd.getJavaType() == JavaType.MESSAGE) {
-							Message.Builder subbuilder = msgBuilder
-									.newBuilderForField(fd);
+							Message.Builder subbuilder = msgBuilder.newBuilderForField(fd);
 							toPB(subbuilder, v);
 							Object pv = subbuilder.build();
 							msgBuilder.setField(fd, pv);
 						} else if (fd.getJavaType() == JavaType.ENUM) {
-							EnumValueDescriptor evd = fd.getEnumType()
-									.findValueByNumber((int) v);
+							EnumValueDescriptor evd = fd.getEnumType().findValueByNumber((int) v);
 							msgBuilder.setField(fd, evd);
 
 						} else {
@@ -258,9 +217,7 @@ public class BeanPBUtil {
 									msgBuilder.setField(fd, v.toString());
 								}
 							} catch (Exception e1) {
-								log.debug("cannot invoke setfield class="
-										+ src.getClass() + ",field="
-										+ bf.getKey() + ",fd=" + fd + ",v=" + v);
+								log.debug("cannot invoke setfield class=" + src.getClass() + ",field=" + bf.getKey() + ",fd=" + fd + ",v=" + v);
 							}
 						}
 					}
@@ -273,8 +230,7 @@ public class BeanPBUtil {
 
 	public static void main(String[] args) {
 		try {
-			System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-					.parse(String.valueOf("2016-04-01 23:59:50")));
+			System.out.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(String.valueOf("2016-04-01 23:59:50")));
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

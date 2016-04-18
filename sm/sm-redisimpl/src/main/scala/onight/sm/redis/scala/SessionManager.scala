@@ -78,12 +78,19 @@ object SessionManager extends OLog {
       false
     }
     val rsession = RedisDAOs.logiddao.selectByPrimaryKey(session);
+
     if (rsession == null || rsession.isKickout()) {
       log.info("SessionTimeOut:logid:or:notfoundinRedis:logid:" + session.getLoginId() + ":smid:" + session.getSmid())
       //被踢出来的
       removeSession(session)
-      false
-    } else if (current - rsession.getLastUpdateMS() >= TimeOutMS && current - session.getLastUpdateMS() >= TimeOutMS) {
+      return false
+    }
+    val maxTimeOutMS = rsession.getMaxInactiveInterval() match {
+      case f if f > 0 => f*1000
+      case _ => TimeOutMS
+    }
+
+    if (current - rsession.getLastUpdateMS() >= maxTimeOutMS && current - session.getLastUpdateMS() >= maxTimeOutMS) {
       //        RedisDAOs.getSmiddao().deleteByPrimaryKey(session)
       removeSession(session)
       log.info("SessionTimeOut:logid:" + session.getLoginId() + ":userid:" + session.getUserId() + ":lastup:" + session.getLastUpdateMS() + ":logtime:" + session.getLoginMS())
@@ -91,7 +98,7 @@ object SessionManager extends OLog {
     } else { //redis里面被别的集群节点更新过了
       if (!rsession.getLastUpdateMS().equals(session.getLastUpdateMS())) {
         ThreadContext.setContext(JpaContextConstants.Cache_Timeout_Second, TimeOutSec)
-        log.debug("update Session:"+session.smid+":gid:"+session.globalID()+",rsession="+rsession+",session = "+session)
+        log.debug("update Session:" + session.smid + ":gid:" + session.globalID() + ",rsession=" + rsession + ",session = " + session)
         val upsession = LoginResIDSession(session, true);
         val rsessionv = RedisDAOs.logiddao.getAndSet(upsession);
         if (rsessionv.isKickout()) {
@@ -164,9 +171,9 @@ object SessionManager extends OLog {
   }
 
   //检查是否登录
-  def checkAndUpdateSession(smid: String, newsession: LoginResIDSession=null): Tuple2[LoginResIDSession, String] = {
+  def checkAndUpdateSession(smid: String, newsession: LoginResIDSession = null): Tuple2[LoginResIDSession, String] = {
     val tkgid = SMIDHelper.fetchUID(smid);
-    if(StringUtils.isBlank(tkgid)){
+    if (StringUtils.isBlank(tkgid)) {
       return (null, "smid_error_0")
     }
     val searchSession = LoginResIDSession(tkgid);
@@ -179,23 +186,28 @@ object SessionManager extends OLog {
         return (null, "smid_error_2");
       }
 
-      if (System.currentTimeMillis() - session.lastUpdateMS > TimeOutMS) {
+      val maxTimeOutMS = session.getMaxInactiveInterval() match {
+        case f if f > 0 => f*1000
+        case _ => TimeOutMS
+      }
+
+      if (System.currentTimeMillis() - session.lastUpdateMS > maxTimeOutMS) {
         removeSession(session);
         return (null, "session_timeout");
       }
       if (newsession != null) {
-//        if (!StringUtils.equals(session.smid, newsession.smid) ||
-//          !StringUtils.equals(session.loginId, newsession.loginId) ||
-//          !StringUtils.equals(session.resId, newsession.resId)) {
-//          return (null, "smid_error_3:not_the_same_session");
-//        }
-        if(session.kvs==null){
-          log.debug("none for kvs:"+session);
-          session.kvs=new HashMap();
+        //        if (!StringUtils.equals(session.smid, newsession.smid) ||
+        //          !StringUtils.equals(session.loginId, newsession.loginId) ||
+        //          !StringUtils.equals(session.resId, newsession.resId)) {
+        //          return (null, "smid_error_3:not_the_same_session");
+        //        }
+        if (session.kvs == null) {
+          log.debug("none for kvs:" + session);
+          session.kvs = new HashMap();
         }
-        if(newsession.getKvs()==null){
+        if (newsession.getKvs() == null) {
           log.debug("new session.kvs is null:")
-        }else{
+        } else {
           session.kvs.putAll(newsession.getKvs());
         }
       }

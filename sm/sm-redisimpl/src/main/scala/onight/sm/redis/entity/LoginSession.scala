@@ -14,6 +14,7 @@ class LoginResIDSession {
   @BeanProperty var resId: String = null
   @BeanProperty var lastUpdateMS: Long = System.currentTimeMillis();
   @BeanProperty var loginMS: Long = System.currentTimeMillis();
+  @BeanProperty var maxInactiveInterval: Long = 0;
   @BeanProperty var status: String = null;
   @BeanProperty var kvs = new HashMap[String, Object]();
 

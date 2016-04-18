@@ -86,7 +86,6 @@ message PBSSORet{//登入返回
 	
 	string  res_id = 10;//资源id
 	
-	
 	string ext0 = 20;
 	string ext1 = 21;
 	string ext2 = 22;
