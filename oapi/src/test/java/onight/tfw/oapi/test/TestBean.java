@@ -42,7 +42,7 @@ public class TestBean {
 			System.out.println("bb="+bb);
 			System.out.println("b2="+b2);
 
-			System.out.println("equal="+bb.equals(b2));
+//			System.out.println("equal="+bb.equals(b2));
 
 //			System.out.println("bean="+bb.getBb1().equals(b2.getBb1()));
 //			System.out.println("listbeanequal="+bb.getList1().equals(b2.getList1()));

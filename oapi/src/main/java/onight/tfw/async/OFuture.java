@@ -72,9 +72,9 @@ public class OFuture<V> {
 				cb.onSuccess(result);
 			}
 		} else {
-			rwlock.writeLock().lock();
 			if (cbs != null) {
 				try {
+					rwlock.writeLock().lock();
 					cbs.add(cb);
 				} finally {
 					rwlock.writeLock().unlock();
