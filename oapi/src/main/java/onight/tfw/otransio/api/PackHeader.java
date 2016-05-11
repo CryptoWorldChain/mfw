@@ -4,7 +4,9 @@ import onight.tfw.mservice.NodeHelper;
 
 public class PackHeader {
 	public final static String EXT_HIDDEN = "_h";
-	
+
+	public final static String Set_COOKIE = "Set-Cookie";
+
 	public final static String EXT_IGNORE = EXT_HIDDEN + "_ign";
 	
 	public final static String EXT_IGNORE_FORWARD = EXT_IGNORE + "f";

@@ -2,6 +2,7 @@ package onight.tfw.otransio.api.beans;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -11,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import onight.tfw.otransio.api.ActorSession;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.outils.serialize.HttpHelper;
 import onight.tfw.outils.serialize.SerializerUtil;
@@ -49,19 +49,19 @@ public class ExtHeader {
 	public String getSMID() {
 		Object obj = get(SESSIONID);
 		if (obj != null) {
-			return (String)obj;
+			return (String) obj;
 		}
 		return null;
 	}
-	
-//	public ActorSession getSession() {
-//		Object obj = get(PACK_SESSION);
-//		if (obj != null) {
-//			return (ActorSession)obj;
-//		}
-//		return null;
-//	}
-	
+
+	// public ActorSession getSession() {
+	// Object obj = get(PACK_SESSION);
+	// if (obj != null) {
+	// return (ActorSession)obj;
+	// }
+	// return null;
+	// }
+
 	public void appendFrom(byte[] data, int offset, int len) {
 		if (data == null) {
 			return;
@@ -129,7 +129,7 @@ public class ExtHeader {
 				sb.append(pair.getKey()).append(EQUAL_CHAR).append(pair.getValue()).append(SPLIT_CHAR);
 			}
 		}
-		
+
 		try {
 			data = sb.toString().getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e) {
@@ -221,7 +221,7 @@ public class ExtHeader {
 				cookie = (new Cookie(key, Base64.encodeBase64URLSafeString(SerializerUtil.toBytes(value))));
 			}
 			cookie.setPath("/");
-			cookie.setMaxAge(7*24*3600);
+			cookie.setMaxAge(7 * 24 * 3600);
 			res.addCookie(cookie);
 
 		}
@@ -234,8 +234,14 @@ public class ExtHeader {
 				try {
 					addCookie(res, pair.getKey(), pair.getValue());
 				} catch (Exception e) {
-//					e.printStackTrace();
+					// e.printStackTrace();
 				}
+			}
+		}
+		List<String> cookies = (List<String>) vkvs.get(PackHeader.Set_COOKIE);
+		if (cookies != null && cookies.size() > 0) {
+			for(String cookie:cookies){
+				res.addHeader("Set-Cookie", cookie);
 			}
 		}
 	}
