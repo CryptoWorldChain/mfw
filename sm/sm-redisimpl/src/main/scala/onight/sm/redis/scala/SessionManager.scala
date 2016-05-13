@@ -226,11 +226,18 @@ object SessionManager extends OLog {
     if (!StringUtils.equals(searchSession.globalID(), tkgid)) {
       return (null, "smid_error_1")
     }
-    val session = LoginIDRedisLoCache.get(searchSession);
+    var session = LoginIDRedisLoCache.get(searchSession);
     if (session != null) {
-      if (session.isKickout() || !StringUtils.equals(session.getSmid(), smid)) {
+      if (session.isKickout()) {
         return (null, "smid_error_2")
       }
+      if( !StringUtils.equals(session.getSmid(), smid)){
+         session =  LoginIDRedisLoCache.getFromDb(searchSession)
+         if( !StringUtils.equals(session.getSmid(), smid)){
+            return (null, "smid_error_3")
+         }
+      }
+      
       if (System.currentTimeMillis() - session.lastUpdateMS > TimeOutMS) {
         removeSession(session);
         return (null, "session_timeout");

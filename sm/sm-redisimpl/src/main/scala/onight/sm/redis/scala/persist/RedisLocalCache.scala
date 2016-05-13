@@ -17,7 +17,7 @@ abstract class RedisLocalCache[T] {
   val pconfig = NodeHelper.getPropInstance;
   //  val redisLocalCache = new ConcurrentHashMap[String, T](NodeHelper.getPropInstance.get("ssm.vmcache.redismax", 100000))
   val redisLocalCache: Cache[String, T] = CacheBuilder.newBuilder().maximumSize(pconfig.get("ssm.vmcache.redismax", 100000)) //
-    .expireAfterWrite(pconfig.get("sm.log.timeoutsec", 60), TimeUnit.SECONDS)
+    .expireAfterWrite(pconfig.get("sm.localcache.timeoutsec", 60), TimeUnit.SECONDS)
     .build().asInstanceOf[Cache[String, T]];
 
   def getKey(v: T): String
@@ -34,7 +34,14 @@ abstract class RedisLocalCache[T] {
       redisobj
     }
   }
-//这个函数性能很差
+ 
+  def getFromDb(v: T): T = {
+    val redisobj = dao.selectByPrimaryKey(v);
+    if (redisobj != null)
+      redisLocalCache.put(getKey(v), redisobj)
+    redisobj
+  }
+  //这个函数性能很差
   def getAndSet(v: T): T = {
     getKey(v).intern().synchronized({
       redisLocalCache.put(getKey(v), v)
