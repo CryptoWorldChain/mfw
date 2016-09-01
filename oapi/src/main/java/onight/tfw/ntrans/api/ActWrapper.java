@@ -93,6 +93,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		req.setCharacterEncoding("UTF-8");
 		FramePacket pack = PacketHelper.buildHeaderFromHttpGet(req);
 		doWeb(req, resp, pack);
 	}
@@ -169,6 +170,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		req.setCharacterEncoding("UTF-8");
 		FramePacket pack = PacketHelper.buildHeaderFromHttpPost(req);
 		doWeb(req, resp, pack);
 	}

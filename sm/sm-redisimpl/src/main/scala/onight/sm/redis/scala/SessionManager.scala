@@ -44,28 +44,34 @@ object SessionManager extends OLog {
       //检查重复登录
       //      val exists = LoginIDRedisLoCache.redisLocalCache.getIfPresent(session.globalID());
       //      if (exists != null) exists.kickout(true)
-      LoginIDRedisLoCache.redisLocalCache.put(session.globalID(), session)
-      insertBox.put(session.globalID(), session)
-      //      LoginIDRedisLoCache.insert(session);
-      //      if (rcsession != null) {
-      //        //same session:insert into redis,
-      //        if (!StringUtils.equals(session.getSmid(), rcsession.getSmid())) {
-      //          log.info("UserSessionRelogin:KickoutOldSession:" + rcsession.getSmid());
-      ////          rcsession.kickout(true);
-      //        } else {
-      //          log.debug("sameSessionRelogin")
-      //        }
-      //        //        logrcsession.kickout(false)
-      ////        val example = new KVExample();
-      //        //        example.getCriterias.add(logrcsession);
-      //        //        example.setSelectCol("status")
-      //        //        LoginIDRedisLoCache.dao.deleteByExample(example);
-      //      }
+//      LoginIDRedisLoCache.redisLocalCache.put(session.globalID(), session)
+//      insertBox.put(session.globalID(), session)
+      
+       val maxTimeOutMS = session.getMaxInactiveInterval() match {
+        case f if f > 0 => f*1000
+        case _ => TimeOutMS
+      }
+
+      ThreadContext.setContext(JpaContextConstants.Cache_Timeout_Second, maxTimeOutMS/1000)
+
+      
+            LoginIDRedisLoCache.insert(session);
+//            if (rcsession != null) {
+//              //same session:insert into redis,
+//              if (!StringUtils.equals(session.getSmid(), rcsession.getSmid())) {
+//                log.info("UserSessionRelogin:KickoutOldSession:" + rcsession.getSmid());
+//      //          rcsession.kickout(true);
+//              } else {
+//                log.debug("sameSessionRelogin")
+//              }
+//              //        logrcsession.kickout(false)
+//      //        val example = new KVExample();
+//              //        example.getCriterias.add(logrcsession);
+//              //        example.setSelectCol("status")
+//              //        LoginIDRedisLoCache.dao.deleteByExample(example);
+//            }
       //加入检查队列
 
-      //      opexec.schedule(CheckRunner, InsertDelaySec, TimeUnit.SECONDS); //批量insert处理
-
-      //      exec.schedule(CheckRunner, TimeOutSec, TimeUnit.SECONDS); //超时检查
 
     } finally {
       //      ThreadContext.cleanContext()
@@ -97,7 +103,7 @@ object SessionManager extends OLog {
       false
     } else { //redis里面被别的集群节点更新过了
       if (!rsession.getLastUpdateMS().equals(session.getLastUpdateMS())) {
-        ThreadContext.setContext(JpaContextConstants.Cache_Timeout_Second, TimeOutSec)
+        ThreadContext.setContext(JpaContextConstants.Cache_Timeout_Second, maxTimeOutMS/1000)
         log.debug("update Session:" + session.smid + ":gid:" + session.globalID() + ",rsession=" + rsession + ",session = " + session)
         val upsession = LoginResIDSession(session, true);
         val rsessionv = RedisDAOs.logiddao.getAndSet(upsession);
@@ -121,7 +127,7 @@ object SessionManager extends OLog {
     def doSomething();
     def run() {
       isRunner = true;
-      ThreadContext.setContext(JpaContextConstants.Cache_Timeout_Second, TimeOutSec * 1.5)
+      ThreadContext.setContext(JpaContextConstants.Cache_Timeout_Second, TimeOutSec)
       try {
         doSomething()
       } finally {
@@ -180,11 +186,18 @@ object SessionManager extends OLog {
     if (searchSession == null) {
       return (null, "smid_error_1")
     }
-    val session = LoginIDRedisLoCache.get(searchSession);
+    var session = LoginIDRedisLoCache.get(searchSession);
     if (session != null) {
-      if (session.isKickout() || !StringUtils.equals(session.getSmid(), smid)) {
+      if (session.isKickout()) {
         return (null, "smid_error_2");
       }
+       if( !StringUtils.equals(session.getSmid(), smid)){
+         session =  LoginIDRedisLoCache.getFromDb(searchSession)
+         if( !StringUtils.equals(session.getSmid(), smid)){
+            return (null, "smid_error_3")
+         }
+      }
+       
 
       val maxTimeOutMS = session.getMaxInactiveInterval() match {
         case f if f > 0 => f*1000
@@ -211,9 +224,21 @@ object SessionManager extends OLog {
           session.kvs.putAll(newsession.getKvs());
         }
       }
+            
+      ThreadContext.setContext(JpaContextConstants.Cache_Timeout_Second, maxTimeOutMS/1000)
+
       session.lastUpdateMS = System.currentTimeMillis();
-      checkBox.put(session.globalID, session)
-      //      opexec.schedule(CheckRunner, Math.min(OpDelaySec, Math.max(1, (TimeOutMS - (System.currentTimeMillis() - lastup)) / 100)), TimeUnit.SECONDS); //timeout的
+      
+        val rsessionv = RedisDAOs.logiddao.getAndSet(session);
+        if (rsessionv.isKickout()) {
+          session.kickout(true)
+          removeSession(session)
+          return  (null, "session_kickout");
+        }
+
+//      checkBox.put(session.globalID, session)
+            
+//      opexec.schedule(CheckRunner, Math.min(OpDelaySec, Math.max(1, (TimeOutMS - (System.currentTimeMillis() - lastup)) / 100)), TimeUnit.SECONDS); //timeout的
       return (session, "OK");
     }
     (null, "not_login")

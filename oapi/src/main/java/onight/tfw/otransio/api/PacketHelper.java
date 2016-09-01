@@ -94,7 +94,10 @@ public class PacketHelper {
 		ret.setFixHead(FixHeader.buildFrom(req));
 		ret.setExtHead(ExtHeader.buildFrom(req));
 		if (postData == null) {
-			ret.setBody(req.getParameter(PackHeader.HTTP_PARAM_BODY_DATA).getBytes());
+			try {
+				ret.setBody(req.getParameter(PackHeader.HTTP_PARAM_BODY_DATA).getBytes("UTF-8"));
+			} catch (Exception e) {
+			}
 		} else {
 			ret.setBody(postData);
 		}
