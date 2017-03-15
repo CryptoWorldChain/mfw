@@ -11,7 +11,7 @@ apply plugin: 'eclipse-wtp'
 
 
 subprojects {
-	project.group='onight.tfw'
+	project.group='org.fc.zippo'
 	apply plugin: 'eclipse-wtp'
 
 	buildscript{
@@ -38,5 +38,5 @@ subprojects {
 
 	version = '2.0.0'
 
-	jar { manifest.attributes provider: 'onight.tfs' }
+	jar { manifest.attributes provider: 'onight.fc.zippo' }
 }
