@@ -1,9 +1,9 @@
 
-version = '1.0.0'
+version = '3.0.0'
 
 
 dependencies {
-	compile 'com.google.guava:guava:19.0'
+	compile 'com.google.guava:guava:21.0'
 }
 
 jar {

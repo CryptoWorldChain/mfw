@@ -13,11 +13,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import lombok.extern.slf4j.Slf4j;
-import onight.tfw.outils.bean.BeanFieldInfo;
-import onight.tfw.outils.bean.JsonPBUtil;
-import onight.tfw.outils.serialize.TransBeanSerializer;
-
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.DeserializationConfig.Feature;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -29,7 +24,10 @@ import com.google.protobuf.Descriptors.FieldDescriptor.JavaType;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
 import com.google.protobuf.MapEntry;
 import com.google.protobuf.Message;
-import com.sun.corba.se.impl.protocol.giopmsgheaders.MessageBase;
+
+import lombok.extern.slf4j.Slf4j;
+import onight.tfw.outils.bean.BeanFieldInfo;
+import onight.tfw.outils.serialize.TransBeanSerializer;
 
 @Slf4j
 public class BeanPBUtil {

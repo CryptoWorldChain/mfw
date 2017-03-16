@@ -170,7 +170,10 @@ public class TransBeanSerializer implements ISerializer {
 					bp.setM.invoke(t, v);
 				} else if (v instanceof List) {
 					List orginallist = (List) v;
-					if (isBaseType(orginallist.get(0).getClass())) {
+					if(orginallist.size()==0){
+						bp.setM.invoke(t, v);
+					}
+					else if (isBaseType(orginallist.get(0).getClass())) {
 						bp.setM.invoke(t, v);
 					} else {
 

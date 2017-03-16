@@ -1,5 +1,5 @@
 
-version = '1.0.5'
+version = '3.0.0'
 
 apply plugin: 'ofw.actor'
 
@@ -8,15 +8,15 @@ dependencies {
 	//	 testCompile 'junit:junit:4.12'
 	includeInJar "javax.transaction:jta:1.1"
 	compile 'com.google.guava:guava:19.0'
-	includeInJar ('org.scalikejdbc:scalikejdbc_2.11:2.3.5') { exclude module: "scala-library" }
-	includeInJar ("com.github.mauricio:mysql-async_2.11:0.2.18"){ exclude module: "scala-library" } 
+	includeInJar ('org.scalikejdbc:scalikejdbc_2.11:2.5.1') { exclude module: "scala-library" }
+	includeInJar ("com.github.mauricio:mysql-async_2.11:0.2.21"){ exclude module: "scala-library" } 
 	includeInJar files('libs/ojdbc6.jar','libs/mysql-connector-java-5.1.37.jar')
 }
 
 jar {
 	manifest{
 		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
-		attributes( 'Import-Ignore':'org.joda.time,com.google.protobuf,com.github.mauricio,io.netty.buffer,scalikejdbc')
+		attributes( 'Import-Ignore':'org.joda.time,com.google.protobuf,com.google.common,com.github.mauricio,io.netty.buffer,scalikejdbc')
 		attributes( 'DynamicImport-Package': '*')
 		attributes( 'Import-Lib': 'lib')
 	}

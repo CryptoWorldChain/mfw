@@ -1,5 +1,5 @@
 #org.springsource.ide.eclipse.gradle.core.preferences.GradleProjectPreferences
-#Tue Mar 14 15:09:13 CST 2017
-build.family.org.gradle.tooling.model.eclipse.HierarchicalEclipseProject=;oapi;opolicy;otransio;redisimpl;
+#Wed Mar 15 15:14:09 CST 2017
+build.family.org.gradle.tooling.model.eclipse.HierarchicalEclipseProject=;oapi;opolicy;ordbimpl;ordbutils;otransio;redisimpl;rmqimpl;scheduler;sm;sm/sm-api;sm/sm-redisimpl;
 org.springsource.ide.eclipse.gradle.linkedresources=
 org.springsource.ide.eclipse.gradle.rootprojectloc=

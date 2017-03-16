@@ -1,17 +1,16 @@
 
-version='2.1.5'
+version='3.0.0'
 
 apply plugin :'scala'
 
 dependencies {
 	compile 'org.apache.avro:avro:1.7.7'
-	compile "org.apache.commons:commons-lang3:3.3.2"
-	compile 'org.scala-lang:scala-library:2.11.7'
-	
+	compile "org.apache.commons:commons-lang3:3.5"
+	compile 'org.typelevel:scala-library:2.11.8'
 //	includeInJar 'com.esotericsoftware.kryo:kryo:2.24.0'
 	includeInJar 'com.googlecode.protobuf-java-format:protobuf-java-format:1.4'
-	compile 'com.google.protobuf:protobuf-java:3.0.0-alpha-3.1'
-	includeInJar  'org.projectlombok:lombok:1.16.4'
+	compile 'com.google.protobuf:protobuf-java:3.2.0'
+	includeInJar  'org.projectlombok:lombok:1.16.14'
 	compile 'javax.servlet:javax.servlet-api:3.1.0'
 	compile 'org.ow2.spec.osgi:ow2-httpservice-1.2-spec:1.0.0'
 	compile 'org.slf4j:slf4j-api:1.7.7'
