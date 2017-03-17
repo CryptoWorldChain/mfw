@@ -1,9 +1,6 @@
 
 version = '3.0.0'
 
-apply plugin: 'ofw.actor'
-
-
 dependencies {
 	//	 testCompile 'junit:junit:4.12'
 	includeInJar "javax.transaction:jta:1.1"

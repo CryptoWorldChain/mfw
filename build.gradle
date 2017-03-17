@@ -3,22 +3,32 @@ buildscript {
 	repositories { maven { url "http://192.168.10.208:8081/nexus/content/groups/fc/"
 		} }
 
-	dependencies { classpath "onight.osgi:npojo:1.2.3" }
+	dependencies { 
+	classpath "onight.osgi:zpp-gradle:3.0.0"
+	//classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.1' 
+	 }
 }
 
-apply plugin: 'npojo'
-apply plugin: 'eclipse-wtp'
+
+apply plugin: 'zippo'
+//apply plugin: 'eclipse-wtp'
 
 
 subprojects {
 	project.group='org.fc.zippo'
 	apply plugin: 'eclipse-wtp'
-
+/*
+	repositories {
+		maven {url "http://192.168.10.208:8081/nexus/content/groups/fc/"}
+	}
 	buildscript{
 		repositories { maven { url "https://plugins.gradle.org/m2/"  } }
 		dependencies { classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.1'  }
 	}
-	apply plugin: 'npojo'
+	*/
+	
+	
+	apply plugin: 'zippo'
 
 
 	dependencies {
@@ -27,13 +37,16 @@ subprojects {
 			compile ("org.fc.zippo:org.fc.zippo.oapi:3.0.0")
 
 		}
-		compile 'onight.osgi:npojo:1.2.3'
+		
+		
+		/*
 
 		compile 'org.projectlombok:lombok:1.16.14'
 		compile 'org.apache.commons:commons-lang3:3.5'
 		compile 'org.slf4j:slf4j-api:1.7.24'
 		testCompile 'junit:junit:4.12'
 		compile 'org.apache.felix:org.apache.felix.ipojo.annotations:1.12.1'
+		*/
 	}
 
 	version = '3.0.0'
