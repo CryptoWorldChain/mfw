@@ -23,7 +23,7 @@ public class NoneStoreService implements StoreServiceProvider{
 	}
 
 	@Override
-	public DomainDaoSupport getDaoByBeanName(OJpaDAO dao) {
+	public DomainDaoSupport getDaoByBeanName(DomainDaoSupport dao) {
 		return new NoneDomainDao();
 	}
 

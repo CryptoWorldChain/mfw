@@ -4,11 +4,13 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ojpa.api.exception.JPAException;
 import onight.tfw.outils.serialize.SerializerUtil;
 
 @Data
-public class OJpaDAO<T> implements DomainDaoSupport<T> {
+@Slf4j
+public class OJpaDAO<T> implements DomainDaoSupport, ORMappingDao<T> {
 	private ServiceSpec serviceSpec;
 	private String domainName;
 	private Class<T> domainClazz;
@@ -16,9 +18,17 @@ public class OJpaDAO<T> implements DomainDaoSupport<T> {
 	private Class exampleClazz;
 	private Class keyClazz;
 
-	private DomainDaoSupport daosupport;
+	private ORMappingDao daosupport;
 	private String keyField;
 	private List<Method> keyMethods;
+
+	public void setDaosupport(DomainDaoSupport support) {
+		if (support instanceof ORMappingDao) {
+			daosupport = (ORMappingDao) support;
+		} else {
+			log.warn("cannot set DaoSupport for :"+keyField+",support="+support+" not a ORMappingDao");
+		}
+	}
 
 	@Override
 	public int countByExample(Object example) {
@@ -62,7 +72,8 @@ public class OJpaDAO<T> implements DomainDaoSupport<T> {
 
 	@Override
 	public List<Object> selectByExample(Object example) {
-		return (List<Object>) SerializerUtil.deserializeArray(daosupport.selectByExample(SerializerUtil.serialize(example)), domainClazz);
+		return (List<Object>) SerializerUtil
+				.deserializeArray(daosupport.selectByExample(SerializerUtil.serialize(example)), domainClazz);
 	}
 
 	@Override
@@ -72,7 +83,8 @@ public class OJpaDAO<T> implements DomainDaoSupport<T> {
 
 	@Override
 	public List<Object> findAll(List<Object> records) {
-		return (List<Object>) SerializerUtil.deserializeArray(daosupport.findAll((List<Object>) SerializerUtil.serializeArray(records)), domainClazz);
+		return (List<Object>) SerializerUtil.deserializeArray(
+				daosupport.findAll((List<Object>) SerializerUtil.serializeArray(records)), domainClazz);
 	}
 
 	@Override
@@ -152,7 +164,8 @@ public class OJpaDAO<T> implements DomainDaoSupport<T> {
 
 	@Override
 	public Object selectOneByExample(Object example) {
-		return SerializerUtil.deserialize(daosupport.selectOneByExample(SerializerUtil.serialize(example)), domainClazz);
+		return SerializerUtil.deserialize(daosupport.selectOneByExample(SerializerUtil.serialize(example)),
+				domainClazz);
 	}
 
 	@Override

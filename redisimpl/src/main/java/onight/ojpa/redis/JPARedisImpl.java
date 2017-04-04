@@ -1,5 +1,12 @@
 package onight.ojpa.redis;
 
+import org.apache.felix.ipojo.annotations.Component;
+import org.apache.felix.ipojo.annotations.Instantiate;
+import org.apache.felix.ipojo.annotations.Invalidate;
+import org.apache.felix.ipojo.annotations.Provides;
+import org.apache.felix.ipojo.annotations.Validate;
+import org.osgi.framework.BundleContext;
+
 import lombok.extern.slf4j.Slf4j;
 import onight.ojpa.redis.loader.BatchDao;
 import onight.ojpa.redis.loader.DaoRedisImpl;
@@ -10,13 +17,6 @@ import onight.tfw.ojpa.api.OJpaDAO;
 import onight.tfw.ojpa.api.ServiceSpec;
 import onight.tfw.ojpa.api.StoreServiceProvider;
 import onight.tfw.outils.conf.PropHelper;
-
-import org.apache.felix.ipojo.annotations.Component;
-import org.apache.felix.ipojo.annotations.Instantiate;
-import org.apache.felix.ipojo.annotations.Invalidate;
-import org.apache.felix.ipojo.annotations.Provides;
-import org.apache.felix.ipojo.annotations.Validate;
-import org.osgi.framework.BundleContext;
 
 @Component(immediate = true)
 @Instantiate(name = "redisimpl")
@@ -58,11 +58,11 @@ public class JPARedisImpl implements StoreServiceProvider {
 	RedisConnector redis;
 
 	@Override
-	public DomainDaoSupport getDaoByBeanName(OJpaDAO dao) {
+	public DomainDaoSupport getDaoByBeanName(DomainDaoSupport dao) {
 		if (BatchExecutor.class.equals(dao.getDomainClazz())) {
-			return new BatchDao(redis, dao);
+			return new BatchDao(redis, (OJpaDAO)dao);
 		}
-		return new DaoRedisImpl(redis, dao);
+		return new DaoRedisImpl(redis, (OJpaDAO)dao);
 	}
 
 	@Override

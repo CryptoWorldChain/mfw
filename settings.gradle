@@ -2,6 +2,7 @@
 include 'oapi'
 include 'opolicy'
 include 'ordbimpl'
+include 'opetcd'
 include 'ordbutils'
 //include 'tfgcache'
 include 'rmqimpl'

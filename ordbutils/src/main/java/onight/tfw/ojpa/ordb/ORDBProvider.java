@@ -89,7 +89,7 @@ public abstract class ORDBProvider implements StoreServiceProvider {
 	}
 
 	@Override
-	public DomainDaoSupport getDaoByBeanName(OJpaDAO dao) {
+	public DomainDaoSupport getDaoByBeanName(DomainDaoSupport dao) {
 		if (springLoader != null) {
 			return springLoader.getBeans(dao.getDomainName() + "Dao");
 		} else {

@@ -3,13 +3,12 @@ package onight.tfw.ojpa.ordb;
 import java.lang.reflect.Type;
 import java.util.List;
 
-import onight.tfw.ojpa.api.DomainDaoSupport;
+import onight.tfw.ojpa.api.ORMappingDao;
 import onight.tfw.ojpa.api.annotations.Tab;
 import onight.tfw.ojpa.api.exception.JPAException;
-import onight.tfw.outils.bean.ClassUtils;
 import onight.tfw.outils.serialize.SerializerUtil;
 
-public abstract class SerializedDomainDao implements DomainDaoSupport<Object> {
+public abstract class SerializedDomainDao implements ORMappingDao<Object> {
 
 	protected Class beanClazz;
 	protected Class beanExampleClazz;

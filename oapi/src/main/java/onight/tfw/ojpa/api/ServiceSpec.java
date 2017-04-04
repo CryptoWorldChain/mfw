@@ -18,6 +18,7 @@ public class ServiceSpec {
 	public static ServiceSpec HDFS_STORE = new ServiceSpec("hdfs");
 	public static ServiceSpec SYSLOG_STORE = new ServiceSpec("syslog");
 	public static ServiceSpec RMQ_STORE = new ServiceSpec("rabbitmq");
+	public static ServiceSpec ETCD_STORE = new ServiceSpec("ectd");
 
 	public ServiceSpec(String target, StorePolicy policy) {
 		this.target = target;

@@ -9,14 +9,18 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.google.protobuf.Message;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.annotation.iPojoBean;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.ntrans.api.annotation.ActorRequire;
+import onight.tfw.ojpa.api.DomainDaoSupport;
 import onight.tfw.ojpa.api.IJPAClient;
-import onight.tfw.ojpa.api.OJpaDAO;
 import onight.tfw.orouter.api.IQClient;
 import onight.tfw.orouter.api.IRecievier;
 import onight.tfw.orouter.api.NoneQService;
@@ -32,10 +36,6 @@ import onight.tfw.outils.serialize.ISerializer;
 import onight.tfw.outils.serialize.SerializerFactory;
 import onight.tfw.outils.serialize.SerializerUtil;
 import onight.tfw.proxy.IActor;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.google.protobuf.Message;
 
 @iPojoBean
 @Slf4j
@@ -78,7 +78,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 	}
 
 	@Override
-	public void onDaoServiceReady(OJpaDAO<?> dao) {
+	public void onDaoServiceReady(DomainDaoSupport dao) {
 
 	}
 

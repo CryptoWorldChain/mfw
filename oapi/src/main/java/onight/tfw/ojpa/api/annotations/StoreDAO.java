@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 import lombok.Getter;
 import lombok.Setter;
+import onight.tfw.ojpa.api.OJpaDAO;
 
 import org.apache.felix.ipojo.annotations.Stereotype;
 
@@ -29,4 +30,5 @@ public @interface StoreDAO {
 
 	Class keyclass() default Object.class;
 
+	Class daoClass() default OJpaDAO.class;
 }

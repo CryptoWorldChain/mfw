@@ -11,7 +11,7 @@ import onight.tfw.ojpa.api.exception.NotSuportException;
  * entity: 序列化后的数据<br>
  * 
  */
-public class NoneDomainDao implements DomainDaoSupport<Object> {
+public class NoneDomainDao implements ORMappingDao<Object> {
 
 	@Override
 	public int countByExample(Object example) {
@@ -141,6 +141,35 @@ public class NoneDomainDao implements DomainDaoSupport<Object> {
 	@Override
 	public Object getAndSet(Object object) throws JPAException {
 		throw new NotSuportException("DaoNotFound");
+	}
+
+	@Override
+	public void setDaosupport(DomainDaoSupport support) {
+		
+	}
+
+	@Override
+	public DomainDaoSupport getDaosupport() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ServiceSpec getServiceSpec() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getDomainName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Class<?> getDomainClazz() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

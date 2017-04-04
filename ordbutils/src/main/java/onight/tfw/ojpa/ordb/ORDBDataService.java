@@ -10,13 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import lombok.val;
-import lombok.extern.slf4j.Slf4j;
-import onight.tfw.ojpa.api.CASCriteria;
-import onight.tfw.ojpa.api.TransactionExecutor;
-import onight.tfw.ojpa.api.exception.JPADuplicateIDException;
-import onight.tfw.ojpa.api.exception.JPAException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -26,7 +19,18 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 
+import lombok.Data;
+import lombok.val;
+import lombok.extern.slf4j.Slf4j;
+import onight.tfw.ojpa.api.CASCriteria;
+import onight.tfw.ojpa.api.DomainDaoSupport;
+import onight.tfw.ojpa.api.ServiceSpec;
+import onight.tfw.ojpa.api.TransactionExecutor;
+import onight.tfw.ojpa.api.exception.JPADuplicateIDException;
+import onight.tfw.ojpa.api.exception.JPAException;
+
 @Slf4j
+@Data
 public class ORDBDataService extends SerializedDomainDao {
 
 	StaticTableDaoSupport daoSupport;
@@ -434,6 +438,31 @@ public class ORDBDataService extends SerializedDomainDao {
 		String sql = "SELECT " + colname + " FROM " + tablename + " WHERE " + counterCri.getWhereCause() + " FOR UPDATE;";
 		sql += "UPDATE " + tablename + " SET " + colname + "=" + counterCri.getIncrements() + " WHERE " + counterCri.getWhereCause();
 		return doBySQL(sql);
+	}
+
+	@Override
+	public DomainDaoSupport getDaosupport() {
+		return null;
+	}
+
+	@Override
+	public Class<?> getDomainClazz() {
+		return null;
+	}
+
+	@Override
+	public String getDomainName() {
+		return null;
+	}
+
+	@Override
+	public ServiceSpec getServiceSpec() {
+		return null;
+	}
+
+	@Override
+	public void setDaosupport(DomainDaoSupport arg0) {
+		
 	}
 
 }

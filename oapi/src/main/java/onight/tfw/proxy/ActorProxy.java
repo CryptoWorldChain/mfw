@@ -6,12 +6,16 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.google.protobuf.Message;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.annotation.iPojoBean;
+import onight.tfw.ojpa.api.DomainDaoSupport;
 import onight.tfw.ojpa.api.IJPAClient;
-import onight.tfw.ojpa.api.OJpaDAO;
 import onight.tfw.orouter.api.IQClient;
 import onight.tfw.orouter.api.IRecievier;
 import onight.tfw.orouter.api.NoneQService;
@@ -23,10 +27,6 @@ import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.serialize.HttpHelper;
 import onight.tfw.outils.serialize.ISerializer;
 import onight.tfw.outils.serialize.SerializerFactory;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.google.protobuf.Message;
 
 @iPojoBean
 @Slf4j
@@ -106,7 +106,7 @@ public abstract class ActorProxy<T extends Message> implements IActor, IJPAClien
 	 * DAO注册时回调
 	 */
 	@Override
-	public void onDaoServiceReady(OJpaDAO dao) {
+	public void onDaoServiceReady(DomainDaoSupport dao) {
 		
 	}
 
