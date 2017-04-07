@@ -50,7 +50,7 @@ public class ActorAutoWare {
 	public void unbindActor(ActorService service, ServiceReference ref) {
 		log.info("unbindActorService:"+service+",ref="+ref);
 		BundleAutoWare baw = bundleAutoByBundleID.get(ref.getBundle().getBundleId());
-		if (baw != null) {
+		if (baw != null&&service!=null) {
 			baw.unbindActor(service, ref);
 		}
 

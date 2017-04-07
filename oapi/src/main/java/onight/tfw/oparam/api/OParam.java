@@ -20,8 +20,12 @@ public class OParam implements OPFace {
 		this.opimpl = opimpl;
 	}
 
+	Class domainClazz,exampleClazz,keyClazz;
 	public OParam(ServiceSpec serviceSpec, Class domainClazz, Class exampleClazz, Class keyClazz) {
-
+		this.serviceSpec = serviceSpec;
+		this.domainClazz=domainClazz;
+		this.exampleClazz=exampleClazz;
+		this.keyClazz=keyClazz;
 	}
 
 	@Override
@@ -30,52 +34,52 @@ public class OParam implements OPFace {
 	}
 
 	@Override
-	public Future<String> put(String key, String value) throws IOException {
+	public Future<OTreeValue> put(String key, String value) throws IOException {
 		return opimpl.put(key, value);
 	}
 
 	@Override
-	public Future<String> putDir(String dir) throws IOException {
+	public Future<OTreeValue> putDir(String dir) throws IOException {
 		return opimpl.putDir(dir);
 	}
 
 	@Override
-	public Future<String> post(String key, String value) throws IOException {
+	public Future<OTreeValue> post(String key, String value) throws IOException {
 		return opimpl.post(key, value);
 	}
 
 	@Override
-	public Future<String> delete(String key) throws IOException {
+	public Future<OTreeValue> delete(String key) throws IOException {
 		return opimpl.delete(key);
 	}
 
 	@Override
-	public Future<String> deleteDir(String dir) throws IOException {
+	public Future<OTreeValue> deleteDir(String dir) throws IOException {
 		return opimpl.deleteDir(dir);
 	}
 
 	@Override
-	public Future<String> get(String key) throws IOException {
+	public Future<OTreeValue> get(String key) throws IOException {
 		return opimpl.get(key);
 	}
 
 	@Override
-	public Future<String> getDir(String dir) throws IOException {
+	public Future<OTreeValue> getDir(String dir) throws IOException {
 		return opimpl.getDir(dir);
 	}
 
 	@Override
-	public Future<String> getAll() throws IOException {
+	public Future<OTreeValue> getAll() throws IOException {
 		return opimpl.getAll();
 	}
 
 	@Override
-	public void watchOnce(String key, CallBack<String> cb) {
+	public void watchOnce(String key, CallBack<OTreeValue> cb) {
 		opimpl.watchOnce(key, cb);
 	}
 
 	@Override
-	public void watch(String key, CallBack<String> cb, boolean always) {
+	public void watch(String key, CallBack<OTreeValue> cb, boolean always) {
 		opimpl.watch(key, cb, always);
 	}
 
@@ -92,7 +96,7 @@ public class OParam implements OPFace {
 
 	@Override
 	public DomainDaoSupport getDaosupport() {
-		return opimpl;
+		return this;
 	}
 
 	@Override
@@ -102,7 +106,6 @@ public class OParam implements OPFace {
 
 	@Override
 	public Class<?> getDomainClazz() {
-		// TODO Auto-generated method stub
-		return null;
+		return domainClazz;
 	}
 }

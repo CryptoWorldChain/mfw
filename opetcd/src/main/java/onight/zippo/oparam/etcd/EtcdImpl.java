@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.felix.ipojo.annotations.Provides;
-
 import lombok.extern.slf4j.Slf4j;
 import mousio.client.promises.ResponsePromise;
 import mousio.etcd4j.EtcdClient;
@@ -13,11 +11,13 @@ import mousio.etcd4j.promises.EtcdResponsePromise;
 import mousio.etcd4j.requests.EtcdKeyGetRequest;
 import mousio.etcd4j.responses.EtcdKeysResponse;
 import onight.tfw.async.CallBack;
-import onight.tfw.ojpa.api.StoreServiceProvider;
+import onight.tfw.ojpa.api.DomainDaoSupport;
+import onight.tfw.ojpa.api.ServiceSpec;
+import onight.tfw.oparam.api.OPFace;
+import onight.tfw.oparam.api.OTreeValue;
 
-@Provides(specifications = StoreServiceProvider.class, strategy = "SINGLETON")
 @Slf4j
-public class EctdImpl implements OPFace {
+public class EtcdImpl implements OPFace,DomainDaoSupport {
 	EtcdClient etcd;
 
 	public EtcdClient getEtcd() {
@@ -45,7 +45,7 @@ public class EctdImpl implements OPFace {
 	 * java.lang.String)
 	 */
 	@Override
-	public Future<String> put(String key, String value) throws IOException {
+	public Future<OTreeValue> put(String key, String value) throws IOException {
 		return new FutureWP(etcd.put(key, value).send());
 	}
 
@@ -55,7 +55,7 @@ public class EctdImpl implements OPFace {
 	 * @see onight.zippo.oparam.etcd.OPFace#putDir(java.lang.String)
 	 */
 	@Override
-	public Future<String> putDir(String dir) throws IOException {
+	public Future<OTreeValue> putDir(String dir) throws IOException {
 		return new FutureWP(etcd.putDir(dir).send());
 	}
 
@@ -66,7 +66,7 @@ public class EctdImpl implements OPFace {
 	 * java.lang.String)
 	 */
 	@Override
-	public Future<String> post(String key, String value) throws IOException {
+	public Future<OTreeValue> post(String key, String value) throws IOException {
 		return new FutureWP(etcd.post(key, value).send());
 	}
 
@@ -76,9 +76,9 @@ public class EctdImpl implements OPFace {
 	 * @see onight.zippo.oparam.etcd.OPFace#delete(java.lang.String)
 	 */
 	@Override
-	public Future<String> delete(String key) throws IOException {
+	public Future<OTreeValue> delete(String key) throws IOException {
 		// TODO Auto-generated method stub
-		return new FutureWP(etcd.delete(key).send());
+		return new FutureWP(etcd.delete(key).recursive().send());
 	}
 
 	/*
@@ -87,8 +87,8 @@ public class EctdImpl implements OPFace {
 	 * @see onight.zippo.oparam.etcd.OPFace#deleteDir(java.lang.String)
 	 */
 	@Override
-	public Future<String> deleteDir(String dir) throws IOException {
-		return new FutureWP(etcd.deleteDir(dir).send());
+	public Future<OTreeValue> deleteDir(String dir) throws IOException {
+		return new FutureWP(etcd.deleteDir(dir).recursive().send());
 	}
 
 	/*
@@ -97,8 +97,8 @@ public class EctdImpl implements OPFace {
 	 * @see onight.zippo.oparam.etcd.OPFace#get(java.lang.String)
 	 */
 	@Override
-	public Future<String> get(String key) throws IOException {
-		return new FutureWP(etcd.get(key).send());
+	public Future<OTreeValue> get(String key) throws IOException {
+		return new FutureWP(etcd.get(key).recursive().send());
 	}
 
 	/*
@@ -107,8 +107,8 @@ public class EctdImpl implements OPFace {
 	 * @see onight.zippo.oparam.etcd.OPFace#getDir(java.lang.String)
 	 */
 	@Override
-	public Future<String> getDir(String dir) throws IOException {
-		return new FutureWP(etcd.getDir(dir).send());
+	public Future<OTreeValue> getDir(String dir) throws IOException {
+		return new FutureWP(etcd.getDir(dir).recursive().send());
 	}
 
 	/*
@@ -117,8 +117,8 @@ public class EctdImpl implements OPFace {
 	 * @see onight.zippo.oparam.etcd.OPFace#getAll()
 	 */
 	@Override
-	public Future<String> getAll() throws IOException {
-		return new FutureWP(etcd.getAll().send());
+	public Future<OTreeValue> getAll() throws IOException {
+		return new FutureWP(etcd.getAll().recursive().send());
 	}
 
 	/*
@@ -128,7 +128,7 @@ public class EctdImpl implements OPFace {
 	 * onight.tfw.async.CallBack)
 	 */
 	@Override
-	public void watchOnce(final String key, final CallBack<String> cb) {
+	public void watchOnce(final String key, final CallBack<OTreeValue> cb) {
 		watch(key, cb, true);
 	}
 
@@ -139,7 +139,7 @@ public class EctdImpl implements OPFace {
 	 * onight.tfw.async.CallBack, boolean)
 	 */
 	@Override
-	public void watch(final String key, final CallBack<String> cb, final boolean always) {
+	public void watch(final String key, final CallBack<OTreeValue> cb, final boolean always) {
 
 		EtcdKeyGetRequest getRequest = etcd.get(key).waitForChange().timeout(60, TimeUnit.SECONDS);
 		try {
@@ -149,21 +149,46 @@ public class EctdImpl implements OPFace {
 				@Override
 				public void onResponse(ResponsePromise<EtcdKeysResponse> response) {
 					try {
-						cb.onSuccess(response.get().getNode().value);
+						cb.onSuccess(new OTreeValue(response.get().getNode().key,response.get().getNode().value,FutureWP.getTrees(response.get().getNode().nodes)));
 					} catch (Exception e) {
-						cb.onFailed(e, key);
+						cb.onFailed(e, new OTreeValue(key,null,null));
 					} finally {
 						if (always) {
 							// still watch
-							EctdImpl.this.watch(key, cb, always);
+							EtcdImpl.this.watch(key, cb, always);
 						}
 					}
 				}
 
 			});
 		} catch (Exception e) {
-			cb.onFailed(e, key);
+			cb.onFailed(e, new OTreeValue(key,null,null));
 		}
+	}
+
+	@Override
+	public DomainDaoSupport getDaosupport() {
+		return this;
+	}
+
+	@Override
+	public Class<?> getDomainClazz() {
+		return Object.class;
+	}
+
+	@Override
+	public String getDomainName() {
+		return "etcd";
+	}
+
+	@Override
+	public ServiceSpec getServiceSpec() {
+		return ServiceSpec.ETCD_STORE;
+	}
+
+	@Override
+	public void setDaosupport(DomainDaoSupport dao) {
+		log.debug("setDaosupport::dao="+dao);
 	}
 
 }

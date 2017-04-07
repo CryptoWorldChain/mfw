@@ -1,6 +1,8 @@
 package onight.tfw.ojpa.ordb;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Instantiate;
@@ -10,14 +12,14 @@ import org.apache.felix.ipojo.annotations.Validate;
 import org.osgi.framework.BundleContext;
 
 import io.netty.handler.ssl.SslContext;
-import lombok.AllArgsConstructor;
+import io.netty.handler.ssl.SslContextBuilder;
 import lombok.extern.slf4j.Slf4j;
 import mousio.etcd4j.EtcdClient;
 import onight.tfw.ojpa.api.DomainDaoSupport;
 import onight.tfw.ojpa.api.ServiceSpec;
 import onight.tfw.ojpa.api.StoreServiceProvider;
 import onight.tfw.outils.conf.PropHelper;
-import onight.zippo.oparam.etcd.EctdImpl;
+import onight.zippo.oparam.etcd.EtcdImpl;
 
 @Component(immediate = true)
 @Instantiate()
@@ -32,57 +34,85 @@ public class EtcdProvider implements StoreServiceProvider {
 
 	BundleContext bundleContext;
 	PropHelper params;
-	EctdImpl impl = new EctdImpl();
+	EtcdImpl etcdImpl = new EtcdImpl();
+	public URI[] getURI(String urilist){
+		try {
+			String strarray[]=urilist.split(",");
+			URI uriarray[]=new URI[strarray.length];
+			int i=0;
+			for(String str:strarray){
+				uriarray[i++]=new URI(str.trim());
+			}
+			return uriarray;
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 	public EtcdProvider(BundleContext bundleContext) {
 		super();
-		log.debug("create:EctdImpl:");
 		params = new PropHelper(bundleContext);
-		String username = params.get("org.zippo.ectd.username", null);
-		String passwd = params.get("org.zippo.ectd.passwd", null);
-		String uris = params.get("org.zippo.ectd.uris", null);
-		String ssluris = params.get("org.zippo.ectd.ssluris", null);
-
-		if (ssluris != null) {
-			SslContext sslContext = SslContext.newClientContext();
-			
-			try (EtcdClient etcd = new EtcdClient(sslContext, URI.create("https://123.45.67.89:8001"),
-					URI.create("https://123.45.67.90:8001"))) {
-				System.out.println(etcd.getVersion());
-			}
-		}
-
-		// EtcdClient etcd = new EtcdClient(username, password, baseUri);
-		impl.setEtcd(etcd);
 		this.bundleContext = bundleContext;
 	}
-
-	@AllArgsConstructor
-	public class SqlMapperInfo {
-		Object sqlmapper;
-		String sf;
-	}
+	EtcdClient etcd=null;
 
 	@Validate
 	public synchronized void startup() {
 		log.info("启动中...@" + bundleContext);
+		log.debug("create:EtcdImpl:");
+		String username = params.get("org.zippo.ectd.username", null);
+		String passwd = params.get("org.zippo.ectd.passwd", null);
+		String uris = params.get("org.zippo.ectd.uris", "http://127.0.0.1:2379");
+		String ssluris = params.get("org.zippo.ectd.ssluris", null);
+		if (ssluris != null) {
+			try {
+				SslContext sslContext = SslContextBuilder.forClient().build();
+				if(username!=null&&passwd!=null){
+					etcd = new EtcdClient(sslContext, getURI(uris));
+					log.info("new SSL EtcdVersion="+etcd.version());
+				}else{
+					etcd = new EtcdClient(sslContext,username,passwd,getURI(uris));
+					log.info("new SSL Etcd with username="+username+",passwd=******"+"Version="+etcd.version());
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}else{
+			if(username!=null&&passwd!=null){
+				etcd = new EtcdClient( getURI(uris));
+				log.info("new EtcdVersion="+etcd.version());
+			}else{
+				etcd = new EtcdClient(username,passwd,getURI(uris));
+				log.info("new Etcd with username="+username+",passwd=******"+"Version="+etcd.version());
+			}
+		}
+		if(etcd==null)
+		{
+			log.warn("cannot connect to etcd!");
+		}
+		else{
+			etcdImpl.setEtcd(etcd);
+		}
 		log.info("启动完成...");
 	}
 
 	@Invalidate
 	public void shutdown() {
 		log.info("退出中...");
+		if(etcd!=null){
+			try {
+				etcd.close();
+			} catch (IOException e) {
+				log.warn("close etcd error",e);
+			}
+		}
 		log.info("退出完成...");
 	}
 
 	@Override
 	public DomainDaoSupport getDaoByBeanName(DomainDaoSupport dao) {
-		/*
-		 * if (springLoader != null) { return
-		 * springLoader.getBeans(dao.getDomainName() + "Dao"); } else {
-		 * log.warn("bean dao not found:" + dao.getDomainName()); return null; }
-		 */
-		return null;
+		return etcdImpl;
 	}
 
 	@Override

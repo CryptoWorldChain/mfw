@@ -97,7 +97,7 @@ public class JPAStoreManager {
 			for (Field field : clazz.getDeclaredFields()) {
 				StoreDAO anno = field.getAnnotation(StoreDAO.class);
 				DomainDaoSupport dao = null;
-				if (anno != null && (anno.domain() != Object.class)) {
+				if (anno != null) {
 					try {
 						Method setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()),
 								DomainDaoSupport.class);
@@ -152,7 +152,7 @@ public class JPAStoreManager {
 		StoreClientSet clientset = daosByClient.get(clientid);
 		if (clientset == null)
 			return;
-		log.debug("wireDaosForClient::" + clientset.client + ",daosize=" + clientset.daos.size() + "@" + clientid);
+		log.debug("wireDaosForClient::" + clientset.client + ",daosize=" + clientset.daos.size() + ",id=@" + clientid);
 
 		for (DomainDaoSupport dao : clientset.daos) {
 			StoreServiceProvider ssp = storeServices.get(dao.getServiceSpec().getTarget());

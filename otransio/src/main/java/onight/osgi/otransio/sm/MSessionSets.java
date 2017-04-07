@@ -1,6 +1,9 @@
 package onight.osgi.otransio.sm;
 
 import java.util.HashMap;
+import java.util.Set;
+
+import org.glassfish.grizzly.Connection;
 
 import lombok.Data;
 import onight.osgi.otransio.sm.RemoteModuleBean.ModuleBean;
@@ -9,8 +12,6 @@ import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.session.ModuleSession;
 import onight.tfw.outils.pool.ReusefulMapPool;
-
-import org.glassfish.grizzly.Connection;
 
 @Data
 public class MSessionSets {
@@ -50,7 +51,9 @@ public class MSessionSets {
 		}
 		return this.addModule(module, currentNodeID, null);
 	}
-
+	public Set<String> getLocalModules(){
+		return sessionByModule.keySet();
+	}
 	public FramePacket getLocalModulesPacket() {
 		return PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN,
 				PackHeader.REMOTE_MODULE, rmb);
