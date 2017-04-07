@@ -3,6 +3,7 @@ package onight.zippo.oparam.etcd;
 import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import lombok.extern.slf4j.Slf4j;
 import mousio.client.promises.ResponsePromise;
@@ -17,7 +18,7 @@ import onight.tfw.oparam.api.OPFace;
 import onight.tfw.oparam.api.OTreeValue;
 
 @Slf4j
-public class EtcdImpl implements OPFace,DomainDaoSupport {
+public class EtcdImpl implements OPFace, DomainDaoSupport {
 	EtcdClient etcd;
 
 	public EtcdClient getEtcd() {
@@ -129,7 +130,7 @@ public class EtcdImpl implements OPFace,DomainDaoSupport {
 	 */
 	@Override
 	public void watchOnce(final String key, final CallBack<OTreeValue> cb) {
-		watch(key, cb, true);
+		watch(key, cb, false);
 	}
 
 	/*
@@ -141,7 +142,7 @@ public class EtcdImpl implements OPFace,DomainDaoSupport {
 	@Override
 	public void watch(final String key, final CallBack<OTreeValue> cb, final boolean always) {
 
-		EtcdKeyGetRequest getRequest = etcd.get(key).waitForChange().timeout(60, TimeUnit.SECONDS);
+		EtcdKeyGetRequest getRequest = etcd.getDir(key).waitForChange().timeout(60, TimeUnit.SECONDS);
 		try {
 
 			EtcdResponsePromise<EtcdKeysResponse> promise = getRequest.send();
@@ -149,9 +150,13 @@ public class EtcdImpl implements OPFace,DomainDaoSupport {
 				@Override
 				public void onResponse(ResponsePromise<EtcdKeysResponse> response) {
 					try {
-						cb.onSuccess(new OTreeValue(response.get().getNode().key,response.get().getNode().value,FutureWP.getTrees(response.get().getNode().nodes)));
+						log.debug("onResponse@"+this+",response="+response);
+						cb.onSuccess(new OTreeValue(response.get().getNode().key, response.get().getNode().value,
+								FutureWP.getTrees(response.get().getNode().nodes)));
+					} catch (TimeoutException te) {
+						log.debug("Etcd Watch Timeout:" + key+",@"+this);
 					} catch (Exception e) {
-						cb.onFailed(e, new OTreeValue(key,null,null));
+						cb.onFailed(e, new OTreeValue(key, null, null));
 					} finally {
 						if (always) {
 							// still watch
@@ -162,7 +167,7 @@ public class EtcdImpl implements OPFace,DomainDaoSupport {
 
 			});
 		} catch (Exception e) {
-			cb.onFailed(e, new OTreeValue(key,null,null));
+			cb.onFailed(e, new OTreeValue(key, null, null));
 		}
 	}
 
@@ -188,7 +193,7 @@ public class EtcdImpl implements OPFace,DomainDaoSupport {
 
 	@Override
 	public void setDaosupport(DomainDaoSupport dao) {
-		log.debug("setDaosupport::dao="+dao);
+		log.debug("setDaosupport::dao=" + dao);
 	}
 
 }

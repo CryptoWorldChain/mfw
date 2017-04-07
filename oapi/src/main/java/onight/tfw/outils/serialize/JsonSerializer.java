@@ -11,7 +11,7 @@ import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.util.TokenBuffer;
 
-class JsonSerializer implements ISerializer {
+public class JsonSerializer implements ISerializer {
 
 	private final static JsonSerializer instance = new JsonSerializer();
 
@@ -45,6 +45,19 @@ class JsonSerializer implements ISerializer {
 			mapper.writeValue(buffer, data);
 			return mapper.readTree(buffer.asParser()).toString()
 					.getBytes(DEFAULT_CHARSET);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public static String formatToString(Object data){
+		try {
+			if (data == null) {
+				return null;
+			}
+			TokenBuffer buffer = new TokenBuffer(mapper);
+			mapper.writeValue(buffer, data);
+			return mapper.readTree(buffer.asParser()).toString();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

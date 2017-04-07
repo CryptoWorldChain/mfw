@@ -104,7 +104,7 @@ public class OSocketImpl implements Serializable,ActorService {
 				osm.init();
 				log.debug("ModuleDiscovery.required=="+mdisc);
 				if(mdisc!=null){
-					mdisc.updateModuleToGlobal(mss);
+					mdisc.updateModuleToGlobal(mss,params);
 				}
 				log.info("init remote session.[success] ");
 			}
@@ -140,7 +140,7 @@ public class OSocketImpl implements Serializable,ActorService {
 			osm.getNodePool().broadcastLocalModule(mss);
 		}
 		if(mdisc!=null){
-			mdisc.updateModuleToGlobal(mss);
+			mdisc.updateModuleToGlobal(mss,params);
 		}
 	}
 
@@ -149,7 +149,7 @@ public class OSocketImpl implements Serializable,ActorService {
 		log.info("Remove ModuleSession::" + service);
 		mss.removeLocalModule(service.getModule());
 		if(mdisc!=null){
-			mdisc.updateModuleToGlobal(mss);
+			mdisc.updateModuleToGlobal(mss,params);
 		}
 	}
 

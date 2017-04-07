@@ -78,7 +78,7 @@ public class QueueConsumer implements Runnable {
 
 		} finally {
 			if (!stop) {
-				log.debug("reQueueTask:delay="+delay+";@"+this.getQueueName());
+				//log.debug("reQueueTask:delay="+delay+";@"+this.getQueueName());
 				qman.reQueueTask(this, nextdelay);
 			}
 		}
