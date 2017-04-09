@@ -205,6 +205,15 @@ public class OSocketImpl implements Serializable, ActorService {
 				String oldwr = pack.getExtStrProp(PackHeader.WALL_ROUTE);
 				if (oldwr == null) {
 					oldwr = "|" + mss.getCurrentNodeID();
+					mss.getRecvCounter().incrementAndGet();
+
+				}else{
+					if (oldwr.contains("|" + mss.getCurrentNodeID())) {
+						// 重复的
+						mss.getDuplCounter().incrementAndGet();
+					}else{
+						mss.getRecvCounter().incrementAndGet();
+					}
 				}
 				StringBuffer nodes = new StringBuffer(oldwr);
 				if (!nodes.toString().contains("|" + mss.getCurrentNodeID())) {
@@ -215,12 +224,7 @@ public class OSocketImpl implements Serializable, ActorService {
 						nodes.append("|").append(nodeid);
 					}
 				}
-				if (oldwr.contains("|" + mss.getCurrentNodeID())) {
-					// 重复的
-					mss.getDuplCounter().incrementAndGet();
-				}else{
-					mss.getRecvCounter().incrementAndGet();
-				}
+				
 				mss.getLocalModuleSession(pack.getModule()).onPacket(pack, handler);
 
 				pack.putHeader(PackHeader.WALL_ROUTE, nodes.toString());
@@ -240,7 +244,6 @@ public class OSocketImpl implements Serializable, ActorService {
 							FramePacket wallpack = PacketHelper.clonePacket(pack);
 							wallpack.putHeader(PackHeader.TTL, "" + (pack.getTTL() - 1));
 							wallpack.putHeader(PACK_FROM, mss.getCurrentNodeID());
-							mss.getSendCounter().incrementAndGet();
 							mss.getAllSCounter().incrementAndGet();
 							kv.getValue().onPacket(wallpack, handler);
 						} else {
@@ -255,7 +258,12 @@ public class OSocketImpl implements Serializable, ActorService {
 
 		}
 		if (ms != null) {
-
+			if(ms instanceof RemoteModuleSession){
+				mss.getSendCounter().incrementAndGet();
+				mss.getAllSCounter().incrementAndGet();
+			}else{
+				mss.getRecvCounter().incrementAndGet();
+			}
 			ms.onPacket(pack, handler);
 		} else {
 			// 没有找到对应的消息

@@ -35,6 +35,8 @@ public class EtcdProvider implements StoreServiceProvider {
 	BundleContext bundleContext;
 	PropHelper params;
 	EtcdImpl etcdImpl = new EtcdImpl();
+	
+	
 	public URI[] getURI(String urilist){
 		try {
 			String strarray[]=urilist.split(",");
@@ -54,6 +56,8 @@ public class EtcdProvider implements StoreServiceProvider {
 		super();
 		params = new PropHelper(bundleContext);
 		this.bundleContext = bundleContext;
+		
+		
 	}
 	EtcdClient etcd=null;
 
@@ -94,6 +98,8 @@ public class EtcdProvider implements StoreServiceProvider {
 		else{
 			etcdImpl.setEtcd(etcd);
 		}
+		
+		etcdImpl.setDefault_ttl(params.get("org.zippo.etcd.ttl", 99999999));
 		log.info("启动完成...");
 	}
 

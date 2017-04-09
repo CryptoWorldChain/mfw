@@ -34,22 +34,21 @@ public class OutgoingSessionManager {
 	boolean ready;
 	@Getter
 	NodeConnectionPool nodePool;
-	
-	
-	public String getJsonInfo()
-	{
-		StringBuffer sb=new StringBuffer();
+
+	public String getJsonInfo() {
+		StringBuffer sb = new StringBuffer();
 		sb.append("{\"cur\":{");
-			sb.append("\"nodeid\":\"").append(mss.currentNodeID).append("\"");
-			sb.append(",\"inaddr\":\"").append(NodeHelper.getCurrNodeListenInAddr()).append("\"");
-			sb.append(",\"inport\":\"").append(NodeHelper.getCurrNodeListenInPort()).append("\"");
-			sb.append(",\"outaddr\":\"").append(NodeHelper.getCurrNodeListenOutAddr()).append("\"");
-			sb.append(",\"outport\":\"").append(NodeHelper.getCurrNodeListenOutPort()).append("\"");
-			sb.append("}");
+		sb.append("\"nodeid\":\"").append(mss.currentNodeID).append("\"");
+		sb.append(",\"inaddr\":\"").append(NodeHelper.getCurrNodeListenInAddr()).append("\"");
+		sb.append(",\"inport\":\"").append(NodeHelper.getCurrNodeListenInPort()).append("\"");
+		sb.append(",\"outaddr\":\"").append(NodeHelper.getCurrNodeListenOutAddr()).append("\"");
+		sb.append(",\"outport\":\"").append(NodeHelper.getCurrNodeListenOutPort()).append("\"");
+		sb.append("}");
 		sb.append(",\"conns\":").append(nodePool.getJsonStr());
 		sb.append("}");
 		return sb.toString();
 	}
+
 	public OutgoingSessionManager(OSocketImpl oimpl, PropHelper params, MSessionSets mss) {
 		this.params = params;
 		this.mss = mss;
@@ -57,7 +56,7 @@ public class OutgoingSessionManager {
 		client.init(this, params);
 		ck = new CheckHealth(params.get("otrans.checkhealth.size", 2), params.get("otrans.checkhealth.delay", 30));
 	}
-	
+
 	public synchronized void initNetPool() {
 		nodePool = new NodeConnectionPool();
 		final HashSet<String> nodeNames = new HashSet<String>();
@@ -80,13 +79,21 @@ public class OutgoingSessionManager {
 
 	}
 
-	public synchronized void addNetPool(String nodeID, String addrport) {
+	public synchronized void rmNetPool(String nodeID, String addrport) {
+		CKConnPool pool = nodePool.getPool(nodeID);// unknow modules
+		if (pool != null) {
+			pool.setStop(true);
+		}
+
+	}
+
+	public synchronized void addNetPool(String nodeID, String addrport, int coreconn, int maxconn) {
 		if (addrport == null)
 			return;
 		String addrports[] = addrport.split(":");
 		if (addrports.length != 2)
 			return;
-		if(StringUtils.equalsIgnoreCase(nodeID, NodeHelper.getCurrNodeID())){
+		if (StringUtils.equalsIgnoreCase(nodeID, NodeHelper.getCurrNodeID())) {
 			log.trace("same node ,not need to add net pool");
 			return;
 		}
@@ -95,9 +102,15 @@ public class OutgoingSessionManager {
 			String addr = addrports[0].trim();
 			int port = Integer.parseInt(addrports[1].trim());
 			String key = "otrans.servers.node." + nodeID;
-			int core = params.get(key + ".core", params.get("otrans.servers.default.core", 2));
-			int max = params.get(key + ".max", params.get("otrans.servers.default.max", 10));
-			CKConnPool pool = nodePool.getPool(nodeID);//unknow modules
+			int core = coreconn;
+			if (core == 0) {
+				params.get(key + ".core", params.get("otrans.servers.default.core", 1));
+			}
+			int max = maxconn;
+			if (max == 0) {
+				max = params.get(key + ".max", params.get("otrans.servers.default.max", 3));
+			}
+			CKConnPool pool = nodePool.getPool(nodeID);// unknow modules
 			if (pool == null) {
 				pool = nodePool.addPool(client, nodeID, addr, port, core, max, mss);
 				ck.addCheckHealth(pool);

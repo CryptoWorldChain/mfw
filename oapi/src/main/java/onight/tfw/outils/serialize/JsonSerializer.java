@@ -26,11 +26,15 @@ public class JsonSerializer implements ISerializer {
 	public <T> T deserialize(Object dataArray, Class<T> clazz) {
 		try {
 			if (dataArray != null) {
-				return mapper.readValue(new String((byte[])dataArray, DEFAULT_CHARSET),
-						clazz);
+				if (dataArray instanceof String) {
+					return mapper.readValue((String)dataArray, clazz);
+				}
+				return mapper.readValue(new String((byte[]) dataArray, DEFAULT_CHARSET), clazz);
 			}
 			return null;
-		} catch (Exception e) {
+		} catch (
+
+		Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -43,14 +47,13 @@ public class JsonSerializer implements ISerializer {
 			}
 			TokenBuffer buffer = new TokenBuffer(mapper);
 			mapper.writeValue(buffer, data);
-			return mapper.readTree(buffer.asParser()).toString()
-					.getBytes(DEFAULT_CHARSET);
+			return mapper.readTree(buffer.asParser()).toString().getBytes(DEFAULT_CHARSET);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	public static String formatToString(Object data){
+
+	public static String formatToString(Object data) {
 		try {
 			if (data == null) {
 				return null;
@@ -72,9 +75,9 @@ public class JsonSerializer implements ISerializer {
 	public <T> List<T> deserializeArray(Object bytes, Class<T> clazz) {
 		try {
 			List<T> list = new ArrayList<>();
-			String jsontxt = new String((byte[])bytes, DEFAULT_CHARSET);
-			ArrayNode nodes = mapper.readValue(jsontxt , ArrayNode.class);
-			for(JsonNode node : nodes){
+			String jsontxt = new String((byte[]) bytes, DEFAULT_CHARSET);
+			ArrayNode nodes = mapper.readValue(jsontxt, ArrayNode.class);
+			for (JsonNode node : nodes) {
 				list.add(mapper.readValue(node, clazz));
 			}
 			return list;
@@ -82,7 +85,7 @@ public class JsonSerializer implements ISerializer {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	static ObjectMapper mapper = new ObjectMapper();
 	static {
 		mapper.configure(Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -90,5 +93,5 @@ public class JsonSerializer implements ISerializer {
 		mapper.configure(SerializationConfig.Feature.WRITE_NULL_PROPERTIES, false);
 
 	}
-	
+
 }

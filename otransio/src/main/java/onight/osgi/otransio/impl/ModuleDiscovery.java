@@ -69,7 +69,15 @@ public class ModuleDiscovery extends NActor {
 			if (f.get() != null && f.get().getNodes() != null) {
 				for (OTreeValue v : f.get().getNodes()) {
 					log.trace("try to Add new NetInfo:" + v);
-					mss.getOsm().addNetPool(v.getKey().replace("/zippo/members/", ""), v.getValue());
+					String jsonv = v.getValue();
+					MemberSvcInfo memsvcinfo = JsonSerializer.getInstance().deserialize(jsonv, MemberSvcInfo.class);
+					if(StringUtils.equals("audit_ok", memsvcinfo.getAuditstatus())){
+						mss.getOsm().addNetPool(v.getKey().replace("/zippo/members/", ""),
+								memsvcinfo.outaddr + ":" + memsvcinfo.outport,memsvcinfo.getCoreconn(),memsvcinfo.getMaxconn());
+					}else if(StringUtils.equals("block", memsvcinfo.getAuditstatus())||StringUtils.equals("reject", memsvcinfo.getAuditstatus())){
+						mss.getOsm().rmNetPool(v.getKey().replace("/zippo/members/", ""),
+								memsvcinfo.outaddr + ":" + memsvcinfo.outport);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -146,12 +154,13 @@ public class ModuleDiscovery extends NActor {
 		}
 	}
 
-	String getConnInfo(){
-		StringBuffer sb=new StringBuffer();
+	String getConnInfo() {
+		StringBuffer sb = new StringBuffer();
 		sb.append("{\"conns\":").append(mss.getOsm().getNodePool().getJsonStr());
 		sb.append(",\"mss\":").append(mss.getJsonInfo()).append("}");
 		return sb.toString();
 	}
+
 	@Override
 	public void doWeb(HttpServletRequest req, HttpServletResponse resp, FramePacket pack) throws IOException {
 		String param = req.getParameter("cmd");
