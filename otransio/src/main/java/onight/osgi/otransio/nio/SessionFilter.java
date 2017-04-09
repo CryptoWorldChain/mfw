@@ -66,7 +66,7 @@ public class SessionFilter extends BaseFilter {
 			handler = new CompleteHandler() {
 				@Override
 				public void onFinished(FramePacket packet) {
-					log.warn("dropping back mssgage:" + packet);
+				//	log.warn("dropping back mssgage:" + packet);
 				}
 			};
 		}

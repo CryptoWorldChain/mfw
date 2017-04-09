@@ -161,7 +161,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 				@Override
 				public void onResponse(ResponsePromise<EtcdKeysResponse> response) {
 					try {
-						log.debug("onResponse@"+this+",response="+response);
+						log.trace("onResponse@"+this+",response="+response);
 						cb.onSuccess(new OTreeValue(response.get().getNode().key, response.get().getNode().value,
 								FutureWP.getTrees(response.get().getNode().nodes)));
 					} catch (TimeoutException te) {
@@ -205,7 +205,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 
 	@Override
 	public void setDaosupport(DomainDaoSupport dao) {
-		log.debug("setDaosupport::dao=" + dao);
+		log.trace("setDaosupport::dao=" + dao);
 	}
 
 	@Override

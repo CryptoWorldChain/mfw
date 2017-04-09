@@ -187,7 +187,7 @@ public class OSocketImpl implements Serializable, ActorService {
 	}
 
 	public void routePacket(FramePacket pack, final CompleteHandler handler) {
-
+		mss.getAllRCounter().incrementAndGet();
 		String destTO = pack.getExtStrProp(PACK_TO);
 		ModuleSession ms = null;
 		if (StringUtils.isNotBlank(destTO)) {// 固定给某个节点id的
@@ -201,31 +201,50 @@ public class OSocketImpl implements Serializable, ActorService {
 		}
 		if (pack.isWallMessage()) {
 			// 广播消息
-			mss.getLocalModuleSession(pack.getModule()).onPacket(pack, handler);
-
 			if (mss.getSessionByModule().get(pack.getModule()) != null) {
 				String oldwr = pack.getExtStrProp(PackHeader.WALL_ROUTE);
-				StringBuffer nodes = new StringBuffer(mss.getCurrentNodeID());
+				if (oldwr == null) {
+					oldwr = "|" + mss.getCurrentNodeID();
+				}
+				StringBuffer nodes = new StringBuffer(oldwr);
+				if (!nodes.toString().contains("|" + mss.getCurrentNodeID())) {
+					nodes.append("|" + mss.getCurrentNodeID());
+				}
 				for (String nodeid : mss.getSessionByModule().get(pack.getModule()).getAllObjMaps().keySet()) {
-					if (!oldwr.contains("," + nodeid)) {
-						nodes.append(",").append(nodeid);
+					if (!nodes.toString().contains("|" + nodeid)) {
+						nodes.append("|").append(nodeid);
 					}
 				}
+				if (oldwr.contains("|" + mss.getCurrentNodeID())) {
+					// 重复的
+					mss.getDuplCounter().incrementAndGet();
+				}else{
+					mss.getRecvCounter().incrementAndGet();
+				}
+				mss.getLocalModuleSession(pack.getModule()).onPacket(pack, handler);
+
 				pack.putHeader(PackHeader.WALL_ROUTE, nodes.toString());
+
 
 				for (Entry<String, ModuleSession> kv : mss.getSessionByModule().get(pack.getModule()).getAllObjMaps()
 						.entrySet()) {
 					if (kv.getValue() instanceof RemoteModuleSession) {
-						if (!oldwr.contains("," + kv.getKey())) {
+						if (!oldwr.contains("|" + kv.getKey())) {
 							FramePacket wallpack = PacketHelper.clonePacket(pack);
 							wallpack.putHeader(PackHeader.TTL, "" + (pack.getTTL()));
 							wallpack.putHeader(PACK_FROM, mss.getCurrentNodeID());
+							mss.getSendCounter().incrementAndGet();
 							kv.getValue().onPacket(wallpack, handler);
-						} else if (pack.getTTL() > 0) {//相同的只广播几次
+							mss.getAllSCounter().incrementAndGet();
+						} else if (pack.getTTL() > 0) {// 相同的只广播几次
 							FramePacket wallpack = PacketHelper.clonePacket(pack);
 							wallpack.putHeader(PackHeader.TTL, "" + (pack.getTTL() - 1));
 							wallpack.putHeader(PACK_FROM, mss.getCurrentNodeID());
+							mss.getSendCounter().incrementAndGet();
+							mss.getAllSCounter().incrementAndGet();
 							kv.getValue().onPacket(wallpack, handler);
+						} else {
+							mss.getDropCounter().incrementAndGet();
 						}
 					}
 				}

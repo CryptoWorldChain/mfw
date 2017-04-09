@@ -3,6 +3,8 @@ package onight.osgi.otransio.sm;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.glassfish.grizzly.Connection;
 
@@ -29,6 +31,12 @@ public class MSessionSets {
 	HashMap<String, ReusefulMapPool<String, ModuleSession>> sessionByModule = new HashMap<>();
 	HashMap<String, ModuleSession> localsessionByModule = new HashMap<>();
 
+	AtomicLong recvCounter = new AtomicLong(0);
+	AtomicLong sendCounter = new AtomicLong(0);
+	AtomicLong duplCounter = new AtomicLong(0);
+	AtomicLong dropCounter = new AtomicLong(0);
+	AtomicLong allRCounter = new AtomicLong(0);
+	AtomicLong allSCounter = new AtomicLong(0);
 	// ConcurrentHashMap<String,HashSet<ModuleSession>> connsByNodeID=new
 	// ConcurrentHashMap<String, HashSet<ModuleSession>>();
 
@@ -44,8 +52,15 @@ public class MSessionSets {
 			i++;
 			sb.append(kv.getValue().getJsonStr());
 		}
-
-		sb.append("],\"all\":[");
+		sb.append("],\"stats\":{");
+		sb.append("\"recv\":").append(recvCounter.get());
+		sb.append(",\"send\":").append(sendCounter.get());
+		sb.append(",\"allR\":").append(allRCounter.get());
+		sb.append(",\"allS\":").append(allSCounter.get());
+		sb.append(",\"drop\":").append(dropCounter.get());
+		sb.append(",\"dupl\":").append(duplCounter.get());
+		
+		sb.append("},\"all\":[");
 		i = 0;
 		for (Entry<String, ReusefulMapPool<String, ModuleSession>> kv : sessionByModule.entrySet()) {
 			if (i > 0)

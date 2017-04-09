@@ -87,7 +87,7 @@ public class OutgoingSessionManager {
 		if (addrports.length != 2)
 			return;
 		if(StringUtils.equalsIgnoreCase(nodeID, NodeHelper.getCurrNodeID())){
-			log.debug("same node ,not need to add net pool");
+			log.trace("same node ,not need to add net pool");
 			return;
 		}
 

@@ -46,6 +46,7 @@ public class PacketHelper {
 		ret.setBody(fp.getBody());
 		ret.setFbody(ret.getFbody());
 		ret.getFixHead().reset();
+		ret.getExtHead().reset();
 		// ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
 		return ret;
 	}
