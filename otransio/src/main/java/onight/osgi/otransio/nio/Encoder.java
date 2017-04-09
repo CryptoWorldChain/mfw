@@ -4,8 +4,11 @@ import onight.tfw.otransio.api.beans.FramePacket;
 
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
+import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.TransformationException;
 import org.glassfish.grizzly.TransformationResult;
+import org.glassfish.grizzly.attributes.Attribute;
+import org.glassfish.grizzly.attributes.AttributeBuilder;
 import org.glassfish.grizzly.attributes.AttributeStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +16,9 @@ import org.slf4j.LoggerFactory;
 public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 
 	Logger log = LoggerFactory.getLogger(Encoder.class);
+	
+	protected final Attribute<Long> lastCheckHealthMS= Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("Decoder.CheckHealth");
+
 
 	@Override
 	public String getName() {
@@ -44,6 +50,11 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 		output.flip();
 		output.allowBufferDispose(true);
 		log.trace("encode:"+input.getFixHead().toStrHead()+",extsize="+extb.length+",bodysize="+bodyb.length);
+		if(bodyb.length>0&&input.getFixHead().toStrHead().endsWith("400000T00")){
+			log.error("unknow input::");
+			return TransformationResult.createCompletedResult(null, null);
+		}
+		lastCheckHealthMS.set(storage.getAttributes(),System.currentTimeMillis());
 		return TransformationResult.createCompletedResult(output, null);
 	}
 }

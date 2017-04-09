@@ -4,8 +4,11 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import lombok.Getter;
+
 public class ReusefulLoopPool<T> {
 
+	@Getter
 	ConcurrentLinkedQueue<T> allObjs = new ConcurrentLinkedQueue<>();
 
 	ReentrantReadWriteLock rwlock = new ReentrantReadWriteLock();

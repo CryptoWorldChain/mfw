@@ -1,5 +1,6 @@
 package onight.osgi.otransio.ck;
 
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +20,24 @@ public class NodeConnectionPool {
 			pool = new CKConnPool(client, ip, port, core, max, mss);
 			log.debug("create new Pool :" + pool);
 			ckPoolByNodeID.put(nodeID, pool);
+			
 		}
 		return pool;
+	}
+	
+	public String getJsonStr(){
+		StringBuffer sb=new StringBuffer();
+		sb.append("[");
+		int i=0;
+		for(Entry<String,CKConnPool> sets:ckPoolByNodeID.entrySet()){
+			if(i>0)sb.append(",");
+			i++;
+			sb.append("{\"nodeid\":\""+sets.getKey()+"\"");
+			sb.append(",\"conns\":"+sets.getValue().getJsonStr()+"");
+			sb.append("}");
+		}
+		sb.append("]");
+		return sb.toString();
 	}
 	
 	public CKConnPool getPool(String nodeID){

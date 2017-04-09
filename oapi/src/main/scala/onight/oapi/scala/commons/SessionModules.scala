@@ -6,6 +6,8 @@ import onight.tfw.async.AsyncPBActor
 import onight.tfw.async.CompleteHandler
 import onight.tfw.otransio.api.beans.FramePacket
 import onight.oapi.scala.traits.OLog
+import onight.tfw.outils.conf.PropHelper
+
 //import onight.tfw.outils.serialize.SessionIDGenerator
 //import onight.tfw.mservice.NodeHelper
 //import org.apache.commons.lang3.StringUtils
@@ -18,6 +20,8 @@ abstract class SessionModules[T <: Message] extends AsyncPBActor[T] with OLog{
       .getBundle()
       .getBundleContext();
 
+  implicit val props:PropHelper=new PropHelper(ctx);
+  
   def service: LService[T] = null
 
   override def onPBPacket(pack: FramePacket, pbo: T, handler: CompleteHandler) = {

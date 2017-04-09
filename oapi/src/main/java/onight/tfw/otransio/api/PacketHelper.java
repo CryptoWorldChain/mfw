@@ -38,6 +38,17 @@ public class PacketHelper {
 		// ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
 		return ret;
 	}
+	
+	public  static FramePacket clonePacket(FramePacket fp) {
+		FramePacket ret = new FramePacket();
+		ret.setExtHead(fp.getExtHead());
+		ret.setFixHead(fp.getFixHead());
+		ret.setBody(fp.getBody());
+		ret.setFbody(ret.getFbody());
+		ret.getFixHead().reset();
+		// ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
+		return ret;
+	}
 
 	public static FramePacket genASyncPack(String cmd, String module, Object body) {
 		return genPack(cmd, module, body, false, (byte) 0);
@@ -60,7 +71,6 @@ public class PacketHelper {
 		fh.setCmd(cmd);
 		fh.setModule(module);
 		fh.setPrio(pio);
-		fh.setVer('V');
 		fh.setSync(isSync);
 		fh.setEnctype(SerializerFactory.SERIALIZER_TRANSBEAN);
 		ret.setFixHead(fh);

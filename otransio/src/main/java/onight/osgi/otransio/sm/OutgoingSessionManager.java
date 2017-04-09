@@ -3,6 +3,8 @@ package onight.osgi.otransio.sm;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import org.apache.commons.lang3.StringUtils;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +14,7 @@ import onight.osgi.otransio.ck.NodeConnectionPool;
 import onight.osgi.otransio.exception.NoneServerException;
 import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.nio.OClient;
+import onight.tfw.mservice.NodeHelper;
 import onight.tfw.otransio.api.session.ModuleSession;
 import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.conf.PropHelper.IFinder;
@@ -31,15 +34,30 @@ public class OutgoingSessionManager {
 	boolean ready;
 	@Getter
 	NodeConnectionPool nodePool;
-
-	public OutgoingSessionManager(OSocketImpl oimpl,PropHelper params, MSessionSets mss) {
+	
+	
+	public String getJsonInfo()
+	{
+		StringBuffer sb=new StringBuffer();
+		sb.append("{\"cur\":{");
+			sb.append("\"nodeid\":\"").append(mss.currentNodeID).append("\"");
+			sb.append(",\"inaddr\":\"").append(NodeHelper.getCurrNodeListenInAddr()).append("\"");
+			sb.append(",\"inport\":\"").append(NodeHelper.getCurrNodeListenInPort()).append("\"");
+			sb.append(",\"outaddr\":\"").append(NodeHelper.getCurrNodeListenOutAddr()).append("\"");
+			sb.append(",\"outport\":\"").append(NodeHelper.getCurrNodeListenOutPort()).append("\"");
+			sb.append("}");
+		sb.append(",\"conns\":").append(nodePool.getJsonStr());
+		sb.append("}");
+		return sb.toString();
+	}
+	public OutgoingSessionManager(OSocketImpl oimpl, PropHelper params, MSessionSets mss) {
 		this.params = params;
 		this.mss = mss;
 		client = new OClient(oimpl);
 		client.init(this, params);
 		ck = new CheckHealth(params.get("otrans.checkhealth.size", 2), params.get("otrans.checkhealth.delay", 30));
 	}
-
+	
 	public synchronized void initNetPool() {
 		nodePool = new NodeConnectionPool();
 		final HashSet<String> nodeNames = new HashSet<String>();
@@ -58,6 +76,34 @@ public class OutgoingSessionManager {
 			int core = params.get(key + ".core", params.get("otrans.servers.default.core", 2));
 			int max = params.get(key + ".max", params.get("otrans.servers.default.max", 10));
 			nodePool.addPool(client, node, address, port, core, max, mss);
+		}
+
+	}
+
+	public synchronized void addNetPool(String nodeID, String addrport) {
+		if (addrport == null)
+			return;
+		String addrports[] = addrport.split(":");
+		if (addrports.length != 2)
+			return;
+		if(StringUtils.equalsIgnoreCase(nodeID, NodeHelper.getCurrNodeID())){
+			log.debug("same node ,not need to add net pool");
+			return;
+		}
+
+		try {
+			String addr = addrports[0].trim();
+			int port = Integer.parseInt(addrports[1].trim());
+			String key = "otrans.servers.node." + nodeID;
+			int core = params.get(key + ".core", params.get("otrans.servers.default.core", 2));
+			int max = params.get(key + ".max", params.get("otrans.servers.default.max", 10));
+			CKConnPool pool = nodePool.getPool(nodeID);//unknow modules
+			if (pool == null) {
+				pool = nodePool.addPool(client, nodeID, addr, port, core, max, mss);
+				ck.addCheckHealth(pool);
+			}
+
+		} catch (Exception e) {
 		}
 
 	}
@@ -89,7 +135,7 @@ public class OutgoingSessionManager {
 
 	public void createOutgoingSS(String module) throws NoneServerException {
 		String nodeIDs = params.get("otrans.servers.mmid." + module + ".nodes", "");
-		for(String nodeID:nodeIDs.split(",")){
+		for (String nodeID : nodeIDs.split(",")) {
 			ModuleSession ms = mss.byModuleAndNodeID(module, nodeID);
 			OutgoingModuleSession rms = new OutgoingModuleSession(module, nodeID, mss);
 			if (ms != null) {
@@ -128,13 +174,12 @@ public class OutgoingSessionManager {
 		}
 		return defaultv;
 	}
-	
+
 	public static void main(String[] args) {
-		String m="otrans.servers.node.*";
-		String key="otrans.servers.node.n1.addr";
-		System.out.println("match="+key.matches(m));
-		
+		String m = "otrans.servers.node.*";
+		String key = "otrans.servers.node.n1.addr";
+		System.out.println("match=" + key.matches(m));
+
 	}
-	
-	
+
 }

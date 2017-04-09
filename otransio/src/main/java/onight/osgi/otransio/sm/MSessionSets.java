@@ -1,11 +1,13 @@
 package onight.osgi.otransio.sm;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.glassfish.grizzly.Connection;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.sm.RemoteModuleBean.ModuleBean;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
@@ -14,12 +16,15 @@ import onight.tfw.otransio.api.session.ModuleSession;
 import onight.tfw.outils.pool.ReusefulMapPool;
 
 @Data
+@Slf4j
 public class MSessionSets {
 	String currentNodeID;
 
 	public MSessionSets(String currentNodeID) {
 		this.currentNodeID = currentNodeID;
 	}
+
+	OutgoingSessionManager osm;
 
 	HashMap<String, ReusefulMapPool<String, ModuleSession>> sessionByModule = new HashMap<>();
 	HashMap<String, ModuleSession> localsessionByModule = new HashMap<>();
@@ -28,6 +33,40 @@ public class MSessionSets {
 	// ConcurrentHashMap<String, HashSet<ModuleSession>>();
 
 	RemoteModuleBean rmb = new RemoteModuleBean();
+
+	public String getJsonInfo() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("{\"locals\":[");
+		int i = 0;
+		for (Entry<String, ModuleSession> kv : localsessionByModule.entrySet()) {
+			if (i > 0)
+				sb.append(",");
+			i++;
+			sb.append(kv.getValue().getJsonStr());
+		}
+
+		sb.append("],\"all\":[");
+		i = 0;
+		for (Entry<String, ReusefulMapPool<String, ModuleSession>> kv : sessionByModule.entrySet()) {
+			if (i > 0)
+				sb.append(",");
+			i++;
+			sb.append("{\"module\":\"" + kv.getKey() + "\"");
+			sb.append(",\"sessions\":[");
+			int v = 0;
+			for (ModuleSession sm : kv.getValue().getAllObjs()) {
+				if (v > 0)
+					sb.append(",");
+				v++;
+				sb.append(sm.getJsonStr());
+			}
+			sb.append("]}");
+		}
+		sb.append("]");
+
+		sb.append("}");
+		return sb.toString();
+	}
 
 	public ModuleSession byModule(String module) {
 		if (sessionByModule.containsKey(module)) {
@@ -51,22 +90,30 @@ public class MSessionSets {
 		}
 		return this.addModule(module, currentNodeID, null);
 	}
-	public Set<String> getLocalModules(){
+
+	public Set<String> getLocalModules() {
 		return sessionByModule.keySet();
 	}
+
 	public FramePacket getLocalModulesPacket() {
-		return PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN,
-				PackHeader.REMOTE_MODULE, rmb);
+		FramePacket ret = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN, PackHeader.REMOTE_MODULE, rmb);
+		log.debug("getLocalModulePack:" + ret.getFixHead().toStrHead() + ":" + rmb);
+		return ret;
 	}
-	
-	public ModuleSession getLocalModuleSession(String moduleid){
+
+	public FramePacket getLocalModulesPacketBack() {
+		FramePacket ret = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN_RET, PackHeader.REMOTE_MODULE, rmb);
+		log.debug("getLocalModulePack.back:" + ret.getFixHead().toStrHead() + ":" + rmb);
+		return ret;
+
+	}
+
+	public ModuleSession getLocalModuleSession(String moduleid) {
 		return localsessionByModule.get(moduleid);
 	}
 
-	public synchronized ModuleSession addModule(String moduleid, String nodeid,
-			Connection conn) {
-		ReusefulMapPool<String, ModuleSession> pool = sessionByModule
-				.get(moduleid);
+	public synchronized ModuleSession addModule(String moduleid, String nodeid, Connection conn) {
+		ReusefulMapPool<String, ModuleSession> pool = sessionByModule.get(moduleid);
 		if (pool == null) {
 			pool = new ReusefulMapPool<String, ModuleSession>();
 			sessionByModule.put(moduleid, pool);
@@ -88,10 +135,8 @@ public class MSessionSets {
 		return ms;
 	}
 
-	public synchronized void addOutogingModule(ModuleSession session,
-			String nodeid) {
-		ReusefulMapPool<String, ModuleSession> pool = sessionByModule
-				.get(session.getModule());
+	public synchronized void addOutogingModule(ModuleSession session, String nodeid) {
+		ReusefulMapPool<String, ModuleSession> pool = sessionByModule.get(session.getModule());
 		if (pool == null) {
 			pool = new ReusefulMapPool<String, ModuleSession>();
 			sessionByModule.put(session.getModule(), pool);
@@ -104,8 +149,7 @@ public class MSessionSets {
 	}
 
 	public synchronized void removeModule(String module, String nodeid) {
-		ReusefulMapPool<String, ModuleSession> pool = sessionByModule
-				.get(module);
+		ReusefulMapPool<String, ModuleSession> pool = sessionByModule.get(module);
 		if (pool != null) {
 			pool.removeByKey(nodeid);
 			if (pool.size() <= 0) {

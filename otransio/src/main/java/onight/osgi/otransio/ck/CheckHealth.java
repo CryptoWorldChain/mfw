@@ -55,10 +55,10 @@ public class CheckHealth {
 	public void addCheckHealth(final Connection conn) {
 		if (conn == null)
 			return;
-		if(lastCheckHealthMS.isSet(conn)){
+		if(lastCheckHealthMS.isSet(conn.getAttributes())){
 			return;
 		}
-		lastCheckHealthMS.set(conn, System.currentTimeMillis());
+		lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
 		
 
 		exec.scheduleAtFixedRate(new Runnable() {
@@ -69,16 +69,18 @@ public class CheckHealth {
 						conn.close();
 						exec.remove(this);
 					} else {
-						conn.write(hbpack);
-						lastCheckHealthMS.set(conn, System.currentTimeMillis());
-						log.trace("CheckHealth TO:" + conn.getPeerAddress()+",From="+conn.getLocalAddress()+",pack="+hbpack.getFixHead());
+						if(lastCheckHealthMS.get(conn.getAttributes())-System.currentTimeMillis()>delay*1000){
+							//!!conn.write(hbpack);	
+							lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
+							log.trace("!!CheckHealth TO:" + conn.getPeerAddress()+",From="+conn.getLocalAddress()+",pack="+hbpack.getFixHead());
+						}
 					}
 
 				} catch (Exception e) {
 					log.debug("error In HB thread:", e);
 				}
 			}
-		}, delay, delay, TimeUnit.SECONDS);
+		}, 30, delay, TimeUnit.SECONDS);
 	}
 
 	public void addCheckHealth(final CKConnPool pool) {

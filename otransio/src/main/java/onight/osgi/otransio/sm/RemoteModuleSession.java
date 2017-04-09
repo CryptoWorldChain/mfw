@@ -1,8 +1,19 @@
 package onight.osgi.otransio.sm;
 
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.SocketAddress;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.glassfish.grizzly.CloseListener;
+import org.glassfish.grizzly.Closeable;
+import org.glassfish.grizzly.CompletionHandler;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.ICloseType;
+import org.glassfish.grizzly.impl.FutureImpl;
+import org.glassfish.grizzly.utils.Futures;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -14,17 +25,9 @@ import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.beans.LoopPackBody;
 import onight.tfw.otransio.api.beans.SendFailedBody;
+import onight.tfw.otransio.api.session.CMDService;
 import onight.tfw.otransio.api.session.ModuleSession;
 import onight.tfw.outils.pool.ReusefulLoopPool;
-import onight.tfw.outils.serialize.SerializerUtil;
-
-import org.glassfish.grizzly.CloseListener;
-import org.glassfish.grizzly.Closeable;
-import org.glassfish.grizzly.CompletionHandler;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.ICloseType;
-import org.glassfish.grizzly.impl.FutureImpl;
-import org.glassfish.grizzly.utils.Futures;
 
 @Slf4j
 public class RemoteModuleSession extends ModuleSession {
@@ -48,6 +51,37 @@ public class RemoteModuleSession extends ModuleSession {
 				+ counter.incrementAndGet();
 	}
 
+	public String getJsonStr() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("{\"module\":\"" + module + "\"");
+		sb.append(",\"cmds\":").append("[");
+		int v = 0;
+		for (CMDService service : serviceByCMD.values()) {
+			if (v > 0)
+				sb.append(",");
+			v++;
+			for (String cmd : service.getCmds()) {
+				sb.append("\"").append(cmd).append("\"");
+			}
+
+		}
+		sb.append("]");
+		sb.append(",\"remoteid\":\"").append(remoteNodeID).append("\"");
+		sb.append(",\"channels\":").append(connsPool.size()).append("");
+		sb.append(",\"chdetails\":[");
+		Iterator<Connection> it = connsPool.getAllObjs().iterator() ;
+		while(it.hasNext())
+		{
+			Connection conn = it.next();
+			sb.append("{\"local\":\"").append(conn.getLocalAddress()).append("\"");
+			sb.append(",\"peer\":\"").append(conn.getPeerAddress()).append("\"");
+			sb.append("}");
+			if(it.hasNext())sb.append(",");
+		}
+		sb.append("]");
+		sb.append("}");
+		return sb.toString();
+	}
 	public RemoteModuleSession(String moduleid, String remoteNodeID,
 			MSessionSets mss) {
 		super(moduleid);

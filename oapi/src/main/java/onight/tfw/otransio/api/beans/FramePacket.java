@@ -12,6 +12,7 @@ import onight.tfw.outils.serialize.ISerializer;
 import onight.tfw.outils.serialize.SerializerFactory;
 import onight.tfw.outils.serialize.SerializerUtil;
 
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import com.google.protobuf.Message;
@@ -79,6 +80,23 @@ public class FramePacket {
 
 	public boolean isSync() {
 		return fixHead.isSync();
+	}
+
+	public boolean isWallMessage() {
+		return StringUtils.equalsIgnoreCase(getExtStrProp(PackHeader.WALL), "true")
+				|| StringUtils.equalsIgnoreCase(getExtStrProp(PackHeader.WALL), "1")
+				|| StringUtils.equalsIgnoreCase(getExtStrProp(PackHeader.WALL), "on");
+	}
+
+	public int getTTL() {
+		String v = getExtStrProp(PackHeader.TTL);
+		if (StringUtils.isBlank(v))
+			return 0;
+		try {
+			return Integer.parseInt(v);
+		} catch (NumberFormatException e) {
+			return 0;
+		}
 	}
 
 	public String getCMD() {

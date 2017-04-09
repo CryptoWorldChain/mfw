@@ -2,17 +2,19 @@ package onight.osgi.otransio.nio;
 
 import java.io.IOException;
 
-import onight.osgi.otransio.impl.OSocketImpl;
-import onight.tfw.outils.conf.PropHelper;
-
 import org.apache.felix.ipojo.annotations.Invalidate;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
+import org.glassfish.grizzly.ssl.SSLFilter;
 import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import onight.osgi.otransio.impl.OSocketImpl;
+import onight.tfw.mservice.NodeHelper;
+import onight.tfw.outils.conf.PropHelper;
 
 public class OServer {
 
@@ -26,8 +28,10 @@ public class OServer {
 		FilterChainBuilder filterChainBuilder = FilterChainBuilder.stateless();
 		// Add TransportFilter, which is responsible
 		// for reading and writing data to the connection
+		
 		filterChainBuilder.add(new TransportFilter());
 
+		
 		// StringFilter is responsible for Buffer <-> String conversion
 		filterChainBuilder.add(new OTransFilter());
 
@@ -48,13 +52,14 @@ public class OServer {
 		ThreadPoolConfig wtpc=ThreadPoolConfig.defaultConfig();
 		wtpc.setCorePoolSize(params.get("otrans.worker.core", 10)).setMaxPoolSize(params.get("otrans.worker.max", 100));
 		transport.setWorkerThreadPoolConfig(wtpc);
+		
 
 		transport.setTcpNoDelay(true);
 		try {
 			// binding transport to start listen on certain host and port
-			int oport = params.get("otrans.port", PORT);
+			int oport = NodeHelper.getCurrNodeListenInPort();
 			log.debug("port=" + oport);
-			transport.bind(params.get("otrans.addr", "0.0.0.0"), oport);
+			transport.bind(NodeHelper.getCurrNodeListenInAddr(), oport);
 			log.info("socket服务开启成功:" + oport);
 			transport.start();
 			

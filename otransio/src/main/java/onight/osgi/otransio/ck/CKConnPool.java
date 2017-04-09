@@ -17,6 +17,7 @@ import org.glassfish.grizzly.CloseListener;
 import org.glassfish.grizzly.Closeable;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.ICloseType;
+import org.glassfish.grizzly.nio.transport.TCPNIOConnection;
 
 @Data
 @Slf4j
@@ -39,7 +40,17 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		this.max = max;
 		this.mss = mss;
 	}
-
+	
+	public String getJsonStr(){
+		StringBuffer sb=new StringBuffer();
+		sb.append("{\"ip\":\""+ip+"\"");
+		sb.append(",\"port\":"+port+"");
+		sb.append(",\"core\":"+core+"");
+		sb.append(",\"max\":"+max+"");
+		sb.append(",\"curr\":"+this.size()+"");
+		sb.append("}");
+		return sb.toString();
+	}
 	public synchronized Connection createOneConnection() {
 		return createOneConnection(0);
 	}
@@ -48,7 +59,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 
 		if (size() < max && maxtries < 5) {
 			try {
-				Connection conn = client.getConnection(ip, port);
+				final Connection conn = client.getConnection(ip, port);
 				if (conn != null) {
 					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 						@Override
@@ -59,7 +70,11 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 							}
 						}
 					});
-					FramePacket pack=mss.getLocalModulesPacket();
+					final FramePacket pack = mss.getLocalModulesPacket();
+					log.debug("write localmodulepack:" + pack + ",writable==" + conn.canWrite());
+					log.trace("!!WriteLocalModulesPacket TO:" + conn.getPeerAddress() + ",From="
+							+ conn.getLocalAddress() + ",pack=" + pack.getFixHead());
+					//
 					conn.write(pack);
 					this.addObject(conn);
 				} else {

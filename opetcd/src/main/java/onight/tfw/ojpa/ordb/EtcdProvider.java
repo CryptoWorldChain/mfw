@@ -61,30 +61,30 @@ public class EtcdProvider implements StoreServiceProvider {
 	public synchronized void startup() {
 		log.info("启动中...@" + bundleContext);
 		log.debug("create:EtcdImpl:");
-		String username = params.get("org.zippo.ectd.username", null);
-		String passwd = params.get("org.zippo.ectd.passwd", null);
-		String uris = params.get("org.zippo.ectd.uris", "http://127.0.0.1:2379");
-		String ssluris = params.get("org.zippo.ectd.ssluris", null);
+		String username = params.get("org.zippo.etcd.username", null);
+		String passwd = params.get("org.zippo.etcd.passwd", null);
+		String uris = params.get("org.zippo.etcd.uris", "http://127.0.0.1:2379");
+		String ssluris = params.get("org.zippo.etcd.ssluris", null);
 		if (ssluris != null) {
 			try {
 				SslContext sslContext = SslContextBuilder.forClient().build();
 				if(username!=null&&passwd!=null){
 					etcd = new EtcdClient(sslContext, getURI(uris));
-					log.info("new SSL EtcdVersion="+etcd.version());
+					log.info("new SSL Etcd"+",Version(cluster,server)=("+etcd.version().getCluster()+","+etcd.version().server+")");
 				}else{
 					etcd = new EtcdClient(sslContext,username,passwd,getURI(uris));
-					log.info("new SSL Etcd with username="+username+",passwd=******"+"Version="+etcd.version());
+					log.info("new SSL Etcd with username="+username+",passwd=******"+",Version(cluster,server)=("+etcd.version().getCluster()+","+etcd.version().server+")");
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}else{
-			if(username!=null&&passwd!=null){
+			if(username==null&&passwd==null){
 				etcd = new EtcdClient( getURI(uris));
-				log.info("new EtcdVersion="+etcd.version());
+				log.info("new Etcd,Version(cluster,server)=("+etcd.version().getCluster()+","+etcd.version().server+")");
 			}else{
 				etcd = new EtcdClient(username,passwd,getURI(uris));
-				log.info("new Etcd with username="+username+",passwd=******"+"Version="+etcd.version());
+				log.info("new Etcd with username="+username+",passwd=******"+",Version(cluster,server)=("+etcd.version().getCluster()+","+etcd.version().server+")");
 			}
 		}
 		if(etcd==null)

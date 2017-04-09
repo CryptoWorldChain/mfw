@@ -20,13 +20,35 @@ public class ModuleSession extends PSession {
 			service.doPacketWithFilter(pack, new CompleteHandler() {
 				@Override
 				public void onFinished(FramePacket packet) {
-					if(handler!=null)
-					{
+					if (handler != null) {
 						handler.onFinished(packet);
 					}
 				}
 			});
 		}
+	}
+
+	public String getJsonStr() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("{\"module\":\"" + module + "\"");
+		sb.append(",\"cmds\":").append("[");
+		int v = 0;
+		for (CMDService service : serviceByCMD.values()) {
+			if (v > 0)
+				sb.append(",");
+			v++;
+			int i = 0;
+			for (String cmd : service.getCmds()) {
+				if (i > 0)
+					sb.append(",");
+				i++;
+				sb.append("\"").append(cmd).append("\"");
+			}
+
+		}
+		sb.append("]}");
+
+		return sb.toString();
 	}
 
 	public void registerService(String cmd, CMDService service) {

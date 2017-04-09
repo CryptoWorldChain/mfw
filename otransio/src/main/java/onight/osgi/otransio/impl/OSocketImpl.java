@@ -3,6 +3,9 @@ package onight.osgi.otransio.impl;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.ipojo.annotations.Bind;
@@ -19,17 +22,16 @@ import jnr.posix.POSIXFactory;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import onight.osgi.annotation.NActorProvider;
 import onight.osgi.otransio.nio.OServer;
 import onight.osgi.otransio.sm.MSessionSets;
 import onight.osgi.otransio.sm.OutgoingSessionManager;
 import onight.osgi.otransio.sm.RemoteModuleBean;
 import onight.osgi.otransio.sm.RemoteModuleBean.ModuleBean;
+import onight.osgi.otransio.sm.RemoteModuleSession;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.mservice.NodeHelper;
 import onight.tfw.ntrans.api.ActorService;
 import onight.tfw.ntrans.api.annotation.ActorRequire;
-import onight.tfw.ojpa.api.IJPAClient;
 import onight.tfw.otransio.api.PSenderService;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
@@ -43,7 +45,7 @@ import onight.tfw.outils.conf.PropHelper;
 @Instantiate(name = "osocketimpl")
 @Provides(specifications = ActorService.class)
 @Slf4j
-public class OSocketImpl implements Serializable,ActorService {
+public class OSocketImpl implements Serializable, ActorService {
 
 	/**
 	 * 
@@ -52,11 +54,11 @@ public class OSocketImpl implements Serializable,ActorService {
 
 	@Getter
 	private PropHelper params;
-	
-	@ActorRequire
-	@Getter @Setter
-	ModuleDiscovery mdisc;
 
+	@ActorRequire
+	@Getter
+	@Setter
+	ModuleDiscovery mdisc;
 
 	public static String PACK_FROM = PackHeader.EXT_HIDDEN + "_" + "from";
 	public static String PACK_TO = PackHeader.EXT_HIDDEN + "_" + "to";
@@ -67,6 +69,7 @@ public class OSocketImpl implements Serializable,ActorService {
 		params = new PropHelper(context);
 		mss = new MSessionSets(NodeHelper.getCurrNodeID());
 		osm = new OutgoingSessionManager(this, params, mss);
+		mss.setOsm(osm);
 	}
 
 	MSessionSets mss;
@@ -88,7 +91,7 @@ public class OSocketImpl implements Serializable,ActorService {
 	@Validate
 	public void start() {
 		server.startServer(this, params);
-		
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -102,9 +105,9 @@ public class OSocketImpl implements Serializable,ActorService {
 				// 建立外联服务
 				log.info("trying to init remote session.");
 				osm.init();
-				log.debug("ModuleDiscovery.required=="+mdisc);
-				if(mdisc!=null){
-					mdisc.updateModuleToGlobal(mss,params);
+				log.debug("ModuleDiscovery.required==" + mdisc);
+				if (mdisc != null) {
+					mdisc.updateModuleToGlobal(mss, params);
 				}
 				log.info("init remote session.[success] ");
 			}
@@ -139,8 +142,8 @@ public class OSocketImpl implements Serializable,ActorService {
 		if (osm != null && osm.isReady()) {
 			osm.getNodePool().broadcastLocalModule(mss);
 		}
-		if(mdisc!=null){
-			mdisc.updateModuleToGlobal(mss,params);
+		if (mdisc != null) {
+			mdisc.updateModuleToGlobal(mss, params);
 		}
 	}
 
@@ -148,8 +151,8 @@ public class OSocketImpl implements Serializable,ActorService {
 	public void unbindCMDService(CMDService service) {
 		log.info("Remove ModuleSession::" + service);
 		mss.removeLocalModule(service.getModule());
-		if(mdisc!=null){
-			mdisc.updateModuleToGlobal(mss,params);
+		if (mdisc != null) {
+			mdisc.updateModuleToGlobal(mss, params);
 		}
 	}
 
@@ -159,7 +162,15 @@ public class OSocketImpl implements Serializable,ActorService {
 			if (rmb != null) {
 				for (ModuleBean mb : rmb.getModules()) {
 					mss.addModule(mb.getModule(), mb.getNodeID(), conn);
-				}
+				} // 交换信息
+			}
+			conn.write(mss.getLocalModulesPacketBack());
+		} else if (PackHeader.REMOTE_LOGIN_RET.equals(pack.getCMD())) {// 来自远端的模块信息返回
+			RemoteModuleBean rmb = pack.parseBO(RemoteModuleBean.class);
+			if (rmb != null) {
+				for (ModuleBean mb : rmb.getModules()) {
+					mss.addModule(mb.getModule(), mb.getNodeID(), conn);
+				} // 交换信息
 			}
 		} else if (PackHeader.CMD_HB.equals(pack.getCMD())) {// 来自远端的心跳线
 			log.trace("[HB] From " + conn.getPeerAddress() + " , to " + conn.getLocalAddress());
@@ -188,7 +199,44 @@ public class OSocketImpl implements Serializable,ActorService {
 				ms = mss.byModule(pack.getModule());
 			}
 		}
+		if (pack.isWallMessage()) {
+			// 广播消息
+			mss.getLocalModuleSession(pack.getModule()).onPacket(pack, handler);
+
+			if (mss.getSessionByModule().get(pack.getModule()) != null) {
+				String oldwr = pack.getExtStrProp(PackHeader.WALL_ROUTE);
+				StringBuffer nodes = new StringBuffer(mss.getCurrentNodeID());
+				for (String nodeid : mss.getSessionByModule().get(pack.getModule()).getAllObjMaps().keySet()) {
+					if (!oldwr.contains("," + nodeid)) {
+						nodes.append(",").append(nodeid);
+					}
+				}
+				pack.putHeader(PackHeader.WALL_ROUTE, nodes.toString());
+
+				for (Entry<String, ModuleSession> kv : mss.getSessionByModule().get(pack.getModule()).getAllObjMaps()
+						.entrySet()) {
+					if (kv.getValue() instanceof RemoteModuleSession) {
+						if (!oldwr.contains("," + kv.getKey())) {
+							FramePacket wallpack = PacketHelper.clonePacket(pack);
+							wallpack.putHeader(PackHeader.TTL, "" + (pack.getTTL()));
+							wallpack.putHeader(PACK_FROM, mss.getCurrentNodeID());
+							kv.getValue().onPacket(wallpack, handler);
+						} else if (pack.getTTL() > 0) {//相同的只广播几次
+							FramePacket wallpack = PacketHelper.clonePacket(pack);
+							wallpack.putHeader(PackHeader.TTL, "" + (pack.getTTL() - 1));
+							wallpack.putHeader(PACK_FROM, mss.getCurrentNodeID());
+							kv.getValue().onPacket(wallpack, handler);
+						}
+					}
+				}
+
+			}
+
+			return;
+
+		}
 		if (ms != null) {
+
 			ms.onPacket(pack, handler);
 		} else {
 			// 没有找到对应的消息

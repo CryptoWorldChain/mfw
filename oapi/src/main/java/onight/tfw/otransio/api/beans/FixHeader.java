@@ -65,6 +65,7 @@ public class FixHeader {
 
 	public FixHeader() {
 		this.data = new byte[16];
+		reset();
 	}
 
 	public static FixHeader parseFrom(byte[] data) {
@@ -73,6 +74,7 @@ public class FixHeader {
 
 	public void reset() {
 		this.data[0] = -1;
+		dataAlreadyGen = false;
 	}
 
 	public byte[] genBytes() {
@@ -91,10 +93,11 @@ public class FixHeader {
 		}
 	}
 
+	boolean dataAlreadyGen = false;
 	public byte[] toBytes(boolean sync) {
-		if (data[0] > 0) {
-			return data;
-		}
+//		if (dataAlreadyGen) {
+//			return data;
+//		}
 		data[0] = (byte) (ver);
 		System.arraycopy(cmd.getBytes(), 0, data, 1, 3);
 		System.arraycopy(module.getBytes(), 0, data, 4, 3);
@@ -122,6 +125,7 @@ public class FixHeader {
 		data[13] = (byte) enctype;
 		data[14] = (byte) (prio + '0');
 		data[15] = (byte) (reserved + '0');
+		dataAlreadyGen = true;
 		return data;
 	}
 

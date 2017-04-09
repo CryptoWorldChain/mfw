@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 public class OClient {
 	Logger log = LoggerFactory.getLogger(OClient.class);
 
-	private TCPNIOTransport transport;
+	public TCPNIOTransport transport;
 	OSocketImpl oimpl;
 	public OClient(OSocketImpl oimpl) {
 		// init();

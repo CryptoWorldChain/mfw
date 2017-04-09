@@ -108,4 +108,15 @@ public class OParam implements OPFace {
 	public Class<?> getDomainClazz() {
 		return domainClazz;
 	}
+
+	@Override
+	public Future<OTreeValue> compareAndSwap(String key, String value, String compareValue) throws IOException {
+		return opimpl.compareAndSwap(key, value, compareValue);
+	}
+
+	@Override
+	public Future<OTreeValue> compareAndDelete(String key, String compareValue) throws IOException {
+		// TODO Auto-generated method stub
+		return opimpl.compareAndDelete(key, compareValue);
+	}
 }

@@ -5,6 +5,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import lombok.extern.slf4j.Slf4j;
 import mousio.client.promises.ResponsePromise;
 import mousio.etcd4j.EtcdClient;
@@ -12,10 +14,12 @@ import mousio.etcd4j.promises.EtcdResponsePromise;
 import mousio.etcd4j.requests.EtcdKeyGetRequest;
 import mousio.etcd4j.responses.EtcdKeysResponse;
 import onight.tfw.async.CallBack;
+import onight.tfw.mservice.ThreadContext;
 import onight.tfw.ojpa.api.DomainDaoSupport;
 import onight.tfw.ojpa.api.ServiceSpec;
 import onight.tfw.oparam.api.OPFace;
 import onight.tfw.oparam.api.OTreeValue;
+import onight.tfw.outils.serialize.JsonSerializer;
 
 @Slf4j
 public class EtcdImpl implements OPFace, DomainDaoSupport {
@@ -29,6 +33,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 		this.etcd = etcd;
 	}
 
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -36,6 +41,12 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public String getHealth() {
+		Object obj=ThreadContext.getContext("iscluster");
+		if(obj!=null&&obj instanceof Boolean){
+			if((Boolean)obj){
+				return JsonSerializer.formatToString(etcd.getMembers().getMembers());
+			}
+		}
 		return etcd.getHealth().getHealth();
 	}
 
@@ -47,7 +58,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> put(String key, String value) throws IOException {
-		return new FutureWP(etcd.put(key, value).send());
+		return new FutureWP(etcd.put(key, value).ttl(ThreadContext.getContextInt("ttl",0)).send());
 	}
 
 	/*
@@ -57,7 +68,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> putDir(String dir) throws IOException {
-		return new FutureWP(etcd.putDir(dir).send());
+		return new FutureWP(etcd.putDir(dir).ttl(ThreadContext.getContextInt("ttl",0)).send());
 	}
 
 	/*
@@ -68,7 +79,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> post(String key, String value) throws IOException {
-		return new FutureWP(etcd.post(key, value).send());
+		return new FutureWP(etcd.post(key, value).ttl(ThreadContext.getContextInt("ttl",0)).send());
 	}
 
 	/*
@@ -142,7 +153,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	@Override
 	public void watch(final String key, final CallBack<OTreeValue> cb, final boolean always) {
 
-		EtcdKeyGetRequest getRequest = etcd.getDir(key).waitForChange().timeout(60, TimeUnit.SECONDS);
+		EtcdKeyGetRequest getRequest = etcd.getDir(key).recursive().waitForChange().timeout(60, TimeUnit.SECONDS);
 		try {
 
 			EtcdResponsePromise<EtcdKeysResponse> promise = getRequest.send();
@@ -154,7 +165,8 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 						cb.onSuccess(new OTreeValue(response.get().getNode().key, response.get().getNode().value,
 								FutureWP.getTrees(response.get().getNode().nodes)));
 					} catch (TimeoutException te) {
-						log.debug("Etcd Watch Timeout:" + key+",@"+this);
+						//log.debug("Etcd Watch Timeout:" + key+",@"+this);
+						cb.onFailed(te, new OTreeValue(key, null, null));
 					} catch (Exception e) {
 						cb.onFailed(e, new OTreeValue(key, null, null));
 					} finally {
@@ -194,6 +206,19 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	@Override
 	public void setDaosupport(DomainDaoSupport dao) {
 		log.debug("setDaosupport::dao=" + dao);
+	}
+
+	@Override
+	public Future<OTreeValue> compareAndDelete(String key, String value) throws IOException {
+		return new FutureWP(etcd.delete(key).prevValue(value).send());
+	}
+
+	@Override
+	public Future<OTreeValue> compareAndSwap(String key, String newvalue, String comparevalue) throws IOException {
+		if(comparevalue==null){
+			return new FutureWP(etcd.put(key,newvalue).prevExist(false).ttl(ThreadContext.getContextInt("ttl",0)).send());
+		}
+		return new FutureWP(etcd.put(key,newvalue).prevValue(comparevalue).ttl(ThreadContext.getContextInt("ttl",0)).send());
 	}
 
 }

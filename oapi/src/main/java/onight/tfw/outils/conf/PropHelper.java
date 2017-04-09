@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
@@ -61,6 +62,9 @@ public class PropHelper {
 			}
 		}
 		log.debug("configFile::" + config + "::FF==" + configFile.exists());
+		
+		overrideWithProperties();
+		
 	}
 
 	public PropHelper(BundleContext context) {
@@ -108,6 +112,12 @@ public class PropHelper {
 					local_props.putAll(extpropsConf);
 				}
 			}
+		}
+	}
+	
+	public void overrideWithProperties(){
+		for(Map.Entry<Object, Object> e:System.getProperties().entrySet()){
+			local_props.put(e.getKey(), e.getValue());
 		}
 	}
 

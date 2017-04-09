@@ -123,7 +123,27 @@ public class JsonPBUtil {
 					+ ",builder=" + msgBuilder, e);
 		}
 	}
-
+	public static void json2PBArrayB(byte[] jsonbytes, BuilderFactory factory) {
+		try {
+			JsonNode tree = mapper.readTree(jsonbytes);
+			json2PBArray(tree, factory);
+		} catch (Exception e) {
+			log.warn("error in json2PB:jsonTxt=" + new String(jsonbytes)
+					+ ",builders=" + factory, e);
+		}
+	}
+	public static interface BuilderFactory{
+		public Message.Builder getBuilder();
+	}
+	public static void json2PBArrayS(String jsontext, BuilderFactory factory) {
+		try {
+			JsonNode tree = mapper.readTree(jsontext);
+			json2PBArray(tree, factory);
+		} catch (Exception e) {
+			log.warn("error in json2PB:jsonTxt=" + jsontext
+					+ ",builders=" + factory, e);
+		}
+	}
 	public static void json2PBMap(FieldDescriptor fd, JsonNode node,
 			Message.Builder msgBuilder) {
 		Iterator<Map.Entry<String, JsonNode>> it = (Iterator<Map.Entry<String, JsonNode>>) node
@@ -138,7 +158,15 @@ public class JsonPBUtil {
 			msgBuilder.addRepeatedField(fd, mb.build());
 		}
 	}
-
+	public static void json2PBArray(JsonNode tree, BuilderFactory factory) {
+		if(tree.isArray()){
+			Iterator<JsonNode> it = tree.getElements();
+			while (it.hasNext()) {
+				JsonNode itnode = it.next();
+				json2PB(itnode,factory.getBuilder());
+			}
+		}
+	}
 	public static void json2PB(JsonNode tree, Message.Builder msgBuilder) {
 		try {
 			List<FieldDescriptor> fds = msgBuilder.getDescriptorForType()

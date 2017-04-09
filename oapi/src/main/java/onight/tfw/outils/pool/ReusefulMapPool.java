@@ -4,9 +4,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import lombok.Getter;
+
 public class ReusefulMapPool<K, T> {
 
+	@Getter
 	ConcurrentHashMap<K, T> allObjMaps = new ConcurrentHashMap<>();
+	@Getter
 	ConcurrentLinkedQueue<T> allObjs = new ConcurrentLinkedQueue<>();
 
 	ReentrantReadWriteLock rwlock = new ReentrantReadWriteLock();
@@ -22,7 +26,7 @@ public class ReusefulMapPool<K, T> {
 			rwlock.writeLock().unlock();
 		}
 	}
-
+	
 	public T removeByKey(K key) {
 		rwlock.writeLock().lock();
 		try {

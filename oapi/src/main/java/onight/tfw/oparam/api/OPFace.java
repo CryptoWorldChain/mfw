@@ -11,6 +11,10 @@ public interface OPFace extends DomainDaoSupport{
 	String getHealth();
 
 	Future<OTreeValue> put(String key, String value) throws IOException;
+	
+	Future<OTreeValue> compareAndSwap(String key, String value,String compareValue) throws IOException;
+	
+	Future<OTreeValue> compareAndDelete(String key, String compareValue) throws IOException;
 
 	Future<OTreeValue> putDir(String dir) throws IOException;
 

@@ -28,9 +28,16 @@ public class PackHeader {
 	public final static String CMD_HB = "HBL";
 
 	public final static String REMOTE_LOGIN = "RLG";
+	public final static String REMOTE_LOGIN_RET = "BLG";
 	public final static String REMOTE_MODULE = "***";
 
 	public final static String IQ = "iq";
+	
+	public final static String TTL = "ttl";
+	
+	public final static String WALL = "wall";
+	public final static String WALL_ROUTE = "wr";
+	
 	public final static String MESSAGE = "message";
 
 	// public final static String SESSION = EXT_IGNORE+"SSM";
