@@ -23,20 +23,20 @@ import com.google.protobuf.Message;
 
 @Slf4j
 public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
-	
+
 	long def_timeout = new PropHelper(null).get("tfw.async.timeout", 60000);
-	
+
 	@Override
-	public void doWeb(final HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack) throws IOException {
+	public void doWeb(final HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack)
+			throws IOException {
 		resp.setCharacterEncoding("UTF-8");
 		resp.setHeader("Content-type", "application/json;charset=UTF-8");
 
 		final AsyncContext asyncContext = req.startAsync();
 		String timeout = req.getHeader("tfw_timeout");
-		if(StringUtils.isNumeric(timeout)){
+		if (StringUtils.isNumeric(timeout)) {
 			asyncContext.setTimeout(Integer.parseInt(timeout));
-		}
-		else{
+		} else {
 			asyncContext.setTimeout(def_timeout);
 		}
 		asyncContext.start(new Runnable() {
@@ -48,56 +48,89 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 						public void onFinished(FramePacket retpack) {
 							try {
 								if (retpack == null) {
-									resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
+									resp.getOutputStream().write(PacketHelper
+											.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
 									return;
 								}
 								retpack.getExtHead().buildFor(resp);
+								boolean bodyOnly = false;
+								if (StringUtils.equalsIgnoreCase("bd", retpack.getExtStrProp("resp"))) {
+									bodyOnly = true;
+								}
+
 								if (retpack.getFbody() != null & retpack.getFbody() instanceof Message) {
 									if (retpack.getFixHead().getEnctype() == 'P') {
 										byte[] bodyb = retpack.genBodyBytes();
-										byte[] extb = retpack.genExtBytes(); 
+										byte[] extb = retpack.genExtBytes();
 										retpack.getFixHead().setExtsize(extb.length);
 										retpack.getFixHead().setBodysize(bodyb.length);
-
-										resp.getOutputStream().write(retpack.getFixHead().genBytes());
-										resp.getOutputStream().write(extb);
+										if (!bodyOnly) {
+											resp.getOutputStream().write(retpack.getFixHead().genBytes());
+											resp.getOutputStream().write(extb);
+										}
 										resp.getOutputStream().write(bodyb);
-									}else{
+									} else {
 										Message msg = (Message) retpack.getFbody();
 										String str = new JsonPBFormat().printToString(msg);
-										retpack.getFixHead().genBytes();
-										String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-												+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
-												+ ",\"body\":" + str + "" + "}";
+										if (bodyOnly) {
+											resp.getOutputStream().write(str.getBytes("UTF-8"));
+										} else {
+											retpack.getFixHead().genBytes();
 
-										resp.getOutputStream().write(ret.getBytes("UTF-8"));
-										
+											String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes()))
+													+ "\""//
+													+ ",\"eh\":"
+													+ new String(SerializerUtil
+															.toBytes(jsons.serialize(retpack.getExtHead().getVkvs())))
+													+ "" //
+													+ ",\"body\":" + str + "" + "}";
+											resp.getOutputStream().write(ret.getBytes("UTF-8"));
+
+										}
+
 									}
 
-								} else if (retpack.getFbody() != null && retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON) {
-									String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-											+ ",\"eh\":" + new String((byte[]) (jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
-											+ ",\"body\":" + new String((byte[]) jsons.serialize(retpack.getFbody())) + "" + "}";
+								} else if (retpack.getFbody() != null
+										&& retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON) {
 
-									resp.getOutputStream().write(ret.getBytes("UTF-8"));
+									if (bodyOnly) {
+										resp.getOutputStream().write((byte[]) jsons.serialize(retpack.getFbody()));
+									} else {
+										String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
+												+ ",\"eh\":"
+												+ new String((byte[]) (jsons.serialize(retpack.getExtHead().getVkvs())))
+												+ "" //
+												+ ",\"body\":"
+												+ new String((byte[]) jsons.serialize(retpack.getFbody())) + "" + "}";
+
+										resp.getOutputStream().write(ret.getBytes("UTF-8"));
+									}
 
 									//
-								} else if (retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON && retpack.getBody() != null) {
-									String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-											+ ",\"eh\":" + new String((byte[]) (jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
-											+ ",\"body\":" + new String(retpack.getBody()) + "" + "}";
+								} else if (retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON
+										&& retpack.getBody() != null) {
+									if (bodyOnly) {
+										resp.getOutputStream().write(retpack.getBody());
 
-									resp.getOutputStream().write(ret.getBytes("UTF-8"));
+									} else {
+										String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
+												+ ",\"eh\":"
+												+ new String((byte[]) (jsons.serialize(retpack.getExtHead().getVkvs())))
+												+ "" //
+												+ ",\"body\":" + new String(retpack.getBody()) + "" + "}";
+										resp.getOutputStream().write(ret.getBytes("UTF-8"));
+									}
 
 									//
 								} else {
-									resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", null))));
+									resp.getOutputStream().write(PacketHelper
+											.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", null))));
 								}
 							} catch (Exception e) {
 								log.debug("doweb error:", e);
 								try {
-									resp.getOutputStream().write(
-											PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), null))));
+									resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack,
+											new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), null))));
 								} catch (IOException e1) {
 									// e1.printStackTrace();
 									log.debug("error response:", e);
@@ -111,8 +144,8 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 				} catch (Exception e) {
 					log.debug("doweb error:", e);
 					try {
-						resp.getOutputStream().write(
-								PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), pack))));
+						resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack,
+								new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), pack))));
 					} catch (IOException e1) {
 						// e1.printStackTrace();
 						log.debug("error response:", e);
