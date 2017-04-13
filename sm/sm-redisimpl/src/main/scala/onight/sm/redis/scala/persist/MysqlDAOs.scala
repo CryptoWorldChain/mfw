@@ -8,13 +8,19 @@ import java.util.concurrent.Executors
 object MysqlDAOs {
   implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
 
-  case class KOLoginUser(val LOGIN_ID: String = null,
+  case class KOLoginUser(
+    val LOGIN_ID: String = null,
     val EMAIL: String = null,
     val MOBILE: String = null,
-    val THIRD_LOGINID1: String = null,
+    val THIRD_LOGINID1: String = null,//-->trade_no
     val THIRD_LOGINID2: String = null,
-    val USER_ID: String = null,
-    val PASSWORD: String = null, val TRADE_PASSWORD: String = null, val STATUS: Option[Int] = None)
+    val USER_NAME: String = null,
+    val PASSWORD: String = null,
+    val TRADE_NO: String = null,
+    val BC_ADDRESS: String = null,
+    val BC_PKI: String = null,
+    val BC_METADATA: String = null,
+    val TRADE_PASSWORD: String = null, val STATUS: Option[Int] = None)
 
   object ALoginUserDAO extends SimpleDAO[KOLoginUser] {
     val ttag = classTag[KOLoginUser];

@@ -68,15 +68,46 @@ public class ModuleDiscovery extends NActor {
 			Future<OTreeValue> f = oparam.get("/zippo/members/");
 			if (f.get() != null && f.get().getNodes() != null) {
 				for (OTreeValue v : f.get().getNodes()) {
-					log.trace("try to Add new NetInfo:" + v);
+					log.debug("try to Add new Member NetInfo:" + v);
 					String jsonv = v.getValue();
-					MemberSvcInfo memsvcinfo = JsonSerializer.getInstance().deserialize(jsonv, MemberSvcInfo.class);
-					if(StringUtils.equals("audit_ok", memsvcinfo.getAuditstatus())){
-						mss.getOsm().addNetPool(v.getKey().replace("/zippo/members/", ""),
-								memsvcinfo.outaddr + ":" + memsvcinfo.outport,memsvcinfo.getCoreconn(),memsvcinfo.getMaxconn());
-					}else if(StringUtils.equals("block", memsvcinfo.getAuditstatus())||StringUtils.equals("reject", memsvcinfo.getAuditstatus())){
-						mss.getOsm().rmNetPool(v.getKey().replace("/zippo/members/", ""),
-								memsvcinfo.outaddr + ":" + memsvcinfo.outport);
+					try {
+						MemberSvcInfo memsvcinfo = JsonSerializer.getInstance().deserialize(jsonv, MemberSvcInfo.class);
+						if(StringUtils.equals("audit_ok", memsvcinfo.getAuditstatus())){
+							mss.getOsm().addNetPool(v.getKey().replace("/zippo/members/", ""),
+									memsvcinfo.outaddr + ":" + memsvcinfo.outport,memsvcinfo.getCoreconn(),memsvcinfo.getMaxconn());
+						}else if(StringUtils.equals("block", memsvcinfo.getAuditstatus())||StringUtils.equals("reject", memsvcinfo.getAuditstatus())){
+							mss.getOsm().rmNetPool(v.getKey().replace("/zippo/members/", ""),
+									memsvcinfo.outaddr + ":" + memsvcinfo.outport);
+						}
+					} catch (Exception e) {
+					}
+				}
+			}
+		} catch (Exception e) {
+			// log.warn("updateMemInfo error:",e);
+		}
+	}
+	
+	public void updatePeerInfo() {
+		try {
+			Future<OTreeValue> f = oparam.get("/zippo/peers/");
+		    String rolesstr = prop.get("org.zippo.bc.roles", "unknow");
+
+			if (f.get() != null && f.get().getNodes() != null) {
+				for (OTreeValue v : f.get().getNodes()) {
+					log.debug("try to Add new Peer NetInfo:" + v);
+					try {
+						String jsonv = v.getValue();
+						MemberSvcInfo memsvcinfo = JsonSerializer.getInstance().deserialize(jsonv, MemberSvcInfo.class);
+						//如果自己本身就是member的话需要连过去做校验
+						if(StringUtils.equals("audit_ok", memsvcinfo.getAuditstatus())||rolesstr.contains("member")){
+							mss.getOsm().addNetPool(v.getKey().replace("/zippo/peers/", ""),
+									memsvcinfo.outaddr + ":" + memsvcinfo.outport,memsvcinfo.getCoreconn(),memsvcinfo.getMaxconn());
+						}else if(StringUtils.equals("block", memsvcinfo.getAuditstatus())||StringUtils.equals("reject", memsvcinfo.getAuditstatus())){
+							mss.getOsm().rmNetPool(v.getKey().replace("/zippo/peers/", ""),
+									memsvcinfo.outaddr + ":" + memsvcinfo.outport);
+						}
+					} catch (Exception e) {
 					}
 				}
 			}
@@ -96,6 +127,7 @@ public class ModuleDiscovery extends NActor {
 				return;
 			watched = true;
 			updateModuleToGlobal(mss, prop);
+			updateMemInfo();
 			oparam.watch("/zippo/members/", new CallBack<OTreeValue>() {
 				@Override
 				public void onSuccess(OTreeValue ovalue) {
@@ -106,6 +138,23 @@ public class ModuleDiscovery extends NActor {
 				@Override
 				public void onFailed(Exception e, OTreeValue ovalue) {
 					log.trace("get onfailed info::" + ovalue);
+					updateMemInfo();
+				}
+			}, true);
+			
+			updatePeerInfo();
+
+			oparam.watch("/zippo/peers/", new CallBack<OTreeValue>() {
+				@Override
+				public void onSuccess(OTreeValue ovalue) {
+					log.trace("get info::" + ovalue);
+					updatePeerInfo();
+				}
+
+				@Override
+				public void onFailed(Exception e, OTreeValue ovalue) {
+					log.trace("get onfailed info::" + ovalue);
+					updatePeerInfo();
 				}
 			}, true);
 		} catch (Exception e) {

@@ -1,52 +1,43 @@
-
-
 syntax = "proto3";
 
 package onight.sm;
 
-enum PBModule{
+enum PBModule {
 	SSM = 0;
 }
-enum PBCommand{
-	SIN  = 0;
-	 
-	
-	VLD  = 1;
+
+enum PBCommand {
+	SIN = 0;
+	VLD = 1;
 	OUT = 2;
-	GET = 3;//获取session信息
-	SET = 4;//设置session的信息
-	
+	GET = 3; //获取session信息
+	SET = 4; //设置session的信息
 	TKN = 10;
 	TKC = 11;
-	
-	OIN = 20;//基于jdbc的登录，可以是oracle或者是mysql
+	REG = 21; //注册一个新的账户
+	OIN = 20; //基于jdbc的登录，可以是oracle或者是mysql
 }
 
-
-message PBToken	//token操作
+message PBToken //token操作
 {
-	TokenOp op=1;
+	TokenOp op = 1;
 	string tokenid = 2;
 	string userid = 3;
 };
 
-
-message PBSession{
+message PBSession {
 	string smid = 1;
 	uint64 loginMS = 2;
 	uint64 lastUpdateMS = 3;
 	uint32 max_inactive_interval = 4;
 	bool validate = 5;
-	map<string,string> kvs = 6;
+	map < string, string > kvs = 6;
 	string login_id = 7;
-	string  res_id = 8;//资源id
-	
-	RetCode	status = 40;//返回码
-	
+	string res_id = 8; //资源id
+	RetCode status = 40; //返回码
 }
 
-
-message PBSSO	//登入
+message PBSSO //登入
 {
 	string user_id = 1;
 	string login_id = 2;
@@ -56,75 +47,73 @@ message PBSSO	//登入
 	string third_loginid1 = 6;
 	string third_loginid2 = 7;
 	string reg_type = 8;
-	int32  status = 9;
+	int32 status = 9;
 	string password = 10;
 	string trade_password = 11;
 	string update_time = 12;
 	string create_time = 13;
-
-	string  smid =20;//session的唯一id
-	string  res_id = 25;//资源id
-	PBSession session = 30;//session信息
+	string smid = 20; //session的唯一id
+	string res_id = 25; //资源id
+	PBSession session = 30; //session信息
+	string user_name = 40; //给POC测试的例子
+	string trade_no = 41;
+	string metadata = 42;
 };
 
-enum RetCode{
-		SUCCESS = 0;//成功
-		FAILED = -1;//失败
-	}
+enum RetCode {
+	SUCCESS = 0; //成功
+	FAILED = -1; //失败
+}
 
-message PBSSORet{//登入返回
-
-	string	login_id = 1;//登陆的id
-	string  smid = 2;//session的唯一id
-	string  tokenid =3;//tokenid的唯一id
-	string	user_id = 4;//用户的内部ID
-	string	email = 5;//用户的内部ID
+message PBSSORet { //登入返回
+	string login_id = 1; //登陆的id
+	string smid = 2; //session的唯一id
+	string tokenid = 3; //tokenid的唯一id
+	string user_id = 4; //用户的内部ID
+	string email = 5; //用户的内部ID
 	string mobile = 6;
 	string reg_type = 7;
-	int32  status = 8;
+	int32 status = 8;
 	string nickname = 9;
-	
-	string  res_id = 10;//资源id
-	
+	string res_id = 10; //资源id
 	string ext0 = 20;
 	string ext1 = 21;
 	string ext2 = 22;
-	string ext3 = 23; 
+	string ext3 = 23;
 	string ext4 = 24;
 	string ext5 = 25;
 	double ext6 = 26;
 	double ext7 = 27;
 	int64 ext8 = 28;
 	int64 ext9 = 29;
-	
 	repeated string unknows_key = 50;
 	repeated string unknows_value = 51;
-	PBSession session = 30;//session信息
-	
-	RetCode	retcode = 40;//返回码
-	string 	bizcode = 41;//状态信息
-	string 	desc = 42;//描述信息 
-	
-	map<string,string> unknows = 61;
-	
-	
+	PBSession session = 30; //session信息
+	RetCode retcode = 40; //返回码
+	string bizcode = 41; //状态信息
+	string desc = 42; //描述信息
+	map < string, string > unknows = 61;
+
+	string err_code=100;//poc
+	string msg = 101;
+	message RETData{
+		string bubi_address = 1;
+		string pri_keys = 2;
+	}
+	RETData data = 102;
 };
 
+enum TokenOp {
+	TOKEN_NEW = 0;
+	TOKEN_CHECK = 1;
+};
 
-enum TokenOp{
-		TOKEN_NEW=0;
-		TOKEN_CHECK=1;
-	};
-	
-
-message PBTokenRet	//token操作
+message PBTokenRet //token操作
 {
-	TokenOp op=1;
+	TokenOp op = 1;
 	string tokenid = 2;
 	string userid = 3;
-	
-	RetCode	status = 40;//返回码
-	string 	code = 41;//状态信息
-	string 	desc = 42;//描述信息
-	
+	RetCode status = 40; //返回码
+	string code = 41; //状态信息
+	string desc = 42; //描述信息
 };

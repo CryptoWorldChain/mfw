@@ -99,8 +99,15 @@ public class JPAStoreManager {
 				DomainDaoSupport dao = null;
 				if (anno != null) {
 					try {
-						Method setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()),
-								DomainDaoSupport.class);
+						Method setmethod = null;
+						try {
+							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()),
+									DomainDaoSupport.class);
+						} catch (Exception e1) {
+							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()),
+									OJpaDAO.class);
+						}
+
 						Method getmethod = clazz.getMethod("get" + StringUtils.capitalize(field.getName()));
 						if (getmethod == null) {
 							log.warn("DAO没有get方法:" + clazz.getName() + ",field=" + field.getName());

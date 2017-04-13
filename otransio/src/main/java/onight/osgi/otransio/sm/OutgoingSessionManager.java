@@ -104,7 +104,7 @@ public class OutgoingSessionManager {
 			String key = "otrans.servers.node." + nodeID;
 			int core = coreconn;
 			if (core == 0) {
-				params.get(key + ".core", params.get("otrans.servers.default.core", 1));
+				core=params.get(key + ".core", params.get("otrans.servers.default.core", 1));
 			}
 			int max = maxconn;
 			if (max == 0) {

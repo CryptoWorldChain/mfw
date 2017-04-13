@@ -16,6 +16,8 @@ class LoginResIDSession {
   @BeanProperty var loginMS: Long = System.currentTimeMillis();
   @BeanProperty var maxInactiveInterval: Long = 0;
   @BeanProperty var status: String = null;
+  @BeanProperty var bc_address: String = null;
+  @BeanProperty var bc_pri: String = null;
   @BeanProperty var kvs = new HashMap[String, Object]();
 
   def globalID(): String = { loginId + "/" + resId }

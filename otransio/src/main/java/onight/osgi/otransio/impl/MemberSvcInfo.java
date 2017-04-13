@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MemberSvcInfo {
+	String nodeid;
 
 	String outaddr;
 	int outport;
@@ -23,5 +24,7 @@ public class MemberSvcInfo {
 
 	int coreconn = 1;
 	int maxconn = 1;
+
+	String org;
 
 }

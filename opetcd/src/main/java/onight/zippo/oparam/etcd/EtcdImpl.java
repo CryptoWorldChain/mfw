@@ -63,7 +63,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> put(String key, String value) throws IOException {
-		return new FutureWP(etcd.put(key, value).ttl(ThreadContext.getContextInt("ttl", default_ttl)).send());
+		return new FutureWP(etcd.put(key, value).timeout(ThreadContext.getContextInt("wait.timeout", 60), TimeUnit.SECONDS).ttl(ThreadContext.getContextInt("ttl", default_ttl)).send());
 	}
 
 	/*
@@ -73,7 +73,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> putDir(String dir) throws IOException {
-		return new FutureWP(etcd.putDir(dir).ttl(ThreadContext.getContextInt("ttl", default_ttl)).send());
+		return new FutureWP(etcd.putDir(dir).timeout(ThreadContext.getContextInt("wait.timeout", 60), TimeUnit.SECONDS).ttl(ThreadContext.getContextInt("ttl", default_ttl)).send());
 	}
 
 	/*
@@ -84,7 +84,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> post(String key, String value) throws IOException {
-		return new FutureWP(etcd.post(key, value).ttl(ThreadContext.getContextInt("ttl", default_ttl)).send());
+		return new FutureWP(etcd.post(key, value).timeout(ThreadContext.getContextInt("wait.timeout", 60), TimeUnit.SECONDS).ttl(ThreadContext.getContextInt("ttl", default_ttl)).send());
 	}
 
 	/*
@@ -95,7 +95,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	@Override
 	public Future<OTreeValue> delete(String key) throws IOException {
 		// TODO Auto-generated method stub
-		return new FutureWP(etcd.delete(key).recursive().send());
+		return new FutureWP(etcd.delete(key).timeout(ThreadContext.getContextInt("wait.timeout", 60), TimeUnit.SECONDS).recursive().send());
 	}
 
 	/*
@@ -115,6 +115,9 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> get(String key) throws IOException {
+		if (ThreadContext.getContextInt("sorted", 0) == 1) {
+			return new FutureWP(etcd.get(key).timeout(ThreadContext.getContextInt("wait.timeout", 60), TimeUnit.SECONDS).recursive().sorted().send());
+		}
 		return new FutureWP(etcd.get(key).recursive().send());
 	}
 
@@ -158,7 +161,8 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 	@Override
 	public void watch(final String key, final CallBack<OTreeValue> cb, final boolean always) {
 
-		EtcdKeyGetRequest getRequest = etcd.getDir(key).recursive().waitForChange().timeout(60, TimeUnit.SECONDS);
+		EtcdKeyGetRequest getRequest = etcd.getDir(key).recursive().waitForChange()
+				.timeout(ThreadContext.getContextInt("wait.timeout", 60), TimeUnit.SECONDS);
 		try {
 
 			EtcdResponsePromise<EtcdKeysResponse> promise = getRequest.send();
@@ -215,16 +219,16 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 
 	@Override
 	public Future<OTreeValue> compareAndDelete(String key, String value) throws IOException {
-		return new FutureWP(etcd.delete(key).prevValue(value).send());
+		return new FutureWP(etcd.delete(key).timeout(ThreadContext.getContextInt("wait.timeout", 60), TimeUnit.SECONDS).prevValue(value).send());
 	}
 
 	@Override
 	public Future<OTreeValue> compareAndSwap(String key, String newvalue, String comparevalue) throws IOException {
 		if (comparevalue == null) {
-			return new FutureWP(
-					etcd.put(key, newvalue).prevExist(false).ttl(ThreadContext.getContextInt("ttl", default_ttl)).send());
+			return new FutureWP(etcd.put(key, newvalue).timeout(ThreadContext.getContextInt("wait.timeout", 60), TimeUnit.SECONDS).prevExist(false)
+					.ttl(ThreadContext.getContextInt("ttl", default_ttl)).send());
 		}
-		return new FutureWP(etcd.put(key, newvalue).prevValue(comparevalue)
+		return new FutureWP(etcd.put(key, newvalue).timeout(ThreadContext.getContextInt("wait.timeout", 60), TimeUnit.SECONDS).prevValue(comparevalue)
 				.ttl(ThreadContext.getContextInt("ttl", default_ttl)).send());
 	}
 
