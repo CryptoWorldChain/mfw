@@ -21,9 +21,9 @@ import onight.tfw.ojpa.api.StoreServiceProvider;
 import onight.tfw.outils.conf.PropHelper;
 import onight.zippo.oparam.etcd.EtcdImpl;
 
-@Component(immediate = true)
-@Instantiate()
-@Provides(specifications = StoreServiceProvider.class, strategy = "SINGLETON")
+//@Component(immediate = true)
+//@Instantiate()
+//@Provides(specifications = StoreServiceProvider.class, strategy = "SINGLETON")
 @Slf4j
 public class EtcdProvider implements StoreServiceProvider {
 
