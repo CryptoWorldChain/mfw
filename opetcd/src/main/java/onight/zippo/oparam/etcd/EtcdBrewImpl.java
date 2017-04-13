@@ -66,7 +66,7 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> put(String key, String value) throws IOException {
-		return new FutureBrew(req.put(value, "/v2/keys" + key));
+		return new FutureBrew(req.put(URLEncoder.encode(value,"UTF-8"), "/v2/keys" + key));
 	}
 
 	/*
@@ -92,7 +92,7 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> post(String key, String value) throws IOException {
-		return new FutureBrew(req.post(value, "/v2/keys" + key));
+		return new FutureBrew(req.post(URLEncoder.encode(value,"UTF-8"), "/v2/keys" + key));
 	}
 
 	/*
@@ -237,10 +237,10 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	@Override
 	public Future<OTreeValue> compareAndSwap(String key, String newvalue, String comparevalue) throws IOException {
 		if (comparevalue == null) {
-			return new FutureBrew(req.put(newvalue, "/v2/keys" + key));
+			return new FutureBrew(req.put(URLEncoder.encode(newvalue,"UTF-8"), "/v2/keys" + key));
 		}
 		return new FutureBrew(
-				req.put(newvalue, "/v2/keys" + key + "?prevValue=" + URLEncoder.encode(comparevalue, "UTF-8")));
+				req.put(URLEncoder.encode(newvalue,"UTF-8"), "/v2/keys" + key + "?prevValue=" + URLEncoder.encode(comparevalue, "UTF-8")));
 	}
 
 }

@@ -8,6 +8,7 @@ import static org.apache.http.params.CoreProtocolPNames.HTTP_ELEMENT_CHARSET;
 import static org.apache.http.params.CoreProtocolPNames.PROTOCOL_VERSION;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -92,13 +93,15 @@ public class HttpRequestor {
 
 			log.debug("httpresult:" + address + ",result=" + result);
 			return result;
+		} catch (SocketTimeoutException so) {
+			throw so;
 		} catch (HttpResponseException he) {
 			if (he.getStatusCode() == 404) {
 				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
 			}
 			throw he;
 		} catch (Exception e) {
-			log.trace("error:" + e + ":" + urlbase + address,e);
+			log.trace("error:" + e + ":" + urlbase + address, e);
 			throw e;
 		} finally {
 
@@ -125,13 +128,15 @@ public class HttpRequestor {
 
 			log.debug("httpresult:" + address + ",result=" + result);
 			return result;
+		} catch (SocketTimeoutException so) {
+			throw so;
 		} catch (HttpResponseException he) {
 			if (he.getStatusCode() == 404) {
 				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
 			}
 			throw he;
 		} catch (Exception e) {
-			log.trace("error:" + e + ":" + urlbase + address,e);
+			log.trace("error:" + e + ":" + urlbase + address, e);
 			throw e;
 		} finally {
 			lock.readLock().unlock();
@@ -153,13 +158,15 @@ public class HttpRequestor {
 
 			log.debug("httpresult:" + address + ",result=" + result);
 			return result;
+		} catch (SocketTimeoutException so) {
+			throw so;
 		} catch (HttpResponseException he) {
 			if (he.getStatusCode() == 404) {
 				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
 			}
 			throw he;
 		} catch (Exception e) {
-			log.trace("error:" + e + ":" + urlbase + address,e);
+			log.trace("error:" + e + ":" + urlbase + address, e);
 			throw e;
 		} finally {
 			lock.readLock().unlock();
@@ -194,13 +201,15 @@ public class HttpRequestor {
 
 			log.debug("httpresult:" + address + ",result=" + result);
 			return result;
+		} catch (SocketTimeoutException so) {
+			throw so;
 		} catch (HttpResponseException he) {
 			if (he.getStatusCode() == 404) {
 				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
 			}
 			throw he;
 		} catch (Exception e) {
-			log.trace("error:" + e + ":" + urlbase + address,e);
+			log.trace("error:" + e + ":" + urlbase + address, e);
 			throw e;
 
 		} finally {
