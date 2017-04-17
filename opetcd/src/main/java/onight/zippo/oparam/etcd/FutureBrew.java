@@ -46,7 +46,7 @@ public class FutureBrew implements Future<OTreeValue> {
 		if (nodes != null && nodes.size() > 0) {
 			List<OTreeValue> tnodes = new ArrayList<>();
 			for (MEtcdNode node : nodes) {
-				OTreeValue tree = new OTreeValue(node.key, node.value, getTrees(node.nodes));
+				OTreeValue tree = new OTreeValue(node.key, node.value, getTrees(node.nodes),node.getModifiedIndex(),node.getCreatedIndex());
 				tnodes.add(tree);
 			}
 			return tnodes;
@@ -59,7 +59,7 @@ public class FutureBrew implements Future<OTreeValue> {
 		try {
 			if (response != null)
 				return new OTreeValue(response.getNode().key, response.getNode().value,
-						getTrees(response.getNode().nodes));
+						getTrees(response.getNode().nodes),response.getNode().getModifiedIndex(),response.getNode().getCreatedIndex());
 			return null;
 		} catch (Exception e) {
 			return null;

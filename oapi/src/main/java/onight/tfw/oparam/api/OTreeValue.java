@@ -13,8 +13,10 @@ public class OTreeValue {
 	String key;
 	String value;
 	List<OTreeValue> nodes;
+	long modifiedIndex;
+	long createdIndex;
 
 	public String toString() {
-		return "OTreeValue@"+this.hashCode()+"[key="+key+",value="+value+",nodes="+nodes+"]";
+		return "OTreeValue@"+this.hashCode()+"[key="+key+",value="+value+",nodes="+nodes+",modifiedIndex="+modifiedIndex+",createdIndex="+createdIndex+"]";
 	}
 }

@@ -41,7 +41,7 @@ public class FutureWP implements Future<OTreeValue> {
 		if(nodes!=null&&nodes.size()>0){
 			List<OTreeValue> tnodes=new ArrayList<>();
  			for(EtcdNode node:nodes){
-				OTreeValue tree=new OTreeValue(node.key,node.value,getTrees(node.nodes));
+				OTreeValue tree=new OTreeValue(node.key,node.value,getTrees(node.nodes),0,0);
 				tnodes.add(tree);
 			}
  			return tnodes;
@@ -52,7 +52,7 @@ public class FutureWP implements Future<OTreeValue> {
 	public OTreeValue get() throws InterruptedException, ExecutionException {
 		try {
 			EtcdKeysResponse response=promise.get();
-			return new OTreeValue(response.getNode().key,response.getNode().value,getTrees(response.getNode().nodes));
+			return new OTreeValue(response.getNode().key,response.getNode().value,getTrees(response.getNode().nodes),response.getNode().modifiedIndex,response.getNode().createdIndex);
 		} catch (Exception e) {
 			return null;
 		}
@@ -61,7 +61,7 @@ public class FutureWP implements Future<OTreeValue> {
 	@Override
 	public OTreeValue get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
 		EtcdKeysResponse response=promise.getNettyPromise().get(timeout, unit);
-		return new OTreeValue(response.getNode().key,response.getNode().value,getTrees(response.getNode().nodes));
+		return new OTreeValue(response.getNode().key,response.getNode().value,getTrees(response.getNode().nodes),response.getNode().modifiedIndex,response.getNode().createdIndex);
 
 	}
 

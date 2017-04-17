@@ -172,12 +172,12 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 					try {
 						log.trace("onResponse@" + this + ",response=" + response);
 						cb.onSuccess(new OTreeValue(response.get().getNode().key, response.get().getNode().value,
-								FutureWP.getTrees(response.get().getNode().nodes)));
+								FutureWP.getTrees(response.get().getNode().nodes),response.get().getNode().modifiedIndex,response.get().getNode().createdIndex));
 					} catch (TimeoutException te) {
 						// log.debug("Etcd Watch Timeout:" + key+",@"+this);
-						cb.onFailed(te, new OTreeValue(key, null, null));
+						cb.onFailed(te, new OTreeValue(key, null, null,0,0));
 					} catch (Exception e) {
-						cb.onFailed(e, new OTreeValue(key, null, null));
+						cb.onFailed(e, new OTreeValue(key, null, null,0,0));
 					} finally {
 						if (always) {
 							// still watch
@@ -188,7 +188,7 @@ public class EtcdImpl implements OPFace, DomainDaoSupport {
 
 			});
 		} catch (Exception e) {
-			cb.onFailed(e, new OTreeValue(key, null, null));
+			cb.onFailed(e, new OTreeValue(key, null, null,0,0));
 		}
 	}
 
