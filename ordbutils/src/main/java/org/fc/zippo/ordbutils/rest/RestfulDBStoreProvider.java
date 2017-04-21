@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Validate;
 import org.fc.zippo.ordbutils.exception.PathException;
+import org.fc.zippo.ordbutils.rest.filter.RequestSizeFilter;
 import org.osgi.framework.BundleContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ojpa.ordb.ORDBProvider;
 import onight.tfw.ojpa.ordb.StaticTableDaoSupport;
 import onight.tfw.ojpa.ordb.loader.CommonSqlMapper;
+import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.serialize.HttpHelper;
 import onight.tfw.proxy.IActor;
 
@@ -35,14 +37,28 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 		super(bundleContext);
 	}
 
+	PropHelper props = new PropHelper(bundleContext);
+
 	HashMap<String, BaseRestCtrl> ctrls = new HashMap<>();
+	protected FilterManager fm = new FilterManager(bundleContext);
 
 	public abstract String[] getCtrlPaths();
+
+	public abstract IRestfulFilter[] getFilters();
 
 	@Validate
 	public void startup() {
 		super.startup();
-
+		if (StringUtils.equals("true", props.get("org.zippo.rest.filters.sizefilter", "true"))
+				|| StringUtils.equals("on", props.get("org.zippo.rest.filters.sizefilter", "on"))
+				|| StringUtils.equals("1", props.get("org.zippo.rest.filters.sizefilter", "1"))) {
+			fm.addFilter(new RequestSizeFilter());
+		}
+		if (getFilters() != null && getFilters().length > 0) {
+			for (IRestfulFilter rf : getFilters()) {
+				fm.addFilter(rf);
+			}
+		}
 		for (String path : getCtrlPaths()) {
 			Enumeration<URL> en = bundleContext.getBundle().findEntries(path.replaceAll("\\.", "/"), "*.class", true);
 			while (en.hasMoreElements()) {
@@ -55,7 +71,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 								CommonSqlMapper.class);
 						String ctrlname = clazz.getSimpleName().replaceAll("Ctrl", "").toLowerCase();
 						BaseRestCtrl ctrl = construct.newInstance(getStaticDao(ctrlname), getCommonSqlMapper());
-						log.debug("Registry Ctrl:path=" +ctrlname+":ctrl"+ ctrl + ",dao=" + getStaticDao(ctrlname));
+						log.debug("Registry Ctrl:path=" + ctrlname + ":ctrl" + ctrl + ",dao=" + getStaticDao(ctrlname));
 						ctrls.put(ctrlname, ctrl);
 					}
 
@@ -131,7 +147,9 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		try {
-			String ret = tryPath(req, res).get(getSafePath(req.getPathInfo().substring(1)), req);
+			if (!fm.doFilter(req, res))
+				return;
+			String ret = tryPath(req, res).get(getSafePath(req.getPathInfo().substring(1)), req, res);
 			res.getOutputStream().write(ret.getBytes("UTF-8"));
 		} catch (PathException e) {
 			res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
@@ -143,6 +161,8 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		if (!fm.doFilter(req, res))
+			return;
 		String method = req.getParameter("_method");
 		if (StringUtils.isNotBlank(method)) {
 			if (method.equals("del")) {
@@ -163,7 +183,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"POST Body not found\"}");
 		} else {
 			try {
-				String ret = tryPath(req, res).post(bytes, req);
+				String ret = tryPath(req, res).post(bytes, req, res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
 			} catch (PathException e) {
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
@@ -176,12 +196,15 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 
 	@Override
 	public void doPut(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		if (!fm.doFilter(req, res))
+			return;
+
 		byte bytes[] = HttpHelper.getRequestContentBytes(req);
 		if (bytes == null || bytes.length == 0) {
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"PUT Body not found\"}");
 		} else {
 			try {
-				String ret = tryPath(req, res).put(getSafePath(req.getPathInfo().substring(1)), bytes, req);
+				String ret = tryPath(req, res).put(getSafePath(req.getPathInfo().substring(1)), bytes, req, res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
 			} catch (PathException e) {
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
@@ -194,12 +217,14 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 
 	@Override
 	public void doDelete(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		if (!fm.doFilter(req, res))
+			return;
 		byte bytes[] = HttpHelper.getRequestContentBytes(req);
 		if (bytes == null || bytes.length == 0) {
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"DELETE Body not found\"}");
 		} else {
 			try {
-				String ret = tryPath(req, res).delete(getSafePath(req.getPathInfo().substring(1)), bytes, req);
+				String ret = tryPath(req, res).delete(getSafePath(req.getPathInfo().substring(1)), bytes, req, res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
 			} catch (PathException e) {
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());

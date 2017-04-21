@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
@@ -27,13 +28,15 @@ public abstract class BaseRestCtrl {
 	protected StaticTableDaoSupport dao;
 	protected CommonSqlMapper mapper;
 
-	public abstract String get(String key, HttpServletRequest req);
 
-	public abstract String post(byte[] bodies, HttpServletRequest req);
+	public abstract String get(String key, HttpServletRequest req,HttpServletResponse res);
 
-	public abstract String put(String key, byte[] bodies, HttpServletRequest req);
+	public abstract String post(byte[] bodies, HttpServletRequest req,HttpServletResponse res);
 
-	public abstract String delete(String key, byte[] bodies, HttpServletRequest req);
+	public abstract String put(String key, byte[] bodies, HttpServletRequest req,HttpServletResponse res);
+
+	public abstract String delete(String key, byte[] bodies, HttpServletRequest req,HttpServletResponse res);
+
 
 	public List<Map<String, Object>> reMap(List<Map<String, Object>> list) {
 		if (list == null)
