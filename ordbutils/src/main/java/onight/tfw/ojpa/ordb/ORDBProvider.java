@@ -2,14 +2,6 @@ package onight.tfw.ojpa.ordb;
 
 import java.util.concurrent.LinkedBlockingDeque;
 
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import onight.tfw.ojpa.api.DomainDaoSupport;
-import onight.tfw.ojpa.api.OJpaDAO;
-import onight.tfw.ojpa.api.SqlMapper;
-import onight.tfw.ojpa.api.StoreServiceProvider;
-import onight.tfw.ojpa.ordb.loader.SpringContextLoader;
-
 import org.apache.felix.ipojo.annotations.Bind;
 import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Provides;
@@ -17,6 +9,14 @@ import org.apache.felix.ipojo.annotations.Unbind;
 import org.apache.felix.ipojo.annotations.Validate;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import onight.tfw.ojpa.api.DomainDaoSupport;
+import onight.tfw.ojpa.api.SqlMapper;
+import onight.tfw.ojpa.api.StoreServiceProvider;
+import onight.tfw.ojpa.ordb.loader.CommonSqlMapper;
+import onight.tfw.ojpa.ordb.loader.SpringContextLoader;
 
 //@Component(immediate = true)
 //@Instantiate(name = "mysqlimpl")
@@ -29,9 +29,9 @@ public abstract class ORDBProvider implements StoreServiceProvider {
 	// return ServiceSpec.MYSQL_STORE.getTarget();
 	// }
 
-	BundleContext bundleContext;
+	protected BundleContext bundleContext;
 
-	SpringContextLoader springLoader;
+	protected SpringContextLoader springLoader;
 
 	public ORDBProvider(BundleContext bundleContext) {
 		super();
@@ -94,6 +94,19 @@ public abstract class ORDBProvider implements StoreServiceProvider {
 			return springLoader.getBeans(dao.getDomainName() + "Dao");
 		} else {
 			log.warn("bean dao not found:" + dao.getDomainName());
+			return null;
+		}
+	}
+
+	public StaticTableDaoSupport getStaticDao(String beanname) {
+		return springLoader.getStaticDao(beanname + "Dao");
+	}
+
+	public CommonSqlMapper getCommonSqlMapper() {
+		if (springLoader != null) {
+			return (CommonSqlMapper) springLoader.getSpringBeans("commonSqlMapper");
+		} else {
+			log.warn("bean getCommonSqlMapper not found:");
 			return null;
 		}
 	}

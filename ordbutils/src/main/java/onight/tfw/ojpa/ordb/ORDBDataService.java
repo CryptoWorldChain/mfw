@@ -33,25 +33,26 @@ import onight.tfw.ojpa.api.exception.JPAException;
 @Data
 public class ORDBDataService extends SerializedDomainDao {
 
-	StaticTableDaoSupport daoSupport;
+	
+	StaticTableDaoSupport dao;
 
 	PlatformTransactionManager txManager;
 
 	public ORDBDataService(ExtendDaoSupper daoSupport, PlatformTransactionManager txManager) {
 		super(daoSupport);
 		this.txManager = txManager;
-		this.daoSupport = daoSupport;
+		this.dao = daoSupport;
 	}
 
 	@Override
 	public int countByExample(Object example) {
-		return daoSupport.countByExample(localExample(example));
+		return dao.countByExample(localExample(example));
 	}
 
 	@Override
 	public int deleteByExample(Object example) {
 		try {
-			return daoSupport.deleteByExample(localExample(example));
+			return dao.deleteByExample(localExample(example));
 		} catch (Exception e) {
 			throw new JPAException(e.getMessage());
 		}
@@ -60,7 +61,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public int deleteByPrimaryKey(Object key) {
 		try {
-			return daoSupport.deleteByPrimaryKey(localKey(key));
+			return dao.deleteByPrimaryKey(localKey(key));
 		} catch (Exception e) {
 			throw new JPAException(e.getMessage());
 		}
@@ -69,7 +70,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public int insert(Object record) {
 		try {
-			return daoSupport.insert(localBean(record));
+			return dao.insert(localBean(record));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -83,8 +84,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public Object getAndSet(Object record) {
 		try {
-			Object oldv = daoSupport.selectByPrimaryKey(localKey(record));
-			daoSupport.insert(localBean(record));
+			Object oldv = dao.selectByPrimaryKey(localKey(record));
+			dao.insert(localBean(record));
 			if (oldv != null) {
 				return serial(oldv);
 			} else {
@@ -103,7 +104,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public int insertSelective(Object record) {
 		try {
-			return daoSupport.insertSelective(localBean(record));
+			return dao.insertSelective(localBean(record));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -117,7 +118,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public int batchInsert(List<Object> records) {
 		try {
-			return daoSupport.batchInsert(localBean2List(records));
+			return dao.batchInsert(localBean2List(records));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -131,7 +132,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public int batchUpdate(List<Object> records) {
 		try {
-			return daoSupport.batchUpdate(localBean2List(records));
+			return dao.batchUpdate(localBean2List(records));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -145,7 +146,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public int batchDelete(List<Object> records) {
 		try {
-			return daoSupport.batchDelete(localBean2List(records));
+			return dao.batchDelete(localBean2List(records));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -158,23 +159,23 @@ public class ORDBDataService extends SerializedDomainDao {
 
 	@Override
 	public List<Object> selectByExample(Object example) {
-		return serial(daoSupport.selectByExample(localExample(example)));
+		return serial(dao.selectByExample(localExample(example)));
 	}
 
 	@Override
 	public Object selectByPrimaryKey(Object key) {
-		return serial(daoSupport.selectByPrimaryKey(localKey(key)));
+		return serial(dao.selectByPrimaryKey(localKey(key)));
 	}
 
 	@Override
 	public List<Object> findAll(List<Object> records) {
-		return serial(daoSupport.findAll(localBean2List(records)));
+		return serial(dao.findAll(localBean2List(records)));
 	}
 
 	@Override
 	public int updateByExampleSelective(Object record, Object example) {
 		try {
-			return daoSupport.updateByExampleSelective(localBean(record), localExample(example));
+			return dao.updateByExampleSelective(localBean(record), localExample(example));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -188,7 +189,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public int updateByExample(Object record, Object example) {
 		try {
-			return daoSupport.updateByExample(localBean(record), localExample(example));
+			return dao.updateByExample(localBean(record), localExample(example));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -202,7 +203,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public int updateByPrimaryKeySelective(Object record) {
 		try {
-			return daoSupport.updateByPrimaryKeySelective(localBean(record));
+			return dao.updateByPrimaryKeySelective(localBean(record));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -216,7 +217,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public int updateByPrimaryKey(Object record) {
 		try {
-			return daoSupport.updateByPrimaryKey(localBean(record));
+			return dao.updateByPrimaryKey(localBean(record));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -229,13 +230,13 @@ public class ORDBDataService extends SerializedDomainDao {
 
 	@Override
 	public int sumByExample(Object example) {
-		return daoSupport.countByExample(localExample(example));
+		return dao.countByExample(localExample(example));
 	}
 
 	@Override
 	public void deleteAll() {
 		try {
-			daoSupport.deleteAll();
+			dao.deleteAll();
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -245,7 +246,7 @@ public class ORDBDataService extends SerializedDomainDao {
 
 	@Override
 	public Object getExample(Object record) {
-		return serial(daoSupport.getExample(localBean(record)));
+		return serial(dao.getExample(localBean(record)));
 	}
 
 	private boolean needTransaction(String sql) {
@@ -289,7 +290,7 @@ public class ORDBDataService extends SerializedDomainDao {
 		Statement st = null;
 		try {
 
-			session = daoSupport.getSqlSessionFactory().openSession();
+			session = dao.getSqlSessionFactory().openSession();
 			Connection conn = session.getConnection();
 			st = conn.createStatement();
 			int rs = st.executeUpdate(sql);
@@ -330,7 +331,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	}
 
 	public List<HashMap> doSqlByNoTransaction(String sql) {
-		SqlSession session = daoSupport.getSqlSessionFactory().openSession();
+		SqlSession session = dao.getSqlSessionFactory().openSession();
 		Connection conn = session.getConnection();
 		Statement st = null;
 		ResultSet rs = null;
@@ -363,7 +364,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public Object insertIfNoExist(Object entity) throws JPAException {
 		try {
-			return daoSupport.insert(localBean(entity));
+			return dao.insert(localBean(entity));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
@@ -427,8 +428,8 @@ public class ORDBDataService extends SerializedDomainDao {
 
 	@Override
 	public Object selectOneByExample(Object example) {
-		return serial(daoSupport.selectOneByExample(localExample(example)));
-//		return daoSupport.selectOneByExample(example);
+		return serial(dao.selectOneByExample(localExample(example)));
+//		return dao.selectOneByExample(example);
 	}
 
 	@Override
