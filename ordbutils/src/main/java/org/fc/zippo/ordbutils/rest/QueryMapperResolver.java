@@ -81,7 +81,7 @@ public class QueryMapperResolver {
 					return String.format(" %s %s %s ", mapKey(key,fieldsMap), cond,condvalue);
 				} else 
 				if(isLikeAndType(key, value)){
-					return String.format(" %s like '%%%s%%' ", mapKey(key,fieldsMap), value.get("$regex").asText());
+					return String.format(" %s like '%s' ", mapKey(key,fieldsMap), value.get("$regex").asText());
 				}
 				else{
 					return genQueyStr(mapKey(key,fieldsMap), value, "and");

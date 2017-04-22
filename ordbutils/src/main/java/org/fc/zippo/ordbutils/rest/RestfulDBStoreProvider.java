@@ -71,6 +71,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 								CommonSqlMapper.class);
 						String ctrlname = clazz.getSimpleName().replaceAll("Ctrl", "").toLowerCase();
 						BaseRestCtrl ctrl = construct.newInstance(getStaticDao(ctrlname), getCommonSqlMapper());
+						ctrl.setDeleteByExampleEnabled(StringHelper.toBool(props.get("org.zippo.rest.deletebyexample","off")));
 						log.debug("Registry Ctrl:path=" + ctrlname + ":ctrl" + ctrl + ",dao=" + getStaticDao(ctrlname));
 						ctrls.put(ctrlname, ctrl);
 					}

@@ -16,6 +16,8 @@ import org.fc.zippo.ordbutils.bean.PageInfo;
 import org.fc.zippo.ordbutils.bean.QueryMapperBean;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ojpa.ordb.StaticTableDaoSupport;
 import onight.tfw.ojpa.ordb.loader.CommonSqlMapper;
@@ -27,6 +29,9 @@ public abstract class BaseRestCtrl {
 
 	protected StaticTableDaoSupport dao;
 	protected CommonSqlMapper mapper;
+	@Setter
+	@Getter
+	protected boolean deleteByExampleEnabled=false;
 
 
 	public abstract String get(String key, HttpServletRequest req,HttpServletResponse res);
