@@ -22,7 +22,7 @@ public class SqlMaker {
 	public final static String TABLE_NAME = "TABLE_NAME";
 
 	public static String getCountSql(DbCondi dc) {
-		Map<String, String> fieldsMap = getFieldsMap(dc.getClass());
+		Map<String, String> fieldsMap = getFieldsMap(dc.getEntityClass());
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT COUNT(1) AS COUNT FROM ");
 		sql.append(dc.getTableName());

@@ -3,8 +3,6 @@ package onight.tfw.outils.serialize;
 import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jnr.posix.POSIXFactory;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 
@@ -110,7 +108,7 @@ public class SessionIDGenerator {
 
 	private static AtomicInteger counter = new AtomicInteger(8888);
 
-	private static final String JVMStr = int2Str((POSIXFactory.getPOSIX().getpid()));
+	private static final String JVMStr = int2Str(UUIDGenerator.JVM);
 
 	public static String timeTick = int2Str((int) (System.currentTimeMillis()), 100);
 	

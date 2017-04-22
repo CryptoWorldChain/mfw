@@ -4,7 +4,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
 
-import jnr.posix.POSIXFactory;
 import onight.tfw.outils.conf.PropHelper;
 
 public class NodeHelper {

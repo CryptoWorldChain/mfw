@@ -1,9 +1,10 @@
 package onight.tfw.outils.serialize;
 
 
+import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 
-import jnr.posix.POSIXFactory;
+import org.apache.commons.lang3.RandomUtils;
 
 public class UUIDGenerator {
 
@@ -12,7 +13,6 @@ public class UUIDGenerator {
 	 * 
 	 * @return
 	 */
-
 	public static String generate() {
 		return new StringBuilder(32).append(format(getIP())).append(
 				format(getJVM())).append(format(getHiTime())).append(
@@ -34,7 +34,27 @@ public class UUIDGenerator {
 
 	private static short counter = (short) 0;
 
-	private static final int JVM = (int) (POSIXFactory.getPOSIX().getpid());
+	private static int getProcessId(final int fallback) {
+	    // Note: may fail in some JVM implementations
+	    // therefore fallback has to be provided
+
+	    // something like '<pid>@<hostname>', at least in SUN / Oracle JVMs
+	    final String jvmName = ManagementFactory.getRuntimeMXBean().getName();
+	    final int index = jvmName.indexOf('@');
+
+	    if (index < 1) {
+	        // part before '@' empty (index = 0) / '@' not found (index = -1)
+	        return fallback;
+	    }
+
+	    try {
+	        return Integer.parseInt(jvmName.substring(0, index));
+	    } catch (NumberFormatException e) {
+	        // ignore
+	    }
+	    return fallback;
+	}
+	static final int JVM = (int) (getProcessId(RandomUtils.nextInt()));
 
 	private final static String format(int intval) {
 		String formatted = Integer.toHexString(intval);
