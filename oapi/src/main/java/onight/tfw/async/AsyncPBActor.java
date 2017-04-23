@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ntrans.api.PBActor;
+import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.ExceptionBody;
 import onight.tfw.otransio.api.beans.FramePacket;
@@ -31,6 +32,8 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 			throws IOException {
 		resp.setCharacterEncoding("UTF-8");
 		resp.setHeader("Content-type", "application/json;charset=UTF-8");
+		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_REQUEST, req);
+		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_RESPONSE, resp);
 
 		final AsyncContext asyncContext = req.startAsync();
 		String timeout = req.getHeader("tfw_timeout");

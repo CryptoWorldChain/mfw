@@ -329,7 +329,7 @@ public class ORDBDataService extends SerializedDomainDao {
 		}
 		return ret;
 	}
-
+ 
 	public List<HashMap> doSqlByNoTransaction(String sql) {
 		SqlSession session = dao.getSqlSessionFactory().openSession();
 		Connection conn = session.getConnection();

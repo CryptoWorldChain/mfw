@@ -26,6 +26,7 @@ import onight.tfw.orouter.api.IRecievier;
 import onight.tfw.orouter.api.NoneQService;
 import onight.tfw.orouter.api.QService;
 import onight.tfw.otransio.api.PSenderService;
+import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.ExceptionBody;
 import onight.tfw.otransio.api.beans.FramePacket;
@@ -104,7 +105,9 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 		try {
 			resp.setCharacterEncoding("UTF-8");
 			resp.setHeader("Content-type", "application/json;charset=UTF-8");  
-
+			pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_REQUEST, req);
+			pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_RESPONSE, resp);
+			
 			doPacketWithFilter(pack, new CompleteHandler() {
 				@Override
 				public void onFinished(FramePacket retpack) {
@@ -177,13 +180,16 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	@Override
 	public void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		resp.getWriter().write("PUT NOT SUPPORT");
-
+		req.setCharacterEncoding("UTF-8");
+		FramePacket pack = PacketHelper.buildHeaderFromHttpPost(req);
+		doWeb(req, resp, pack);
 	}
 
 	@Override
 	public void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		resp.getWriter().write("DELETE NOT SUPPORT");
+		req.setCharacterEncoding("UTF-8");
+		FramePacket pack = PacketHelper.buildHeaderFromHttpPost(req);
+		doWeb(req, resp, pack);
 	}
 
 	@Override

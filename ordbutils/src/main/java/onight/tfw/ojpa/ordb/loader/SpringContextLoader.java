@@ -32,6 +32,7 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import onight.osgi.annotation.NActorProvider;
 import onight.tfw.ojpa.api.DomainDaoSupport;
 import onight.tfw.ojpa.api.annotations.Tab;
 import onight.tfw.ojpa.ordb.ExtendDaoSupper;

@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Validate;
 import org.fc.zippo.ordbutils.exception.PathException;
+import org.fc.zippo.ordbutils.rest.filter.EncodingFilter;
 import org.fc.zippo.ordbutils.rest.filter.RequestSizeFilter;
 import org.osgi.framework.BundleContext;
 import org.springframework.core.io.Resource;
@@ -49,11 +50,13 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	@Validate
 	public void startup() {
 		super.startup();
+		fm.addFilter(new EncodingFilter());
 		if (StringUtils.equals("true", props.get("org.zippo.rest.filters.sizefilter", "true"))
 				|| StringUtils.equals("on", props.get("org.zippo.rest.filters.sizefilter", "on"))
 				|| StringUtils.equals("1", props.get("org.zippo.rest.filters.sizefilter", "1"))) {
 			fm.addFilter(new RequestSizeFilter());
 		}
+
 		if (getFilters() != null && getFilters().length > 0) {
 			for (IRestfulFilter rf : getFilters()) {
 				fm.addFilter(rf);
@@ -71,7 +74,8 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 								CommonSqlMapper.class);
 						String ctrlname = clazz.getSimpleName().replaceAll("Ctrl", "").toLowerCase();
 						BaseRestCtrl ctrl = construct.newInstance(getStaticDao(ctrlname), getCommonSqlMapper());
-						ctrl.setDeleteByExampleEnabled(StringHelper.toBool(props.get("org.zippo.rest.deletebyexample","off")));
+						ctrl.setDeleteByExampleEnabled(
+								StringHelper.toBool(props.get("org.zippo.rest.deletebyexample", "off")));
 						log.debug("Registry Ctrl:path=" + ctrlname + ":ctrl" + ctrl + ",dao=" + getStaticDao(ctrlname));
 						ctrls.put(ctrlname, ctrl);
 					}
@@ -120,37 +124,35 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 		}
 		if (uri.startsWith("/"))
 			return uri.substring(1);
-		return uri;
+		return "";
 	}
 
-	public BaseRestCtrl tryPath(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		req.setCharacterEncoding("UTF-8");
-		resp.setContentType("application/json; charset=utf-8");
-		if (req.getPathInfo().length() < 2) {
-			throw new PathException(
-					"{\"status\":\"error\",\"message\":\"path.1 not found:" + req.getPathInfo() + "\"}");
+	public BaseRestCtrl tryPath(String path) throws IOException {
+		if (path.length() < 2) {
+			throw new PathException("{\"status\":\"error\",\"message\":\"path.1 not found:" + path + "\"}");
 		} else {
-			String ctrlpath = req.getPathInfo().substring(1);
+			String ctrlpath = path.substring(1);
 			String paths[] = ctrlpath.split("/");
 			if (paths.length > 0) {
 				BaseRestCtrl ctrl = ctrls.get(paths[0]);
 				if (ctrl == null) {
 					throw new PathException("{\"status\":\"error\",\"message\":\"Controller not found:" + paths[0]
-							+ ",path:" + req.getPathInfo() + "\"}");
+							+ ",path:" + path + "\"}");
 				}
 				log.debug("tryPath={},ctrl={}", paths[0], ctrl);
 				return ctrl;
 			}
 		}
-		throw new PathException("{\"status\":\"error\",\"message\":\"path.2 not found:" + req.getPathInfo() + "\"}");
+		throw new PathException("{\"status\":\"error\",\"message\":\"path.2 not found:" + path + "\"}");
 	}
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+
 		try {
 			if (!fm.doFilter(req, res))
 				return;
-			String ret = tryPath(req, res).get(getSafePath(req.getPathInfo().substring(1)), req, res);
+			String ret = tryPath(req.getPathInfo()).get(getSafePath(req.getPathInfo().substring(1)), req, res);
 			res.getOutputStream().write(ret.getBytes("UTF-8"));
 		} catch (PathException e) {
 			res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
@@ -162,6 +164,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+
 		if (!fm.doFilter(req, res))
 			return;
 		String method = req.getParameter("_method");
@@ -184,7 +187,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"POST Body not found\"}");
 		} else {
 			try {
-				String ret = tryPath(req, res).post(bytes, req, res);
+				String ret = tryPath(req.getPathInfo()).post(bytes, req, res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
 			} catch (PathException e) {
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
@@ -197,6 +200,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 
 	@Override
 	public void doPut(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+
 		if (!fm.doFilter(req, res))
 			return;
 
@@ -205,7 +209,8 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"PUT Body not found\"}");
 		} else {
 			try {
-				String ret = tryPath(req, res).put(getSafePath(req.getPathInfo().substring(1)), bytes, req, res);
+				String ret = tryPath(req.getPathInfo()).put(getSafePath(req.getPathInfo().substring(1)), bytes, req,
+						res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
 			} catch (PathException e) {
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
@@ -218,14 +223,17 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 
 	@Override
 	public void doDelete(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+
 		if (!fm.doFilter(req, res))
 			return;
+
 		byte bytes[] = HttpHelper.getRequestContentBytes(req);
 		if (bytes == null || bytes.length == 0) {
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"DELETE Body not found\"}");
 		} else {
 			try {
-				String ret = tryPath(req, res).delete(getSafePath(req.getPathInfo().substring(1)), bytes, req, res);
+				String ret = tryPath(req.getPathInfo()).delete(getSafePath(req.getPathInfo().substring(1)), bytes, req,
+						res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
 			} catch (PathException e) {
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());

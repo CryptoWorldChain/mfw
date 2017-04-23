@@ -41,9 +41,12 @@ public class PackHeader {
 	public final static String MESSAGE = "message";
 
 	// public final static String SESSION = EXT_IGNORE+"SSM";
+	
+	public final static String EXT_IGNORE_HTTP_REQUEST = EXT_IGNORE_RESPONSE + "_httprequest";
+	public final static String EXT_IGNORE_HTTP_RESPONSE = EXT_IGNORE_RESPONSE + "_httpresponse";
 
 	public final static String HTTP_PARAM_FIX_HEAD = "fh";
-	public final static String HTTP_PARAM_BODY_DATA = "bd";
+	public final static String HTTP_PARAM_BODY_DATA = "bd"; 
 	public final static String GCMD = "gcmd";
 
 	// public final static String H_IGN_GCMD = EXT_IGNORE_RESPONSE + "_gcmd";

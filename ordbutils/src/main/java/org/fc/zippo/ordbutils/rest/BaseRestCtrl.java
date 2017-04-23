@@ -42,22 +42,6 @@ public abstract class BaseRestCtrl {
 
 	public abstract String delete(String key, byte[] bodies, HttpServletRequest req,HttpServletResponse res);
 
-
-	public List<Map<String, Object>> reMap(List<Map<String, Object>> list) {
-		if (list == null)
-			return null;
-		ArrayList<Map<String, Object>> retlist = new ArrayList<>();
-		for (Map<String, Object> map : list) {
-			HashMap remap = new HashMap<>();
-			for (Map.Entry<String, Object> entry : map.entrySet()) {
-				remap.put(FieldUtils.SqlColomn2Field(entry.getKey()), entry.getValue());
-			}
-			retlist.add(remap);
-		}
-		return retlist;
-
-	}
-
 	public String getBySql(Class entityClazz, Class keyClass, String tableName, HttpServletRequest req) {
 		int totalCount = -1;
 		boolean page = StringHelper.toBool(req.getParameter("page"));
@@ -90,7 +74,7 @@ public abstract class BaseRestCtrl {
 			log.debug("[SQL]:{}", sql);
 			list = mapper.executeSql(sql);
 			if (list != null && list.size() > 0) {
-				list = reMap(list);
+				list = FieldUtils.reMap(list);
 			}
 		}
 		if (page) {
