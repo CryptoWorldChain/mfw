@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Validate;
+import org.fc.zippo.filter.exception.FilterException;
 import org.fc.zippo.filter.exception.PathException;
 import org.osgi.framework.BundleContext;
 import org.springframework.core.io.Resource;
@@ -62,13 +63,13 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 
 	public abstract PacketFilter[] getFilters();
 
-	protected ActWrapper actwapper=new ActWrapper(){
+	protected ActWrapper actwapper = new ActWrapper() {
 
 		@Override
 		public String getModule() {
 			return "rest";
 		}
-		
+
 	};
 
 	@Validate
@@ -167,13 +168,15 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 
 	public boolean doPreFilter(HttpServletRequest req, HttpServletResponse res) {
 		if (fm != null)
-			return fm.preRouteListner(actwapper, getFakeFramePack(req, res), new CompleteHandler() {
+			if (!fm.preRouteListner(actwapper, getFakeFramePack(req, res), new CompleteHandler() {
 
 				@Override
 				public void onFinished(FramePacket arg0) {
 
 				}
-			});
+			})) {
+				throw new FilterException("FilterCannotMatch");
+			}
 		return true;
 	}
 
@@ -192,8 +195,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
 		try {
-			if (!doPreFilter(req, res))
-				return;
+			doPreFilter(req, res);
 			String ret = tryPath(req.getPathInfo()).get(getSafePath(req.getPathInfo().substring(1)), req, res);
 			res.getOutputStream().write(ret.getBytes("UTF-8"));
 		} catch (PathException e) {
@@ -209,8 +211,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-		if (!doPreFilter(req, res))
-			return;
+		
 		String method = req.getParameter("_method");
 		if (StringUtils.isNotBlank(method)) {
 			if (method.equals("del")) {
@@ -227,10 +228,11 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			}
 		}
 		byte bytes[] = HttpHelper.getRequestContentBytes(req);
-		if (bytes == null || bytes.length == 0) {
+		if (bytes == null) {
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"POST Body not found\"}");
 		} else {
 			try {
+				doPreFilter(req, res);
 				String ret = tryPath(req.getPathInfo()).post(bytes, req, res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
 			} catch (PathException e) {
@@ -251,10 +253,11 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			return;
 
 		byte bytes[] = HttpHelper.getRequestContentBytes(req);
-		if (bytes == null || bytes.length == 0) {
+		if (bytes == null ) {
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"PUT Body not found\"}");
 		} else {
 			try {
+				doPreFilter(req, res);
 				String ret = tryPath(req.getPathInfo()).put(getSafePath(req.getPathInfo().substring(1)), bytes, req,
 						res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
@@ -272,14 +275,12 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	@Override
 	public void doDelete(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-		if (!doPreFilter(req, res))
-			return;
-
 		byte bytes[] = HttpHelper.getRequestContentBytes(req);
 		if (bytes == null || bytes.length == 0) {
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"DELETE Body not found\"}");
 		} else {
 			try {
+				doPreFilter(req, res);
 				String ret = tryPath(req.getPathInfo()).delete(getSafePath(req.getPathInfo().substring(1)), bytes, req,
 						res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));

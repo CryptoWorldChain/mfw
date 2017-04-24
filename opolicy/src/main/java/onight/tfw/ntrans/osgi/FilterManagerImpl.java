@@ -120,7 +120,7 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 
 	@Override
@@ -136,6 +136,6 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 			pl.postRoute(actor, pack, handler);
 		}
 
-		return false;
+		return true;
 	}
 }
