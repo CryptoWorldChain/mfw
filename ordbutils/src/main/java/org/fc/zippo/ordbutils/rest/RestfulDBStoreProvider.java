@@ -15,18 +15,23 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Validate;
-import org.fc.zippo.ordbutils.exception.PathException;
-import org.fc.zippo.ordbutils.rest.filter.EncodingFilter;
-import org.fc.zippo.ordbutils.rest.filter.RequestSizeFilter;
+import org.fc.zippo.filter.exception.PathException;
 import org.osgi.framework.BundleContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
 import lombok.extern.slf4j.Slf4j;
+import onight.tfw.async.CompleteHandler;
+import onight.tfw.ntrans.api.ActWrapper;
+import onight.tfw.ntrans.api.FilterManager;
+import onight.tfw.ntrans.api.annotation.ActorRequire;
 import onight.tfw.ojpa.ordb.ORDBProvider;
 import onight.tfw.ojpa.ordb.StaticTableDaoSupport;
 import onight.tfw.ojpa.ordb.loader.CommonSqlMapper;
+import onight.tfw.otransio.api.PackHeader;
+import onight.tfw.otransio.api.PacketFilter;
+import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.serialize.HttpHelper;
 import onight.tfw.proxy.IActor;
@@ -41,27 +46,34 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	PropHelper props = new PropHelper(bundleContext);
 
 	HashMap<String, BaseRestCtrl> ctrls = new HashMap<>();
-	protected FilterManager fm = new FilterManager(bundleContext);
 
 	public abstract String[] getCtrlPaths();
 
-	public abstract IRestfulFilter[] getFilters();
+	@ActorRequire(name = "filterManager", scope = "global")
+	FilterManager fm;
+
+	public FilterManager getFm() {
+		return fm;
+	}
+
+	public void setFm(FilterManager fm) {
+		this.fm = fm;
+	}
+
+	public abstract PacketFilter[] getFilters();
+
+	protected ActWrapper actwapper=new ActWrapper(){
+
+		@Override
+		public String getModule() {
+			return "rest";
+		}
+		
+	};
 
 	@Validate
 	public void startup() {
 		super.startup();
-		fm.addFilter(new EncodingFilter());
-		if (StringUtils.equals("true", props.get("org.zippo.rest.filters.sizefilter", "true"))
-				|| StringUtils.equals("on", props.get("org.zippo.rest.filters.sizefilter", "on"))
-				|| StringUtils.equals("1", props.get("org.zippo.rest.filters.sizefilter", "1"))) {
-			fm.addFilter(new RequestSizeFilter());
-		}
-
-		if (getFilters() != null && getFilters().length > 0) {
-			for (IRestfulFilter rf : getFilters()) {
-				fm.addFilter(rf);
-			}
-		}
 		for (String path : getCtrlPaths()) {
 			Enumeration<URL> en = bundleContext.getBundle().findEntries(path.replaceAll("\\.", "/"), "*.class", true);
 			while (en.hasMoreElements()) {
@@ -146,11 +158,41 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 		throw new PathException("{\"status\":\"error\",\"message\":\"path.2 not found:" + path + "\"}");
 	}
 
+	FramePacket getFakeFramePack(HttpServletRequest req, HttpServletResponse res) {
+		FramePacket pack = new FramePacket();
+		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_REQUEST, req);
+		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_RESPONSE, req);
+		return pack;
+	}
+
+	public boolean doPreFilter(HttpServletRequest req, HttpServletResponse res) {
+		if (fm != null)
+			return fm.preRouteListner(actwapper, getFakeFramePack(req, res), new CompleteHandler() {
+
+				@Override
+				public void onFinished(FramePacket arg0) {
+
+				}
+			});
+		return true;
+	}
+
+	public boolean doPostFilter(HttpServletRequest req, HttpServletResponse res) {
+		if (fm != null)
+			return fm.postRouteListner(actwapper, getFakeFramePack(req, res), new CompleteHandler() {
+				@Override
+				public void onFinished(FramePacket arg0) {
+
+				}
+			});
+		return true;
+	}
+
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
 		try {
-			if (!fm.doFilter(req, res))
+			if (!doPreFilter(req, res))
 				return;
 			String ret = tryPath(req.getPathInfo()).get(getSafePath(req.getPathInfo().substring(1)), req, res);
 			res.getOutputStream().write(ret.getBytes("UTF-8"));
@@ -159,13 +201,15 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 		} catch (Throwable t) {
 			log.debug("unknow Error", t);
 			res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
+		} finally {
+			doPostFilter(req, res);
 		}
 	}
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-		if (!fm.doFilter(req, res))
+		if (!doPreFilter(req, res))
 			return;
 		String method = req.getParameter("_method");
 		if (StringUtils.isNotBlank(method)) {
@@ -194,6 +238,8 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			} catch (Throwable t) {
 				log.debug("unknow Error", t);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
+			} finally {
+				doPostFilter(req, res);
 			}
 		}
 	}
@@ -201,7 +247,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	@Override
 	public void doPut(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-		if (!fm.doFilter(req, res))
+		if (!doPreFilter(req, res))
 			return;
 
 		byte bytes[] = HttpHelper.getRequestContentBytes(req);
@@ -217,6 +263,8 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			} catch (Throwable t) {
 				log.debug("unknow Error", t);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
+			} finally {
+				doPostFilter(req, res);
 			}
 		}
 	}
@@ -224,7 +272,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	@Override
 	public void doDelete(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-		if (!fm.doFilter(req, res))
+		if (!doPreFilter(req, res))
 			return;
 
 		byte bytes[] = HttpHelper.getRequestContentBytes(req);
@@ -240,6 +288,8 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			} catch (Throwable t) {
 				log.debug("unknow Error", t);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
+			} finally {
+				doPostFilter(req, res);
 			}
 		}
 	}

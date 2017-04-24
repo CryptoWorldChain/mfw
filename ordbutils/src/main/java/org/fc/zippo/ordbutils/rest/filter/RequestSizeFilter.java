@@ -1,14 +1,20 @@
 package org.fc.zippo.ordbutils.rest.filter;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.lang3.StringUtils;
-import org.fc.zippo.ordbutils.exception.FilterException;
-import org.fc.zippo.ordbutils.rest.FilterConfig;
-import org.fc.zippo.ordbutils.rest.IRestfulFilter;
+import org.apache.felix.ipojo.annotations.Provides;
+import org.fc.zippo.filter.FilterConfig;
+import org.fc.zippo.filter.exception.FilterException;
 
-public class RequestSizeFilter implements IRestfulFilter {
+import onight.osgi.annotation.iPojoBean;
+import onight.tfw.async.CompleteHandler;
+import onight.tfw.ntrans.api.ActWrapper;
+import onight.tfw.otransio.api.PacketFilter;
+import onight.tfw.otransio.api.SimplePacketFilter;
+import onight.tfw.otransio.api.beans.FramePacket;
+
+@iPojoBean
+@Provides(specifications = { PacketFilter.class }, strategy = "SINGLETON")
+public class RequestSizeFilter extends SimplePacketFilter {
 
 	@Override
 	public String getSimpleName() {
@@ -35,13 +41,13 @@ public class RequestSizeFilter implements IRestfulFilter {
 	}
 
 	@Override
-	public void destroy(FilterConfig filterConfig) throws FilterException {
-
-	}
-
-	@Override
-	public boolean doFilter(HttpServletRequest request, HttpServletResponse response) throws FilterException {
-		return maxsize > 0 && request.getContentLength() < maxsize;
+	public boolean preRoute(ActWrapper arg0, FramePacket pack, CompleteHandler arg2) throws FilterException {
+		if (pack.getHttpServerletRequest() != null)
+			if (maxsize > 0 && pack.getHttpServerletRequest().getContentLength() > maxsize) {
+				throw new FilterException("Request Size Limit to :" + maxsize + ", contentLength="
+						+ pack.getHttpServerletRequest().getContentLength() + ":");
+			}
+		return true;
 	}
 
 }

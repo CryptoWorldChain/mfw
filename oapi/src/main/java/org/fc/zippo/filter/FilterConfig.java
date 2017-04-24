@@ -1,4 +1,4 @@
-package org.fc.zippo.ordbutils.rest;
+package org.fc.zippo.filter;
 
 import org.osgi.framework.BundleContext;
 

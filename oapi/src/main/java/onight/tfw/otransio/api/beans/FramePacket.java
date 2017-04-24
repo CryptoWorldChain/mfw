@@ -2,6 +2,14 @@ package onight.tfw.otransio.api.beans;
 
 import java.io.ByteArrayOutputStream;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
+import org.codehaus.jackson.annotate.JsonIgnore;
+
+import com.google.protobuf.Message;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,11 +19,6 @@ import onight.tfw.outils.bean.JsonPBFormat;
 import onight.tfw.outils.serialize.ISerializer;
 import onight.tfw.outils.serialize.SerializerFactory;
 import onight.tfw.outils.serialize.SerializerUtil;
-
-import org.apache.commons.lang3.StringUtils;
-import org.codehaus.jackson.annotate.JsonIgnore;
-
-import com.google.protobuf.Message;
 
 @Data
 @NoArgsConstructor
@@ -68,6 +71,22 @@ public class FramePacket {
 			extHead = new ExtHeader();
 		}
 		return extHead.append(key, value);
+	}
+	
+	public HttpServletRequest getHttpServerletRequest(){
+		Object ret =  extHead.get(PackHeader.EXT_IGNORE_HTTP_REQUEST);
+		if(ret!=null&&ret instanceof HttpServletRequest){
+			return (HttpServletRequest)ret;
+		}
+		return null;
+	}
+	
+	public HttpServletResponse getHttpServerletResponse(){
+		Object ret =  extHead.get(PackHeader.EXT_IGNORE_HTTP_RESPONSE);
+		if(ret!=null&&ret instanceof HttpServletResponse){
+			return (HttpServletResponse)ret;
+		}
+		return null;
 	}
 
 	// public Map<String, Object> getExts() {

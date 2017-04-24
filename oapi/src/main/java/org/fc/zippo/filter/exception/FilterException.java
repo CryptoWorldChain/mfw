@@ -1,4 +1,4 @@
-package org.fc.zippo.ordbutils.exception;
+package org.fc.zippo.filter.exception;
 
 public class FilterException extends RuntimeException {
 

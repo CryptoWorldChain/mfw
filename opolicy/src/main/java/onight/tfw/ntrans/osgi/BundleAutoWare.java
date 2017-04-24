@@ -57,7 +57,7 @@ public class BundleAutoWare {
 		if (name == null) {
 			name = clazz.getName();
 		}
-
+		log.debug("Register ActorService:" + name + "," + service + ",clazz=" + clazz);
 		serviceByName.put(name, service);
 
 		// serviceByName.put(service.getClass(), value)
