@@ -5,11 +5,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import lombok.Getter;
-import lombok.Setter;
-import onight.tfw.ojpa.api.OJpaDAO;
-
 import org.apache.felix.ipojo.annotations.Stereotype;
+
+import lombok.Getter;
+import onight.tfw.ojpa.api.OJpaDAO;
 
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
@@ -22,7 +21,7 @@ public @interface StoreDAO {
 	 */
 	Class domain() default Object.class;
 
-	String target() default "mysql";
+	String target() default "";
 	
 	String key() default "";
 	

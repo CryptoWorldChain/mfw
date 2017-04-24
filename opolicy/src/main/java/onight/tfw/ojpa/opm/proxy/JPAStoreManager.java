@@ -2,6 +2,8 @@ package onight.tfw.ojpa.opm.proxy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +14,7 @@ import org.apache.felix.ipojo.annotations.Bind;
 import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Unbind;
 import org.apache.felix.ipojo.annotations.Validate;
+import org.osgi.framework.BundleContext;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.annotation.iPojoBean;
@@ -22,6 +25,7 @@ import onight.tfw.ojpa.api.OJpaDAO;
 import onight.tfw.ojpa.api.ServiceSpec;
 import onight.tfw.ojpa.api.StoreServiceProvider;
 import onight.tfw.ojpa.api.annotations.StoreDAO;
+import onight.tfw.outils.conf.PropHelper;
 
 @iPojoBean
 @Slf4j
@@ -31,6 +35,13 @@ public class JPAStoreManager {
 
 	// private List<IStoreClient> clientDaos = new
 	// ArrayList<IStoreClient>();
+	BundleContext btx;
+	PropHelper prop;
+
+	public JPAStoreManager(BundleContext btx) {
+		this.btx = btx;
+		prop = new PropHelper(btx);
+	}
 
 	class StoreClientSet {
 		IJPAClient client;
@@ -86,6 +97,17 @@ public class JPAStoreManager {
 		daosByClient.remove(System.identityHashCode(storeClient));
 	}
 
+	public String getOverrideTarger(Class<?> clazz, Field field) {
+		String override_target = null;
+		StringBuffer sb = new StringBuffer("org.zippo.store");
+		for (String v : (clazz.getName() + "." + field.getName()).split("\\.")) {
+			sb.append(".").append(v);
+			override_target = prop.get(sb.toString(), override_target);
+		}
+
+		return override_target;
+	}
+
 	@Bind(aggregate = true, optional = true)
 	public void bindClientDao(IJPAClient storeClient) {
 		log.info("ClientDao.bind:" + storeClient + "@" + System.identityHashCode(storeClient));
@@ -93,7 +115,9 @@ public class JPAStoreManager {
 		if (clientset == null) {
 			List<DomainDaoSupport> daos = new ArrayList<DomainDaoSupport>();
 			daosByClient.put(System.identityHashCode(storeClient), new StoreClientSet(storeClient, daos));
+
 			Class clazz = storeClient.getClass();
+
 			for (Field field : clazz.getDeclaredFields()) {
 				StoreDAO anno = field.getAnnotation(StoreDAO.class);
 				DomainDaoSupport dao = null;
@@ -104,8 +128,7 @@ public class JPAStoreManager {
 							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()),
 									DomainDaoSupport.class);
 						} catch (Exception e1) {
-							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()),
-									OJpaDAO.class);
+							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()), OJpaDAO.class);
 						}
 
 						Method getmethod = clazz.getMethod("get" + StringUtils.capitalize(field.getName()));
@@ -121,22 +144,44 @@ public class JPAStoreManager {
 
 						dao = (DomainDaoSupport) getmethod.invoke(storeClient);
 						if (dao == null) {
-							ServiceSpec ss = new ServiceSpec(anno.target());
+
+							Class domainClazz = anno.domain();
+							if ((domainClazz==null||domainClazz == Object.class) && field.getGenericType() instanceof ParameterizedType) {
+								for (Type type : ((ParameterizedType) field.getGenericType())
+										.getActualTypeArguments()) {
+									if (type instanceof Class) {
+										domainClazz = (Class) type;
+										log.debug("get JPADAOType==" + domainClazz + ",type=" + type + ",typeclass="
+												+ type.getClass());
+									}
+								}
+							}
+
+							ServiceSpec ss;
+							String target = getOverrideTarger(clazz, field);
+							if (StringUtils.isBlank(target)) {
+								if (StringUtils.isBlank(anno.target())) {
+									target = prop.get("org.zippo.store.default_target", "orcl");
+								} else {
+									target = anno.target();
+								}
+							}
+							ss = new ServiceSpec(target);
+
 							dao = (DomainDaoSupport) anno.daoClass()
 									.getConstructor(ServiceSpec.class, Class.class, Class.class, Class.class)
-									.newInstance(ss, anno.domain(), anno.example(), anno.keyclass());
-							// new OJpaDAO(ss,
-							// anno.domain(),anno.example(),anno.keyclass());
+									.newInstance(ss, domainClazz, anno.example(), anno.keyclass());
 							setmethod.invoke(storeClient, dao);
 							if (dao instanceof OJpaDAO) {
 								OJpaDAO ojdao = (OJpaDAO) dao;
+
 								ojdao.setKeyField(anno.key());
 								if (!StringUtils.isBlank(anno.key())) {
 									List<Method> keyMethods = new ArrayList<Method>();
 									for (String keyf : anno.key().split(",")) {
 										try {
-											keyMethods.add(anno.domain()
-													.getMethod("get" + StringUtils.capitalize(keyf.trim())));
+											keyMethods.add(
+													domainClazz.getMethod("get" + StringUtils.capitalize(keyf.trim())));
 										} catch (Exception e) {
 											log.warn("key get method not found:" + clazz + ",field=" + field.getName());
 										}
