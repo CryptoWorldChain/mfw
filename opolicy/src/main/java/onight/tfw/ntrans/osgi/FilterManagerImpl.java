@@ -12,6 +12,7 @@ import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.StaticServiceProperty;
 import org.apache.felix.ipojo.annotations.Unbind;
 import org.fc.zippo.filter.FilterConfig;
+import org.fc.zippo.filter.exception.FilterException;
 import org.osgi.framework.BundleContext;
 
 import lombok.extern.slf4j.Slf4j;
@@ -72,6 +73,7 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 					}
 				}
 				if (!list.contains(pl)) {
+					pl.init(new FilterConfig(btx, helper));
 					list.add(pl);
 					Collections.sort(list, new Comparator<PacketFilter>() {
 
@@ -108,18 +110,19 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 	public boolean preRouteListner(ActWrapper actor, FramePacket pack, CompleteHandler handler) {
 		String module = actor.getModule();
 		ArrayList<PacketFilter> listeners = filterByModule.get(module);
+		for (PacketFilter pl : globalFilters) {
+			if (!pl.preRoute(actor, pack, handler)) {
+				throw new FilterException("Filter not pass:filter=" + pl.getSimpleName());
+			}
+		}
 		if (listeners != null) {
 			for (PacketFilter pl : listeners) {
 				if (!pl.preRoute(actor, pack, handler)) {
-					return false;
+					throw new FilterException("Filter not pass:filter=" + pl.getSimpleName());
 				}
 			}
 		}
-		for (PacketFilter pl : globalFilters) {
-			if (!pl.preRoute(actor, pack, handler)) {
-				return false;
-			}
-		}
+
 		return true;
 	}
 
@@ -127,13 +130,14 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 	public boolean postRouteListner(ActWrapper actor, FramePacket pack, CompleteHandler handler) {
 		String module = actor.getModule();
 		ArrayList<PacketFilter> listeners = filterByModule.get(module);
-		if (listeners != null) {
-			for (PacketFilter pl : listeners) {
-				pl.postRoute(actor, pack, handler) ;
-			}
-		}
 		for (PacketFilter pl : globalFilters) {
 			pl.postRoute(actor, pack, handler);
+		}
+
+		if (listeners != null) {
+			for (PacketFilter pl : listeners) {
+				pl.postRoute(actor, pack, handler);
+			}
 		}
 
 		return true;

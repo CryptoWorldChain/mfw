@@ -6,3 +6,4 @@ classes
 .cache-*
 .DS_Store
 .DS_Store?
+.classpath

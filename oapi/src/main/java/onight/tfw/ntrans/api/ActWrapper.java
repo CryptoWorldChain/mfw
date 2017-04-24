@@ -204,7 +204,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	@Override
 	final public void doPacketWithFilter(FramePacket pack, CompleteHandler handler) {
-		if (fm.preRouteListner(this, pack, handler)) {
+		if (!fm.preRouteListner(this, pack, handler)) {
 			return;
 		}
 		onPacket(pack, handler);
