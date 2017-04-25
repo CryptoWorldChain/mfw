@@ -80,8 +80,8 @@ public class PacketHelper {
 	}
 
 	public static FramePacket buildHeaderFromHttpGet(HttpServletRequest req) {
-		if (StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))
-			return null;
+		//if (StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))
+			//return null;
 		return buildHeaderFromHttp(req, null);
 	}
 

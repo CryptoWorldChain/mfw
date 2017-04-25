@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
+import org.fc.zippo.filter.exception.FilterException;
 
 import com.google.protobuf.Message;
 
@@ -101,19 +102,21 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	protected ISerializer jsons = SerializerFactory.getSerializer(SerializerFactory.SERIALIZER_JSON);
 
-	public void doWeb(final HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack) throws IOException {
+	public void doWeb(final HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack)
+			throws IOException {
 		try {
 			resp.setCharacterEncoding("UTF-8");
-			resp.setHeader("Content-type", "application/json;charset=UTF-8");  
+			resp.setHeader("Content-type", "application/json;charset=UTF-8");
 			pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_REQUEST, req);
 			pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_RESPONSE, resp);
-			
+
 			doPacketWithFilter(pack, new CompleteHandler() {
 				@Override
 				public void onFinished(FramePacket retpack) {
 					try {
 						if (retpack == null) {
-							resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
+							resp.getOutputStream().write(PacketHelper
+									.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
 							return;
 						}
 						retpack.getExtHead().buildFor(resp);
@@ -123,25 +126,33 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 							String str = new JsonPBFormat().printToString(msg);
 							retpack.getFixHead().genBytes();
 							String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-									+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
+									+ ",\"eh\":"
+									+ new String(
+											SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs())))
+									+ "" //
 									+ ",\"body\":" + str + "" + "}";
 
 							resp.getOutputStream().write(ret.getBytes("UTF-8"));
 
-						} else if (retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON && retpack.getBody() != null) {
+						} else if (retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON
+								&& retpack.getBody() != null) {
 							String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-									+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
+									+ ",\"eh\":"
+									+ new String(
+											SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs())))
+									+ "" //
 									+ ",\"body\":" + new String(retpack.getBody()) + "" + "}";
 							resp.getOutputStream().write(ret.getBytes("UTF-8"));
 							//
 						} else {
-							resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
+							resp.getOutputStream().write(PacketHelper
+									.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
 						}
 					} catch (Exception e) {
 						log.debug("doweb error:", e);
 						try {
-							resp.getOutputStream().write(
-									PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), pack))));
+							resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack,
+									new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), pack))));
 						} catch (IOException e1) {
 							// e1.printStackTrace();
 							log.debug("error response:", e);
@@ -161,8 +172,8 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 		} catch (Exception e) {
 			log.debug("doweb error:", e);
 			try {
-				resp.getOutputStream()
-						.write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), pack))));
+				resp.getOutputStream().write(PacketHelper.toJsonBytes(
+						PacketHelper.toPBReturn(pack, new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), pack))));
 			} catch (IOException e1) {
 				// e1.printStackTrace();
 				log.debug("error response:", e);
@@ -204,11 +215,19 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 
 	@Override
 	final public void doPacketWithFilter(FramePacket pack, CompleteHandler handler) {
-		if (!fm.preRouteListner(this, pack, handler)) {
-			return;
+		try {
+			if (!fm.preRouteListner(this, pack, handler)) {
+				throw new FilterException("FilterBlock!");
+			}
+			onPacket(pack, handler);
+		} catch (FilterException e) {
+			handler.onFinished(PacketHelper.toPBReturn(pack, "FilterBlocked:" + e.getMessage()));
+		} catch (Throwable e) {
+			log.debug("doPacketWithFilterError:", e);
+			handler.onFinished(PacketHelper.toPBReturn(pack, e.getMessage()));
+		} finally {
+			fm.postRouteListner(this, pack, handler);
 		}
-		onPacket(pack, handler);
-		fm.postRouteListner(this, pack, handler);
 	}
 
 	public void onPacket(FramePacket pack, CompleteHandler handler) {

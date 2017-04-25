@@ -94,10 +94,11 @@ public class FixHeader {
 	}
 
 	boolean dataAlreadyGen = false;
+
 	public byte[] toBytes(boolean sync) {
-//		if (dataAlreadyGen) {
-//			return data;
-//		}
+		// if (dataAlreadyGen) {
+		// return data;
+		// }
 		data[0] = (byte) (ver);
 		System.arraycopy(cmd.getBytes(), 0, data, 1, 3);
 		System.arraycopy(module.getBytes(), 0, data, 4, 3);
@@ -117,10 +118,10 @@ public class FixHeader {
 			LengthUtils.int2Byte2(extsize, data, 8);
 			LengthUtils.int2Byte3(bodysize, data, 10);
 		}
-		if(data[7]<10){
-			data[7] =  (byte) (data[7] + '0');
-		}else{
-			data[7] =  (byte) (data[7] + 'A' - '0' );
+		if (data[7] < 10) {
+			data[7] = (byte) (data[7] + '0');
+		} else {
+			data[7] = (byte) (data[7] + 'A' - '0');
 		}
 		data[13] = (byte) enctype;
 		data[14] = (byte) (prio + '0');
@@ -133,10 +134,10 @@ public class FixHeader {
 		ver = (char) data[0];
 		cmd = new String(data, 1, 3).trim();
 		module = new String(data, 4, 3).trim();
-		if(data[7]<='9'){
-			flag =  (byte) (data[7] - '0');
-		}else{
-			flag =  (byte) (data[7] - 'A' + 10 );
+		if (data[7] <= '9') {
+			flag = (byte) (data[7] - '0');
+		} else {
+			flag = (byte) (data[7] - 'A' + 10);
 		}
 		if ((flag & 0x3) == 2) {// 去字节方式
 			extsize = LengthUtils.byte2Int(data[8], data[9]);
@@ -167,6 +168,9 @@ public class FixHeader {
 	}
 
 	public static FixHeader buildFrom(HttpServletRequest req) {
+		if (req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD) == null) {
+			return new FixHeader();
+		}
 		return parseFrom(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD).getBytes());
 	}
 

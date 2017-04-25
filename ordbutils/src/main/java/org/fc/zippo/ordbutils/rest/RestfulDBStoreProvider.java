@@ -32,6 +32,7 @@ import onight.tfw.ojpa.ordb.StaticTableDaoSupport;
 import onight.tfw.ojpa.ordb.loader.CommonSqlMapper;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketFilter;
+import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.serialize.HttpHelper;
@@ -160,9 +161,9 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	}
 
 	FramePacket getFakeFramePack(HttpServletRequest req, HttpServletResponse res) {
-		FramePacket pack = new FramePacket();
+		FramePacket pack = PacketHelper.buildHeaderFromHttpGet(req);//new FramePacket();
 		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_REQUEST, req);
-		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_RESPONSE, req);
+		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_RESPONSE, res);
 		return pack;
 	}
 
@@ -248,10 +249,6 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 
 	@Override
 	public void doPut(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-
-		if (!doPreFilter(req, res))
-			return;
-
 		byte bytes[] = HttpHelper.getRequestContentBytes(req);
 		if (bytes == null ) {
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"PUT Body not found\"}");
