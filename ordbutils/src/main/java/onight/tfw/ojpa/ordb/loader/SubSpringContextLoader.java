@@ -81,7 +81,8 @@ public class SubSpringContextLoader extends SpringContextLoader{
 		String names[] = appContext.getBeanDefinitionNames();
 		log.debug("total beans:" + names.length + ",springcontext=" + appContext + "@" + this);
 
-
+		txManager = (PlatformTransactionManager) appContext.getBean("transactionManager");
+		log.info("txManager=" + txManager);
 	}
 
 

@@ -5,28 +5,33 @@ import org.apache.felix.ipojo.annotations.Validate;
 import org.osgi.framework.BundleContext;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ntrans.api.ActorService;
 import onight.tfw.ntrans.api.annotation.ActorRequire;
 import onight.tfw.ojpa.api.StoreServiceProvider;
 import onight.tfw.ojpa.ordb.loader.SubSpringContextLoader;
-import onight.tfw.outils.reflect.TypeHelper;
 
 @Slf4j
 @Provides(specifications = { StoreServiceProvider.class, ActorService.class }, strategy = "SINGLETON")
-public abstract class SubDBProvider<T extends ORDBProvider> extends ORDBProvider implements ActorService {
+public abstract class SubIndepentDBProvider extends ORDBProvider implements ActorService {
 
-	@ActorRequire(scope = "global")
+	@ActorRequire(scope = "global",name=".superProName")
 	@Getter
-	T orclProvider;
+	ORDBProvider orclProvider;
 
-	public void setOrclProvider(T orclProvider) {
+	@Getter
+	@Setter
+	String superProName;
+
+	public void setOrclProvider(ORDBProvider orclProvider) {
 		this.orclProvider = orclProvider;
 		reloadContx();
 	}
 
-	public SubDBProvider(BundleContext bundleContext) {
+	public SubIndepentDBProvider(String superProName, BundleContext bundleContext) {
 		super(bundleContext);
+		this.superProName = superProName;
 	}
 
 	@Override
@@ -53,7 +58,5 @@ public abstract class SubDBProvider<T extends ORDBProvider> extends ORDBProvider
 	public String getProviderid() {
 		return null;
 	}
-	
-
 
 }

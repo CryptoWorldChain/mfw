@@ -110,7 +110,7 @@ public class JPAStoreManager {
 		daosByClient.remove(System.identityHashCode(storeClient));
 	}
 
-	public String getOverrideTarger(Class<?> clazz, Field field) {
+	public String getOverrideTarget(Class<?> clazz, Field field) {
 		String override_target = null;
 		StringBuffer sb = new StringBuffer("org.zippo.store");
 		for (String v : (clazz.getName() + "." + field.getName()).split("\\.")) {
@@ -173,9 +173,17 @@ public class JPAStoreManager {
 							}
 
 							ServiceSpec ss;
-							String target = getOverrideTarger(clazz, field);
+							String target = getOverrideTarget(clazz, field);
 							if (StringUtils.isBlank(target)) {
 								target = anno.target();
+							}
+							if(StringUtils.isNotBlank(target)&&target.indexOf('.')>0){
+								//sub class
+								String name  = target.substring(1);
+								Method getNameMethod = clazz.getMethod("get" + StringUtils.capitalize(name));
+								if(getNameMethod!=null){
+									target = (String)getNameMethod.invoke(storeClient);
+								}
 							}
 							ss = new ServiceSpec(target);
 

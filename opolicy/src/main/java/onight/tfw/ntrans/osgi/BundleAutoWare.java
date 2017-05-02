@@ -2,6 +2,7 @@ package onight.tfw.ntrans.osgi;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,11 +31,10 @@ public class BundleAutoWare {
 		Object destObj;
 		boolean global = false;
 	};
-	
-	public static Class<?> determineType(Field field, Class<?> type) {
-	    return (Class<?>) TypeHelper.getType(type, field).getType();
-	}
 
+	public static Class<?> determineType(Field field, Class<?> type) {
+		return (Class<?>) TypeHelper.getType(type, field).getType();
+	}
 
 	public ConcurrentHashMap<String, List<WaredInfo>> requireList = new ConcurrentHashMap<>();
 
@@ -44,7 +44,7 @@ public class BundleAutoWare {
 			try {
 				fields.addAll(Arrays.asList(c.getDeclaredFields()));
 			} catch (Throwable e) {
-				log.error("error loading fields:"+type,e);
+				log.error("error loading fields:" + type, e);
 			}
 		}
 		return fields;
@@ -74,15 +74,27 @@ public class BundleAutoWare {
 		for (Field field : getInheritedFields(clazz)) {
 			ActorRequire anno = field.getAnnotation(ActorRequire.class);
 			if (anno != null) {
-				
+
 				String beanname = anno.name();
 				if (StringUtils.isBlank(beanname)) {
-					//beanname = field.getType().getName();
-					beanname=determineType(field, clazz).getName();
+					// beanname = field.getType().getName();
+					beanname = determineType(field, clazz).getName();
+				}
+				else if (beanname.startsWith(".")) {
+					String exname = beanname.substring(1);
+					try {
+						Method getNameMethod = clazz.getMethod("get" + StringUtils.capitalize(exname));
+						if (getNameMethod != null) {
+							beanname = (String) getNameMethod.invoke(service);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 				boolean global = anno.scope().equals("global");
-				
-				log.debug("Service(" + service + "),require.field=" + field.getName() + ",bean=" + beanname + ",clazz=" + clazz);
+
+				log.debug("Service(" + service + "),require.field=" + field.getName() + ",bean=" + beanname + ",clazz="
+						+ clazz);
 				try {
 					PropertyDescriptor pd = new PropertyDescriptor(field.getName(), clazz);
 					List<WaredInfo> rq = requireList.get(beanname);
@@ -116,7 +128,8 @@ public class BundleAutoWare {
 		checkWared(requireList, serviceByName, false);
 	}
 
-	public void checkWared(ConcurrentHashMap<String, List<WaredInfo>> requireList, ConcurrentHashMap<String, Object> serviceByName, boolean global) {
+	public void checkWared(ConcurrentHashMap<String, List<WaredInfo>> requireList,
+			ConcurrentHashMap<String, Object> serviceByName, boolean global) {
 		for (Entry<String, List<WaredInfo>> hunted : requireList.entrySet()) {
 			Object result = serviceByName.get(hunted.getKey());
 			if (result != null) {
