@@ -10,14 +10,14 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
+
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.outils.serialize.HttpHelper;
 import onight.tfw.outils.serialize.SerializerUtil;
-
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @Data
@@ -143,7 +143,8 @@ public class ExtHeader {
 			return PackHeader.EMPTY_BYTES;
 		StringBuffer sb = new StringBuffer();
 		for (Entry<String, Object> pair : hiddenkvs.entrySet()) {
-			if (pair.getValue() != null && !pair.getKey().startsWith(PackHeader.EXT_HIDDEN) && pair.getValue() instanceof String) {
+			if (pair.getValue() != null && !pair.getKey().startsWith(PackHeader.EXT_HIDDEN)
+					&& pair.getValue() instanceof String) {
 				sb.append(pair.getKey()).append(EQUAL_CHAR).append(pair.getValue()).append(SPLIT_CHAR);
 			}
 		}
@@ -174,7 +175,8 @@ public class ExtHeader {
 	public static ExtHeader buildFrom(HttpServletRequest req) {
 		ExtHeader ret = new ExtHeader();
 		for (Map.Entry<String, String[]> kv : req.getParameterMap().entrySet()) {
-			if (!kv.getKey().equals(PackHeader.HTTP_PARAM_FIX_HEAD) && !kv.getKey().equals(PackHeader.HTTP_PARAM_BODY_DATA)) {
+			if (!kv.getKey().equals(PackHeader.HTTP_PARAM_FIX_HEAD)
+					&& !kv.getKey().equals(PackHeader.HTTP_PARAM_BODY_DATA)) {
 				// if (PackHeader.GCMD.equals(kv.getKey())) {
 				// ret.append(PackHeader.H_IGN_GCMD, kv.getValue()[0]);
 				// } else {
@@ -220,28 +222,36 @@ public class ExtHeader {
 			} else {
 				cookie = (new Cookie(key, Base64.encodeBase64URLSafeString(SerializerUtil.toBytes(value))));
 			}
-			cookie.setPath("/");
-			cookie.setMaxAge(7 * 24 * 3600);
+			if(StringUtils.isNotBlank(PackHeader.CookieDomain))
+			{
+				cookie.setDomain(PackHeader.CookieDomain);
+			}
+			cookie.setPath(PackHeader.CookiePath);
+			cookie.setMaxAge(PackHeader.CookieExpire);
 			res.addCookie(cookie);
-
 		}
 	}
 
 	public void buildFor(HttpServletResponse res) {
 		addCookie(res, "_" + PackHeader.HTTP_PARAM_FIX_HEAD, get(PackHeader.HTTP_PARAM_FIX_HEAD));
 		for (Entry<String, Object> pair : hiddenkvs.entrySet()) {
-			if (pair.getKey().startsWith(PackHeader.EXT_HIDDEN) && !pair.getKey().startsWith(PackHeader.EXT_IGNORE_RESPONSE)) {
+			if (pair.getKey().startsWith(PackHeader.EXT_HIDDEN)
+					&& !pair.getKey().startsWith(PackHeader.EXT_IGNORE_RESPONSE)) {
 				try {
 					addCookie(res, pair.getKey(), pair.getValue());
 				} catch (Exception e) {
-					// e.printStackTrace();
+					log.debug("add cookie fail:", e);
 				}
 			}
 		}
-		List<String> cookies = (List<String>) vkvs.get(PackHeader.Set_COOKIE);
+		Map<String, Object> cookies = (Map<String, Object>) vkvs.get(PackHeader.Set_COOKIE);
 		if (cookies != null && cookies.size() > 0) {
-			for(String cookie:cookies){
-				res.addHeader("Set-Cookie", cookie);
+			for (Entry<String, Object> pair : cookies.entrySet()) {
+				try {
+					addCookie(res, pair.getKey(), pair.getValue());
+				} catch (Exception e) {
+					log.debug("add cookie fail:", e);
+				}
 			}
 		}
 	}

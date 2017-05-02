@@ -9,14 +9,15 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.felix.ipojo.annotations.Instantiate;
+import org.osgi.framework.ServiceReference;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ntrans.api.ActorService;
 import onight.tfw.ntrans.api.annotation.ActorRequire;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.felix.ipojo.annotations.Instantiate;
-import org.osgi.framework.ServiceReference;
+import onight.tfw.outils.reflect.TypeHelper;
 
 @Slf4j
 public class BundleAutoWare {
@@ -29,6 +30,11 @@ public class BundleAutoWare {
 		Object destObj;
 		boolean global = false;
 	};
+	
+	public static Class<?> determineType(Field field, Class<?> type) {
+	    return (Class<?>) TypeHelper.getType(type, field).getType();
+	}
+
 
 	public ConcurrentHashMap<String, List<WaredInfo>> requireList = new ConcurrentHashMap<>();
 
@@ -68,12 +74,15 @@ public class BundleAutoWare {
 		for (Field field : getInheritedFields(clazz)) {
 			ActorRequire anno = field.getAnnotation(ActorRequire.class);
 			if (anno != null) {
+				
 				String beanname = anno.name();
 				if (StringUtils.isBlank(beanname)) {
-					beanname = field.getType().getName();
+					//beanname = field.getType().getName();
+					beanname=determineType(field, clazz).getName();
 				}
 				boolean global = anno.scope().equals("global");
-				log.debug("Service(" + service + "),require.field=" + field.getName() + ",bean=" + beanname + ",type=" + field.getType());
+				
+				log.debug("Service(" + service + "),require.field=" + field.getName() + ",bean=" + beanname + ",clazz=" + clazz);
 				try {
 					PropertyDescriptor pd = new PropertyDescriptor(field.getName(), clazz);
 					List<WaredInfo> rq = requireList.get(beanname);

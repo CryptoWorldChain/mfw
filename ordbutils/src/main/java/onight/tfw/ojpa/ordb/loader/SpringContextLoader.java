@@ -43,10 +43,10 @@ import onight.tfw.outils.conf.PropHelper;
 @Slf4j
 public class SpringContextLoader {
 
-	HashMap<String, ORDBDataService> daos = new HashMap<>();
+	protected HashMap<String, ORDBDataService> daos = new HashMap<>();
 	@Getter
-	ClassPathXmlApplicationContext appContext;
-	PlatformTransactionManager txManager;
+	protected ClassPathXmlApplicationContext appContext;
+	protected PlatformTransactionManager txManager;
 
 	public SpringContextLoader() {
 		log.debug("created");

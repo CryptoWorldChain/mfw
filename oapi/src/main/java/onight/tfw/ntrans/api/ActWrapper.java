@@ -115,8 +115,8 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 				public void onFinished(FramePacket retpack) {
 					try {
 						if (retpack == null) {
-							resp.getOutputStream().write(PacketHelper
-									.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
+							resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBErrorReturn(pack,
+									ExceptionBody.EC_NOBODYRETURN, "")));
 							return;
 						}
 						retpack.getExtHead().buildFor(resp);
@@ -145,14 +145,17 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 							resp.getOutputStream().write(ret.getBytes("UTF-8"));
 							//
 						} else {
-							resp.getOutputStream().write(PacketHelper
-									.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
+							resp.getOutputStream()
+									.write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack,
+											new ExceptionBody(ExceptionBody.EC_UNKNOW_SERAILTYPE,
+													retpack.getFixHead().toStrHead()))));
 						}
 					} catch (Exception e) {
 						log.debug("doweb error:", e);
 						try {
-							resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack,
-									new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), pack))));
+							FramePacket fp = PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION,
+									"UNKNOW_ERROR:" + e.getMessage());
+							resp.getOutputStream().write(PacketHelper.toJsonBytes(fp));
 						} catch (IOException e1) {
 							// e1.printStackTrace();
 							log.debug("error response:", e);
@@ -173,7 +176,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 			log.debug("doweb error:", e);
 			try {
 				resp.getOutputStream().write(PacketHelper.toJsonBytes(
-						PacketHelper.toPBReturn(pack, new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), pack))));
+						PacketHelper.toPBErrorReturn(pack,ExceptionBody.EC_SERVICE_EXCEPTION, "UNKNOW_ERROR:" + e.getMessage())));
 			} catch (IOException e1) {
 				// e1.printStackTrace();
 				log.debug("error response:", e);
@@ -221,10 +224,10 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 			}
 			onPacket(pack, handler);
 		} catch (FilterException e) {
-			handler.onFinished(PacketHelper.toPBReturn(pack, "FilterBlocked:" + e.getMessage()));
+			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_FILTER_EXCEPTION,"FilterBlocked:" + e.getMessage()));
 		} catch (Throwable e) {
 			log.debug("doPacketWithFilterError:", e);
-			handler.onFinished(PacketHelper.toPBReturn(pack, e.getMessage()));
+			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION,e.getMessage()));
 		} finally {
 			fm.postRouteListner(this, pack, handler);
 		}

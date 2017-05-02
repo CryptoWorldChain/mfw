@@ -17,7 +17,8 @@ public class PackHeader {
 	// public final static String CMD = "cmd";
 	// public final static String FROM = "from";
 
-	public static final String CookieDomain = NodeHelper.getPropInstance().get("http.cookie.domain", "tfw.imagetop.cn");
+	public static final String CookieDomain = NodeHelper.getPropInstance().get("http.cookie.domain", null);
+	public static final String CookiePath = NodeHelper.getPropInstance().get("http.cookie.path", "/");
 	public static final int CookieExpire = NodeHelper.getPropInstance().get("http.cookie.expire", 24 * 3600);
 	// public final static String SIZE = "size";
 	// public final static String TYPE = "type";// iq-->需要回复，message-->不需要回复
@@ -41,12 +42,14 @@ public class PackHeader {
 	public final static String MESSAGE = "message";
 
 	// public final static String SESSION = EXT_IGNORE+"SSM";
-	
+
 	public final static String EXT_IGNORE_HTTP_REQUEST = EXT_IGNORE_RESPONSE + "_httprequest";
 	public final static String EXT_IGNORE_HTTP_RESPONSE = EXT_IGNORE_RESPONSE + "_httpresponse";
 
+	public final static String EXT_IGNORE_EXCEPTION = EXT_HIDDEN + "__exception";
+
 	public final static String HTTP_PARAM_FIX_HEAD = "fh";
-	public final static String HTTP_PARAM_BODY_DATA = "bd"; 
+	public final static String HTTP_PARAM_BODY_DATA = "bd";
 	public final static String GCMD = "gcmd";
 
 	// public final static String H_IGN_GCMD = EXT_IGNORE_RESPONSE + "_gcmd";

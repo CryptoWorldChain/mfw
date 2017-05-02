@@ -51,8 +51,8 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 						public void onFinished(FramePacket retpack) {
 							try {
 								if (retpack == null) {
-									resp.getOutputStream().write(PacketHelper
-											.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", pack))));
+									resp.getOutputStream().write(PacketHelper.toJsonBytes(
+											PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_NOBODYRETURN, "")));
 									return;
 								}
 								retpack.getExtHead().buildFor(resp);
@@ -126,14 +126,17 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 
 									//
 								} else {
-									resp.getOutputStream().write(PacketHelper
-											.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody("", null))));
+									resp.getOutputStream()
+									.write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack,
+											new ExceptionBody(ExceptionBody.EC_UNKNOW_SERAILTYPE,
+													retpack.getFixHead().toStrHead()))));
 								}
 							} catch (Exception e) {
 								log.debug("doweb error:", e);
 								try {
-									resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack,
-											new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), null))));
+									FramePacket fp = PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION,
+											"UNKNOW_ERROR:" + e.getMessage());
+									resp.getOutputStream().write(PacketHelper.toJsonBytes(fp));
 								} catch (IOException e1) {
 									// e1.printStackTrace();
 									log.debug("error response:", e);
@@ -147,8 +150,8 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 				} catch (Exception e) {
 					log.debug("doweb error:", e);
 					try {
-						resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack,
-								new ExceptionBody("UNKNOW_ERROR:" + e.getMessage(), pack))));
+						resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBErrorReturn(pack,
+								ExceptionBody.EC_SERVICE_EXCEPTION, "UNKNOW_ERROR:" + e.getMessage())));
 					} catch (IOException e1) {
 						// e1.printStackTrace();
 						log.debug("error response:", e);

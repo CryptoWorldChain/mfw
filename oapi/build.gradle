@@ -1,5 +1,5 @@
 
-version='3.0.2'
+version='3.0.3'
 
 dependencies {
 	compile 'javax.servlet:javax.servlet-api:3.1.0'

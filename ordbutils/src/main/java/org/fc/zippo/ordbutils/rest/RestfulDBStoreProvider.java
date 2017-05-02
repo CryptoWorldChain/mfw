@@ -161,16 +161,15 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	}
 
 	FramePacket getFakeFramePack(HttpServletRequest req, HttpServletResponse res) {
-		FramePacket pack = PacketHelper.buildHeaderFromHttpGet(req);//new FramePacket();
+		FramePacket pack = PacketHelper.buildHeaderFromHttpGet(req);// new
 		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_REQUEST, req);
 		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_RESPONSE, res);
 		return pack;
 	}
 
-	public boolean doPreFilter(HttpServletRequest req, HttpServletResponse res) {
-		if (fm != null)
-			if (!fm.preRouteListner(actwapper, getFakeFramePack(req, res), new CompleteHandler() {
-
+	public boolean doPreFilter(FramePacket packet, HttpServletRequest req, HttpServletResponse res) {
+		if (fm != null) {
+			if (!fm.preRouteListner(actwapper, packet, new CompleteHandler() {
 				@Override
 				public void onFinished(FramePacket arg0) {
 
@@ -178,41 +177,57 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			})) {
 				throw new FilterException("FilterCannotMatch");
 			}
+		}
 		return true;
+
 	}
 
-	public boolean doPostFilter(HttpServletRequest req, HttpServletResponse res) {
-		if (fm != null)
-			return fm.postRouteListner(actwapper, getFakeFramePack(req, res), new CompleteHandler() {
-				@Override
-				public void onFinished(FramePacket arg0) {
-
+	public boolean doPostFilter(FramePacket pack, HttpServletRequest req, HttpServletResponse res) {
+		try {
+			if (pack != null) {
+				try {
+					pack.getExtHead().buildFor(res);
+				} catch (Exception e) {
+					log.debug("error for Build for res:",e);
 				}
-			});
+			}
+			if (fm != null) {
+				return fm.postRouteListner(actwapper, pack, new CompleteHandler() {
+					@Override
+					public void onFinished(FramePacket arg0) {
+
+					}
+				});
+			}
+		} catch (Throwable e) {
+			log.debug("doPostFilterError,", e);
+		}
 		return true;
 	}
 
 	@Override
 	public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-
+		FramePacket packet = getFakeFramePack(req, res);
 		try {
-			doPreFilter(req, res);
+			doPreFilter(packet, req, res);
 			String ret = tryPath(req.getPathInfo()).get(getSafePath(req.getPathInfo().substring(1)), req, res);
+			doPostFilter(packet, req, res);
 			res.getOutputStream().write(ret.getBytes("UTF-8"));
 		} catch (PathException e) {
+			doPostFilter(packet, req, res);
 			res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
 		} catch (Throwable t) {
 			log.debug("unknow Error", t);
+			doPostFilter(packet, req, res);
 			res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
 		} finally {
-			doPostFilter(req, res);
+
 		}
 	}
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 
-		
 		String method = req.getParameter("_method");
 		if (StringUtils.isNotBlank(method)) {
 			if (method.equals("del")) {
@@ -232,17 +247,20 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 		if (bytes == null) {
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"POST Body not found\"}");
 		} else {
+			FramePacket packet = getFakeFramePack(req, res);
+
 			try {
-				doPreFilter(req, res);
+				doPreFilter(packet, req, res);
 				String ret = tryPath(req.getPathInfo()).post(bytes, req, res);
+				doPostFilter(packet,req, res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
 			} catch (PathException e) {
+				doPostFilter(packet,req, res);
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
 			} catch (Throwable t) {
 				log.debug("unknow Error", t);
+				doPostFilter(packet,req, res);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
-			} finally {
-				doPostFilter(req, res);
 			}
 		}
 	}
@@ -250,21 +268,25 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 	@Override
 	public void doPut(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		byte bytes[] = HttpHelper.getRequestContentBytes(req);
-		if (bytes == null ) {
+		if (bytes == null) {
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"PUT Body not found\"}");
 		} else {
+			FramePacket packet = getFakeFramePack(req, res);
+
 			try {
-				doPreFilter(req, res);
+				doPreFilter(packet, req, res);
 				String ret = tryPath(req.getPathInfo()).put(getSafePath(req.getPathInfo().substring(1)), bytes, req,
 						res);
+				doPostFilter(packet,req, res);
+
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
 			} catch (PathException e) {
+				doPostFilter(packet,req, res);
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
 			} catch (Throwable t) {
 				log.debug("unknow Error", t);
+				doPostFilter(packet,req, res);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
-			} finally {
-				doPostFilter(req, res);
 			}
 		}
 	}
@@ -276,18 +298,20 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 		if (bytes == null || bytes.length == 0) {
 			res.getWriter().write("{\"status\":\"error\",\"message\":\"DELETE Body not found\"}");
 		} else {
+			FramePacket packet = getFakeFramePack(req, res);
 			try {
-				doPreFilter(req, res);
+				doPreFilter(packet, req, res);
 				String ret = tryPath(req.getPathInfo()).delete(getSafePath(req.getPathInfo().substring(1)), bytes, req,
 						res);
+				doPostFilter(packet,req, res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
 			} catch (PathException e) {
+				doPostFilter(packet,req, res);
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
 			} catch (Throwable t) {
 				log.debug("unknow Error", t);
+				doPostFilter(packet,req, res);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
-			} finally {
-				doPostFilter(req, res);
 			}
 		}
 	}

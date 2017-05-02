@@ -9,6 +9,7 @@ import org.apache.felix.ipojo.annotations.Unbind;
 import org.apache.felix.ipojo.annotations.Validate;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+import org.springframework.context.support.AbstractXmlApplicationContext;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,7 +94,7 @@ public abstract class ORDBProvider implements StoreServiceProvider {
 		if (springLoader != null) {
 			return springLoader.getBeans(dao.getDomainName() + "Dao");
 		} else {
-			log.warn("bean dao not found:" + dao.getDomainName());
+			//log.warn("bean dao not found:" + dao.getDomainName());
 			return null;
 		}
 	}
@@ -106,9 +107,13 @@ public abstract class ORDBProvider implements StoreServiceProvider {
 		if (springLoader != null) {
 			return (CommonSqlMapper) springLoader.getSpringBeans("commonSqlMapper");
 		} else {
-			log.warn("bean getCommonSqlMapper not found:");
+			//log.warn("bean getCommonSqlMapper not found:");
 			return null;
 		}
+	}
+
+	public Object getApplicationCtx() {
+		return springLoader.getAppContext();
 	}
 
 }

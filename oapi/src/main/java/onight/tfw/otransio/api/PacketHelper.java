@@ -7,18 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import lombok.extern.slf4j.Slf4j;
-import onight.tfw.otransio.api.beans.ExtHeader;
-import onight.tfw.otransio.api.beans.FixHeader;
-import onight.tfw.otransio.api.beans.FrameBody;
-import onight.tfw.otransio.api.beans.FramePacket;
-import onight.tfw.outils.serialize.HttpHelper;
-import onight.tfw.outils.serialize.ISerializer;
-import onight.tfw.outils.serialize.SerializerFactory;
 
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
@@ -26,6 +15,16 @@ import org.codehaus.jackson.map.DeserializationConfig.Feature;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.type.TypeReference;
+
+import lombok.extern.slf4j.Slf4j;
+import onight.tfw.otransio.api.beans.ExceptionBody;
+import onight.tfw.otransio.api.beans.ExtHeader;
+import onight.tfw.otransio.api.beans.FixHeader;
+import onight.tfw.otransio.api.beans.FrameBody;
+import onight.tfw.otransio.api.beans.FramePacket;
+import onight.tfw.outils.serialize.HttpHelper;
+import onight.tfw.outils.serialize.ISerializer;
+import onight.tfw.outils.serialize.SerializerFactory;
 
 @Slf4j
 public class PacketHelper {
@@ -38,8 +37,18 @@ public class PacketHelper {
 		// ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
 		return ret;
 	}
-	
-	public  static FramePacket clonePacket(FramePacket fp) {
+
+	public static FramePacket toPBErrorReturn(FramePacket fp, String errorCode, String errorMessage) {
+		FramePacket ret = new FramePacket();
+		ret.setFbody(new ExceptionBody(errorCode, errorMessage));
+		ret.setExtHead(fp.getExtHead());
+		ret.setFixHead(fp.getFixHead());
+		ret.getFixHead().reset();
+		// ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
+		return ret;
+	}
+
+	public static FramePacket clonePacket(FramePacket fp) {
 		FramePacket ret = new FramePacket();
 		ret.setExtHead(fp.getExtHead());
 		ret.setFixHead(fp.getFixHead());
@@ -80,8 +89,9 @@ public class PacketHelper {
 	}
 
 	public static FramePacket buildHeaderFromHttpGet(HttpServletRequest req) {
-		//if (StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))
-			//return null;
+		// if
+		// (StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))
+		// return null;
 		return buildHeaderFromHttp(req, null);
 	}
 
@@ -184,8 +194,9 @@ public class PacketHelper {
 			ExtHeader eh = null;
 			if (dataNode.get("eh") != null) {
 				eh = new ExtHeader();
-				Map<String, Object> map = (mapper.<HashMap<String, Object>> readValue(dataNode.get("eh"), new TypeReference<HashMap<String, Object>>() {
-				}));
+				Map<String, Object> map = (mapper.<HashMap<String, Object>>readValue(dataNode.get("eh"),
+						new TypeReference<HashMap<String, Object>>() {
+						}));
 				for (Entry<String, Object> entry : map.entrySet()) {
 					eh.append(entry.getKey(), entry.getValue());
 				}
