@@ -37,7 +37,6 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.fc.zippo.ordbutils.bean.DbCondi;
 import org.fc.zippo.ordbutils.exception.DirectOutputStreamException;
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ojpa.ordb.loader.CommonSqlMapper;
 import onight.tfw.outils.serialize.JsonSerializer;
@@ -52,6 +51,8 @@ public class ExcelDownload extends DirectOutputStreamException {
 	int totalCount;
 
 	protected CommonSqlMapper mapper;
+
+	HashMap<String, HashMap<String, String>> emap = new HashMap<>();
 
 	
 	public ExcelDownload(HttpServletRequest req, DbCondi dc, int totalCount, CommonSqlMapper mapper) {
@@ -83,6 +84,43 @@ public class ExcelDownload extends DirectOutputStreamException {
 
 			if (req.getParameter("ci") != null) {
 				coltitle = JsonSerializer.getInstance().deserialize(req.getParameter("ci"), coltitle.getClass());
+
+			}
+			if (req.getParameter("remap") != null) {
+				HashMap<String, String> remap = JsonSerializer.getInstance().deserialize(req.getParameter("remap"),
+						coltitle.getClass());
+				for (Map.Entry<String, String> em : remap.entrySet()) {
+					HashMap<String, String> map = new HashMap<>();
+					if (em.getValue().startsWith("db@")) {// tb,key,display
+						String dbinfo[] = em.getValue().substring(3).split(",");
+						if (dbinfo.length >= 3) {
+							String tb = dbinfo[0];
+							String key = dbinfo[1];
+							String display = dbinfo[2];
+							String where = "";
+							if (dbinfo.length > 3)
+								where = " WHERE " + dbinfo[3];
+							List<Map<String, Object>> rt = mapper.executeSql("SELECT " + FieldUtils.field2SqlColomn(key)
+									+ "," + FieldUtils.field2SqlColomn(display) + " FROM " + tb + where);
+							for (Map<String, Object> dbmap : rt) {// map
+								String ekey = ""+dbmap.get(FieldUtils.field2SqlColomn(key));
+								String evalue = ""+dbmap.get(FieldUtils.field2SqlColomn(display));
+								map.put(ekey, evalue);
+							}
+							emap.put(em.getKey(), map);
+						}
+					} else {
+						for (String kv : em.getValue().split(",")) {
+							String kvs[] = kv.split(":");
+							if (kvs.length == 2) {
+								map.put(kvs[0], kvs[1]);
+							}
+						}
+						emap.put(em.getKey(), map);
+					}
+
+				}
+
 			}
 
 			int pageId = 0;
@@ -94,7 +132,7 @@ public class ExcelDownload extends DirectOutputStreamException {
 			wb.write(out);
 		} catch (Exception e) {
 			try {
-				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "导出失败:"+e.getMessage());
+				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "导出失败:" + e.getMessage());
 			} catch (IOException e1) {
 			}
 		}
@@ -110,8 +148,7 @@ public class ExcelDownload extends DirectOutputStreamException {
 		row1.setHeightInPoints(30);
 		Cell tcell = row0.createCell(0);
 		tcell.setCellValue(emtitle);
-		if(headstyle==null)
-		{
+		if (headstyle == null) {
 			Font tfont = wb.createFont();
 			tfont.setFontHeightInPoints((short) 24);
 			// tfont.setFontName("Courier New");
@@ -119,7 +156,7 @@ public class ExcelDownload extends DirectOutputStreamException {
 			tstyle.setFont(tfont);
 			tstyle.setAlignment(CellStyle.ALIGN_CENTER);
 			tstyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
-			headstyle= tstyle;
+			headstyle = tstyle;
 		}
 		tcell.setCellStyle(headstyle);
 
@@ -131,9 +168,8 @@ public class ExcelDownload extends DirectOutputStreamException {
 		Row row2 = sheet.createRow(2);
 		Cell celldate = row2.createCell(0);
 		celldate.setCellValue(new SimpleDateFormat("YYYY-MM-DD HH:mm:ss").format(new Date()));
-		
-		if(subheadstyle==null)
-		{
+
+		if (subheadstyle == null) {
 			Font tfont = wb.createFont();
 			tfont.setFontHeightInPoints((short) 16);
 			// tfont.setFontName("Courier New");
@@ -182,6 +218,7 @@ public class ExcelDownload extends DirectOutputStreamException {
 	CellStyle columncellstyle;
 	CellStyle subheadstyle;
 	CellStyle headstyle;
+
 	public void setCellComments(Workbook wb, Cell cell, String strcom) {
 
 		CreationHelper factory = wb.getCreationHelper();
@@ -228,6 +265,12 @@ public class ExcelDownload extends DirectOutputStreamException {
 					hcellno.setCellValue(dbrowid + 1);
 					Cell cell = row.createCell(ci + 1);
 					Object dbobj = dbrow.get(dbcol);
+					if (emap.containsKey(dbcol)) {
+						Map<String, String> map = emap.get(dbcol);
+						if (map.containsKey(dbobj)) {
+							dbobj = map.get(dbobj);
+						}
+					}
 					{
 						if (cellstyle == null) {
 							Font tfont = wb.createFont();
