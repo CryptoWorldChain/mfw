@@ -119,6 +119,16 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 									ExceptionBody.EC_NOBODYRETURN, "")));
 							return;
 						}
+						if (retpack.getFbody() instanceof ExceptionBody) {
+							 ExceptionBody eb = (ExceptionBody)retpack.getFbody();
+							 try {
+								int errcode = Integer.parseInt(eb.getErrCode());
+								resp.sendError(errcode,eb.getErrMsg());
+							} catch (Exception e) {
+								resp.sendError(HttpServletResponse.SC_EXPECTATION_FAILED,eb.getErrMsg());
+							}
+							 return;
+						};
 						retpack.getExtHead().buildFor(resp);
 
 						if (retpack.getFbody() != null & retpack.getFbody() instanceof Message) {

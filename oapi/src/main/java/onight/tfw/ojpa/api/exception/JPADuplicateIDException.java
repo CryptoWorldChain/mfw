@@ -1,6 +1,6 @@
 package onight.tfw.ojpa.api.exception;
 
-public class JPADuplicateIDException extends RuntimeException {
+public class JPADuplicateIDException extends JPAException {
 
 	private static final long serialVersionUID = 3129124709055457388L;
 

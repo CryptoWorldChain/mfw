@@ -16,6 +16,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.type.TypeReference;
 
+import com.google.protobuf.Message;
+
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.otransio.api.beans.ExceptionBody;
 import onight.tfw.otransio.api.beans.ExtHeader;
@@ -24,6 +26,7 @@ import onight.tfw.otransio.api.beans.FrameBody;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.serialize.HttpHelper;
 import onight.tfw.outils.serialize.ISerializer;
+import onight.tfw.outils.serialize.JsonDateFormat;
 import onight.tfw.outils.serialize.SerializerFactory;
 
 @Slf4j
@@ -126,13 +129,31 @@ public class PacketHelper {
 		return ret;
 	}
 
-	static ObjectMapper mapper = new ObjectMapper();
+	public static FramePacket buildFromBody(Message body, String gcmd) {
+		FramePacket ret = genPack(gcmd.substring(0, 3), gcmd.substring(3), body, true, (byte) 0);
+		ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
+		return ret;
+	}
+
+	public static FramePacket buildJsonFromStr(String jsbody, String gcmd) {
+		FramePacket ret = genPack(gcmd.substring(0, 3), gcmd.substring(3), jsbody, true, (byte) 0);
+		ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_JSON);
+		return ret;
+	}
+
+	public static FramePacket buildJsonFromBody(Message body, String gcmd) {
+		FramePacket ret = genPack(gcmd.substring(0, 3), gcmd.substring(3), body, true, (byte) 0);
+		ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_JSON);
+		return ret;
+	}
+
+	public static ObjectMapper mapper = new ObjectMapper();
 	static ISerializer transSIO = SerializerFactory.getSerializer(SerializerFactory.SERIALIZER_TRANSBEAN);
 	static {
 		mapper.configure(Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		mapper.configure(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS, false);
 		mapper.configure(SerializationConfig.Feature.WRITE_NULL_PROPERTIES, false);
-
+		mapper.setDateFormat(new JsonDateFormat());
 	}
 
 	@SuppressWarnings("rawtypes")

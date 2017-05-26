@@ -91,6 +91,8 @@ public class JsonSerializer implements ISerializer {
 		mapper.configure(Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		mapper.configure(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS, false);
 		mapper.configure(SerializationConfig.Feature.WRITE_NULL_PROPERTIES, false);
+		mapper.setDateFormat(new JsonDateFormat());
+
 
 	}
 

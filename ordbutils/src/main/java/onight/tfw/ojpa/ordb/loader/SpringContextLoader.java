@@ -174,7 +174,7 @@ public class SpringContextLoader {
 
 		for (String config : Arrays
 				.asList(new String[] { "/SpringContext-ordb-common.xml", "/SpringContext-ordb-driver.xml", })) {
-			if (!configs.contains(newconfigs)) {
+			if (!configs.contains(config)) {
 				configs.add(SpringContextLoader.class.getResource(config).toString());
 			}
 		}
@@ -192,7 +192,7 @@ public class SpringContextLoader {
 			}
 			configs.add(bundleContext.getBundle().getResource(config).toString());
 		}
-
+		log.debug("start loading spring mybatis");
 		appContext = new ClassPathXmlApplicationContext((configs.toArray(new String[] {}))) {
 			protected void initBeanDefinitionReader(XmlBeanDefinitionReader reader) {
 				super.initBeanDefinitionReader(reader);
@@ -223,8 +223,8 @@ public class SpringContextLoader {
 			}
 		};
 
-		org.mybatis.spring.SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
-
+		//org.mybatis.spring.SqlSessionFactoryBean bean = new SqlSessionFactoryBean();
+		log.debug("init spring mybatis ok");
 		ComboPooledDataSource ds = (ComboPooledDataSource) appContext.getBean("dataSource");
 		ds.setJdbcUrl(propHelper.get("ofw.ordb.url",
 				"jdbc:mysql://localhost:3306/msb?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=utf8"));
@@ -247,9 +247,9 @@ public class SpringContextLoader {
 		String names[] = appContext.getBeanDefinitionNames();
 		log.info("total beans:" + names.length + ",springcontext=" + appContext + "@" + this);
 
-		for (String name : names) {
+		//for (String name : names) {
 			// log.debug("name::"+name);
-		}
+		//}
 		txManager = (PlatformTransactionManager) appContext.getBean("transactionManager");
 		log.info("txManager=" + txManager);
 

@@ -1,5 +1,5 @@
 
-version = '3.0.3'
+version = '3.0.5'
 
 
 sourceSets {
@@ -37,14 +37,14 @@ dependencies {
 	includeInJar "cglib:cglib-nodep:3.2.0"
 	
 	includeInJar files('libs/ojdbc6.jar','libs/mysql-connector-java-5.1.38-bin.jar','libs/c3p0-0.9.5.1.jar','libs/mchange-commons-java-0.2.10.jar')
-	
+	includeInJar	'org.apache.poi:poi:3.16'
 	//	 testCompile 'junit:junit:4.12'
 }
 
 jar {
 	manifest{
 		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
-		attributes( 'Import-Ignore':'org.springframework,org.mybatis.spring,com.mchange.v2.c3p0,com.mysql.jdbc')
+		attributes( 'Import-Ignore':'org.springframework,org.mybatis.spring,com.mchange.v2.c3p0,com.mysql.jdbc,org.apache.commons.fileupload,org.apache.poi')
 		attributes( 'DynamicImport-Package': '*')
 		attributes( 'Import-Lib': 'lib')
 	}

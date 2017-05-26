@@ -32,8 +32,8 @@ public class FieldUtils {
 				buff.append("_").append(ch);
 			} else {
 				if (ch >= 'a' && ch <= 'z' && !quota) {
-					
-					buff.append((char)(ch - 'a' + 'A'));
+
+					buff.append((char) (ch - 'a' + 'A'));
 				} else {
 					buff.append(ch);
 				}
@@ -42,7 +42,7 @@ public class FieldUtils {
 				quota = !quota;
 			}
 		}
-		return buff.toString();//.toUpperCase();
+		return buff.toString();// .toUpperCase();
 	}
 
 	public static String SqlColomn2Field(String sqlCol) {
@@ -63,16 +63,19 @@ public class FieldUtils {
 		ArrayList<Map<String, Object>> retlist = new ArrayList<>();
 		for (Map<String, Object> map : list) {
 			HashMap remap = new HashMap<>();
-			for (Map.Entry<String, Object> entry : map.entrySet()) {
-				remap.put(FieldUtils.SqlColomn2Field(entry.getKey()), entry.getValue());
+			if (map != null) {
+				for (Map.Entry<String, Object> entry : map.entrySet()) {
+					remap.put(FieldUtils.SqlColomn2Field(entry.getKey()), entry.getValue());
+				}
 			}
 			retlist.add(remap);
 		}
 		return retlist;
 
 	}
+
 	public static void main(String[] args) {
-		System.out.println(":convertto:"+FieldUtils.field2SqlColomn("a.roleId=b.roleId and a.userId='test1'"));
+		System.out.println(":convertto:" + FieldUtils.field2SqlColomn("a.roleId=b.roleId and a.userId='test1'"));
 	}
 
 }

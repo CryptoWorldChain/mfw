@@ -55,7 +55,6 @@ public class BundleAutoWare {
 		Class clazz = service.getClass();
 		Instantiate inst = (Instantiate) clazz.getAnnotation(Instantiate.class);
 		String name = (String) ref.getProperty("name");
-
 		if (inst != null) {
 			name = inst.name();
 			log.debug("Register ActorService:" + name + "," + service + ",clazz=" + clazz);
@@ -79,8 +78,7 @@ public class BundleAutoWare {
 				if (StringUtils.isBlank(beanname)) {
 					// beanname = field.getType().getName();
 					beanname = determineType(field, clazz).getName();
-				}
-				else if (beanname.startsWith(".")) {
+				} else if (beanname.startsWith(".")) {
 					String exname = beanname.substring(1);
 					try {
 						Method getNameMethod = clazz.getMethod("get" + StringUtils.capitalize(exname));
@@ -135,7 +133,7 @@ public class BundleAutoWare {
 			if (result != null) {
 				for (WaredInfo wi : hunted.getValue()) {
 					try {
-						if (wi.global != global)
+						if (wi.global != global && !wi.global)
 							continue;
 						wi.setMethod.invoke(wi.destObj, result);
 						log.debug("AutoWared Success " + hunted.getKey() + " for class " + wi.setMethod);

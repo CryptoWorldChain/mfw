@@ -1,0 +1,31 @@
+
+
+syntax = "proto3";
+//import "google/protobuf/any.proto";
+
+package org.fc.zippo.sender.httpimpl.pbs;
+
+enum PModule{
+	S01 = 0;// 状态机
+};
+
+
+enum PCommand{
+	INF = 0;//检查
+	PRX = 1;//代理测试 
+};
+
+
+message PSCheck{
+	string op = 1;
+}
+
+message PRetCheck{
+	string retcode = 1;
+	string retmessage = 2;
+}
+
+message PSProxy{
+	string pxbody = 1;
+}
+

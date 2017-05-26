@@ -93,8 +93,12 @@ public class BeanPBUtil {
 				try {
 					return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").parse(str);
 				} catch (ParseException e1) {
-					log.debug("set datetime error:" + obj, e1);
-					return null;
+					try {
+						return new SimpleDateFormat("yyyy-MM-dd").parse(str);
+					} catch (ParseException e2) {
+						log.debug("set datetime error:" + obj, e2);
+						return null;
+					}
 				}
 			}
 

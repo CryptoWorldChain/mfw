@@ -17,6 +17,7 @@ import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Validate;
 import org.fc.zippo.filter.exception.FilterException;
 import org.fc.zippo.filter.exception.PathException;
+import org.fc.zippo.ordbutils.exception.DirectOutputStreamException;
 import org.osgi.framework.BundleContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -24,6 +25,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.async.CompleteHandler;
+import onight.tfw.mservice.ThreadContext;
 import onight.tfw.ntrans.api.ActWrapper;
 import onight.tfw.ntrans.api.FilterManager;
 import onight.tfw.ntrans.api.annotation.ActorRequire;
@@ -188,7 +190,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 				try {
 					pack.getExtHead().buildFor(res);
 				} catch (Exception e) {
-					log.debug("error for Build for res:",e);
+					log.debug("error for Build for res:", e);
 				}
 			}
 			if (fm != null) {
@@ -211,8 +213,19 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 		try {
 			doPreFilter(packet, req, res);
 			String ret = tryPath(req.getPathInfo()).get(getSafePath(req.getPathInfo().substring(1)), req, res);
+			Object obj = ThreadContext.getContext("__exceptionbody");
 			doPostFilter(packet, req, res);
-			res.getOutputStream().write(ret.getBytes("UTF-8"));
+			if (obj != null & obj instanceof DirectOutputStreamException) {
+				((DirectOutputStreamException)obj).doReponse(res);
+			} else {
+				res.getOutputStream().write(ret.getBytes("UTF-8"));
+			}
+		} catch (DirectOutputStreamException be) {
+			doPostFilter(packet, req, res);
+			be.doReponse(res);
+		} catch (FilterException e) {
+			doPostFilter(packet, req, res);
+			res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Filter Reject:" + e.getMessage());
 		} catch (PathException e) {
 			doPostFilter(packet, req, res);
 			res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
@@ -221,7 +234,7 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			doPostFilter(packet, req, res);
 			res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
 		} finally {
-
+			ThreadContext.cleanContext();
 		}
 	}
 
@@ -252,14 +265,17 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			try {
 				doPreFilter(packet, req, res);
 				String ret = tryPath(req.getPathInfo()).post(bytes, req, res);
-				doPostFilter(packet,req, res);
+				doPostFilter(packet, req, res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
+			} catch (FilterException e) {
+				doPostFilter(packet, req, res);
+				res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Filter Reject:" + e.getMessage());
 			} catch (PathException e) {
-				doPostFilter(packet,req, res);
+				doPostFilter(packet, req, res);
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
 			} catch (Throwable t) {
 				log.debug("unknow Error", t);
-				doPostFilter(packet,req, res);
+				doPostFilter(packet, req, res);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
 			}
 		}
@@ -277,15 +293,18 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 				doPreFilter(packet, req, res);
 				String ret = tryPath(req.getPathInfo()).put(getSafePath(req.getPathInfo().substring(1)), bytes, req,
 						res);
-				doPostFilter(packet,req, res);
+				doPostFilter(packet, req, res);
 
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
+			} catch (FilterException e) {
+				doPostFilter(packet, req, res);
+				res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Filter Reject:" + e.getMessage());
 			} catch (PathException e) {
-				doPostFilter(packet,req, res);
+				doPostFilter(packet, req, res);
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
 			} catch (Throwable t) {
 				log.debug("unknow Error", t);
-				doPostFilter(packet,req, res);
+				doPostFilter(packet, req, res);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
 			}
 		}
@@ -303,14 +322,17 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 				doPreFilter(packet, req, res);
 				String ret = tryPath(req.getPathInfo()).delete(getSafePath(req.getPathInfo().substring(1)), bytes, req,
 						res);
-				doPostFilter(packet,req, res);
+				doPostFilter(packet, req, res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
+			} catch (FilterException e) {
+				doPostFilter(packet, req, res);
+				res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Filter Reject:" + e.getMessage());
 			} catch (PathException e) {
-				doPostFilter(packet,req, res);
+				doPostFilter(packet, req, res);
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
 			} catch (Throwable t) {
 				log.debug("unknow Error", t);
-				doPostFilter(packet,req, res);
+				doPostFilter(packet, req, res);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
 			}
 		}

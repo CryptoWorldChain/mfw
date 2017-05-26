@@ -1,6 +1,5 @@
 package org.fc.zippo.ordbutils.rest;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import onight.tfw.mservice.ThreadContext;
 import onight.tfw.ojpa.ordb.StaticTableDaoSupport;
 import onight.tfw.ojpa.ordb.loader.CommonSqlMapper;
 import onight.tfw.outils.serialize.JsonSerializer;
@@ -56,10 +56,19 @@ public abstract class BaseRestCtrl {
 			dc.setQmb(new QueryMapperBean(JsonSerializer.getInstance().deserialize(query, JsonNode.class)));
 		}
 		dc.setPageinfo(pi);
-		dc.setOrderby(req.getParameter("orderby"));
+		dc.setOrderby(req.getParameter("sort"));
+		if(StringUtils.isNotBlank(req.getParameter("orderby")))
+		{
+			dc.setOrderby(req.getParameter("orderby"));
+		}
+		
 		dc.setGroupby(req.getParameter("groupby"));
+		if(StringUtils.isNotBlank(req.getParameter("group")))
+		{
+			dc.setGroupby(req.getParameter("group"));
+		}
 		dc.setFmb(FieldsMapperResolver.genQueryMapper(fields));
-
+		
 		if (page) {
 			String sql = SqlMaker.getCountSql(dc);
 			try {
@@ -68,7 +77,13 @@ public abstract class BaseRestCtrl {
 			}
 			log.debug("[SQL].Count:{},sql={}", totalCount, sql);
 		}
+		if(StringUtils.equalsIgnoreCase("excel", req.getParameter("exp"))){ 
+			ExcelDownload dd = new ExcelDownload(req, dc,totalCount,mapper);
+			ThreadContext.setContext("__exceptionbody", dd);
+			throw dd;
+		}
 		List list = null;
+
 		if (totalCount > 0 || totalCount == -1) {
 			String sql = SqlMaker.getSQL(dc);
 			log.debug("[SQL]:{}", sql);
@@ -77,11 +92,17 @@ public abstract class BaseRestCtrl {
 				list = FieldUtils.reMap(list);
 			}
 		}
+		
 		if (page) {
 			return JsonSerializer.formatToString(new ListInfo<>(totalCount, list, pi.getSkip(), pi.getLimit()));
 		} else {
 			return JsonSerializer.formatToString(list);
 		}
 
+	}
+	
+	
+	public void downloadExcel(){
+		
 	}
 }

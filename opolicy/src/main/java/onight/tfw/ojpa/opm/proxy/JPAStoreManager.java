@@ -74,7 +74,8 @@ public class JPAStoreManager {
 	@Unbind(aggregate = true, optional = true)
 	public void destroyStoreService(StoreServiceProvider dsp, ServiceReference ref) {
 		log.info("StoreService.quit " + dsp.getProviderid() + "@" + dsp);
-
+		String prodid = getBundleProviderId(dsp, ref);
+		storeServices.remove(prodid);
 		unwireDaos(dsp, ref);
 	}
 
@@ -101,6 +102,7 @@ public class JPAStoreManager {
 			log.info("绑定存储服务:" + prodid + "@" + dsp);
 		}
 		storeServices.put(prodid, dsp);
+
 		wireDaos();
 	}
 
@@ -177,12 +179,12 @@ public class JPAStoreManager {
 							if (StringUtils.isBlank(target)) {
 								target = anno.target();
 							}
-							if(StringUtils.isNotBlank(target)&&target.indexOf('.')>0){
-								//sub class
-								String name  = target.substring(1);
+							if (StringUtils.isNotBlank(target) && target.indexOf('.') > 0) {
+								// sub class
+								String name = target.substring(1);
 								Method getNameMethod = clazz.getMethod("get" + StringUtils.capitalize(name));
-								if(getNameMethod!=null){
-									target = (String)getNameMethod.invoke(storeClient);
+								if (getNameMethod != null) {
+									target = (String) getNameMethod.invoke(storeClient);
 								}
 							}
 							ss = new ServiceSpec(target);

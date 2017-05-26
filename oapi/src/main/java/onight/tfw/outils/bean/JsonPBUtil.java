@@ -39,6 +39,12 @@ public class JsonPBUtil {
 		if (fd.isRepeated() && (node.isArray() || node.isObject())) {
 			Iterator<JsonNode> it = node.getElements();
 			Message.Builder subbuilder = null;
+			if (fd.getJavaType().equals(JavaType.STRING)&&node.isObject()) {
+				if (!node.isTextual()) {
+					return node.toString();
+				} else
+					return node.asText();
+			}
 
 			while (it.hasNext()) {
 
@@ -50,7 +56,9 @@ public class JsonPBUtil {
 					subbuilder = builder.newBuilderForField(fd);
 					json2PB(itnode, subbuilder);
 					v = subbuilder.build();
-				} else {
+				}
+				else
+				{
 					subbuilder = builder;
 					v = getValue(fd, itnode, subbuilder);
 				}

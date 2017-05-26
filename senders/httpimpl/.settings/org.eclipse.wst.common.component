@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-modules id="moduleCoreId" project-version="2.0">
+	<wb-module deploy-name="httpimpl">
+		<wb-resource deploy-path="/" source-path="src/main/resources"/>
+		<wb-resource deploy-path="/" source-path="src/main/java"/>
+		<wb-resource deploy-path="/" source-path="build/generated/source/proto/main/java"/>
+		<wb-resource deploy-path="/" source-path="src/main/proto"/>
+		<wb-resource deploy-path="/" source-path="src/main/scala"/>
+	</wb-module>
+</project-modules>

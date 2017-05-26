@@ -19,6 +19,7 @@ import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.PacketFilter;
 import onight.tfw.otransio.api.beans.FramePacket;
+import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.proxy.IActor;
 
 import org.apache.felix.ipojo.annotations.Bind;
@@ -34,8 +35,11 @@ public class ActorManager {
 
 	BundleContext bundleContext;
 
+	PropHelper prop;
+
 	public ActorManager(BundleContext bundleContext) {
 		super();
+		prop = new PropHelper(bundleContext);
 		log.debug("create:ActorManager:");
 		this.bundleContext = bundleContext;
 	}
@@ -57,7 +61,7 @@ public class ActorManager {
 		}
 		services.remove(http);
 	}
-	
+
 	@WebServlet(asyncSupported = true)
 	public class AsyncServlet extends HttpServlet {
 		IActor factor;
@@ -67,43 +71,45 @@ public class ActorManager {
 			this.factor = factor;
 		}
 
-		protected void doGet(HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-//			FramePacket pack = PacketHelper.buildHeaderFromHttpGet(req);
-//			CompleteHandler handler = new CompleteHandler() {
-//				@Override
-//				public void onFinished(FramePacket packet) {
-//					try {
-//						postRouteListner(packet, null);
-//					} catch (IOException e) {
-//						e.printStackTrace();
-//					}
-//				}
-//			};
-//			if (preRouteListner(pack, handler)) {
-//				return;
-//			}
+		protected void doGet(HttpServletRequest req, final HttpServletResponse resp)
+				throws ServletException, IOException {
+			// FramePacket pack = PacketHelper.buildHeaderFromHttpGet(req);
+			// CompleteHandler handler = new CompleteHandler() {
+			// @Override
+			// public void onFinished(FramePacket packet) {
+			// try {
+			// postRouteListner(packet, null);
+			// } catch (IOException e) {
+			// e.printStackTrace();
+			// }
+			// }
+			// };
+			// if (preRouteListner(pack, handler)) {
+			// return;
+			// }
 			factor.doGet(req, resp);
 		}
 
 		@Override
-		protected void doPost(HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-//			FramePacket pack = PacketHelper.buildHeaderFromHttpPost(req);
-//			CompleteHandler handler = new CompleteHandler() {
-//				@Override
-//				public void onFinished(FramePacket packet) {
-//					try {
-//						if (packet != null) {
-//							resp.getOutputStream().write(PacketHelper.toTransBytes(packet));
-//						}
-//						postRouteListner(packet, null);
-//					} catch (IOException e) {
-//						e.printStackTrace();
-//					}
-//				}
-//			};
-//			if (preRouteListner(pack, handler)) {
-//				return;
-//			}
+		protected void doPost(HttpServletRequest req, final HttpServletResponse resp)
+				throws ServletException, IOException {
+			// FramePacket pack = PacketHelper.buildHeaderFromHttpPost(req);
+			// CompleteHandler handler = new CompleteHandler() {
+			// @Override
+			// public void onFinished(FramePacket packet) {
+			// try {
+			// if (packet != null) {
+			// resp.getOutputStream().write(PacketHelper.toTransBytes(packet));
+			// }
+			// postRouteListner(packet, null);
+			// } catch (IOException e) {
+			// e.printStackTrace();
+			// }
+			// }
+			// };
+			// if (preRouteListner(pack, handler)) {
+			// return;
+			// }
 			factor.doPost(req, resp);
 
 		}
@@ -124,16 +130,20 @@ public class ActorManager {
 		log.info("bindActor:" + actor);
 		if (actor == null)
 			return;
+		String rootpath = prop.get("ofw.actor.rootpath", "");
+		if (rootpath.endsWith("/")) {
+			rootpath = rootpath.substring(0, rootpath.length() - 1);
+		}
 		String[] ctxpaths = actor.getWebPaths();
 		if (ctxpaths != null) {
 			for (String ctxpath : ctxpaths) {
 				HttpServlet servlet = new AsyncServlet(actor);
 				for (String spath : ctxpath.split(",")) {
-					servlets.put(spath, servlet);
+					servlets.put(rootpath + spath, servlet);
 					for (HttpService s : services) {
 						try {
-							s.registerServlet(spath, servlet, null, null);
-							log.info("注册servlet成功:" + spath);
+							s.registerServlet(rootpath+spath, servlet, null, null);
+							log.info("注册servlet成功:" + rootpath+spath);
 						} catch (Exception e) {
 							log.warn("注册servlet失败", e);
 						}

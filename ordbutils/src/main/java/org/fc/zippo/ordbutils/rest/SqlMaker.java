@@ -1,7 +1,6 @@
 package org.fc.zippo.ordbutils.rest;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,9 +8,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.fc.zippo.ordbutils.bean.Col;
 import org.fc.zippo.ordbutils.bean.DbCondi;
 import org.fc.zippo.ordbutils.bean.FieldsMapperBean;
-import org.fc.zippo.ordbutils.bean.PageInfo;
 import org.fc.zippo.ordbutils.bean.FieldsMapperBean.SearchField;
+import org.fc.zippo.ordbutils.bean.PageInfo;
 
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -22,7 +22,7 @@ public class SqlMaker {
 	public final static String TABLE_NAME = "TABLE_NAME";
 
 	public static String getCountSql(DbCondi dc) {
-		Map<String, String> fieldsMap = getFieldsMap(dc.getEntityClass());
+		Map<String, FieldDef> fieldsMap = getFieldsMap(dc.getEntityClass());
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT COUNT(1) AS COUNT FROM ");
 		sql.append(dc.getTableName());
@@ -41,10 +41,10 @@ public class SqlMaker {
 	public static void getGroupBy(DbCondi dc, StringBuffer sql) {
 		if (StringUtils.isNotBlank(dc.getGroupby())) {
 			boolean first = true;
-			Map<String, String> fieldsMap = getFieldsMap(dc.getClass());
+			Map<String, FieldDef> fieldsMap = getFieldsMap(dc.getEntityClass());
 
 			for (String col : dc.getGroupby().split(",")) {
-				String COL_sql = fieldsMap.get(col);
+				String COL_sql = fieldsMap.get(col).sqlCol;
 				if (COL_sql == null) {
 					COL_sql = col;
 				}
@@ -71,7 +71,7 @@ public class SqlMaker {
 	public static void getOrderBy(DbCondi dc, StringBuffer sb) {
 		if (StringUtils.isBlank(dc.getOrderby()))
 			return;
-		Map<String, String> fieldsMap = getFieldsMap(dc.getClass());
+		Map<String, FieldDef> fieldsMap = getFieldsMap(dc.getEntityClass());
 
 		boolean first = true;
 		for (String col : dc.getOrderby().split(",")) {
@@ -80,7 +80,7 @@ public class SqlMaker {
 				col = col.substring(1);
 				desc = true;
 			}
-			String COL_sql = fieldsMap.get(col);
+			String COL_sql = fieldsMap.get(col).sqlCol;
 			if (first) {
 				sb.append(" ORDER BY ");
 				first = false;
@@ -100,22 +100,26 @@ public class SqlMaker {
 
 	}
 
-	public static StringBuffer getSelectFieldNames(Map<String, String> fieldMap, FieldsMapperBean fmb) {
+	public static StringBuffer getSelectFieldNames(Map<String, FieldDef> fieldMap, FieldsMapperBean fmb) {
 		StringBuffer fields = new StringBuffer();
 		if (fmb != null && fmb.getFields().size() > 0) {
 			for (SearchField sf : fmb.getFields()) {
 				if (sf.getShow() == 1) {
-					String dbcolName = fieldMap.get(sf.getFieldName());
-					if (dbcolName == null) {
-						log.debug("The query fields[{}] are not among Class [{}]..", sf.getFieldName());
-						dbcolName = sf.getFieldName();
+					if (fieldMap.get(sf.getFieldName()) != null) {
+						String dbcolName = fieldMap.get(sf.getFieldName()).sqlCol;
+						if (dbcolName == null) {
+							log.debug("The query fields[{}] are not among Class [{}]..", sf.getFieldName());
+							dbcolName = sf.getFieldName();
+						}
+						fields.append(dbcolName).append(",");
+					}else{
+						fields.append(FieldUtils.field2SqlColomn(sf.getFieldName())).append(",");
 					}
-					fields.append(dbcolName).append(",");
 				}
 			}
 		} else {
-			for (Map.Entry<String, String> entry : fieldMap.entrySet()) {
-				fields.append(entry.getValue()).append(",");
+			for (Map.Entry<String, FieldDef> entry : fieldMap.entrySet()) {
+				fields.append(entry.getValue().sqlCol).append(",");
 			}
 		}
 		int len = fields.length();
@@ -124,9 +128,9 @@ public class SqlMaker {
 		return fields;
 	}
 
-	public static String getSQL(DbCondi dc){
+	public static String getSQL(DbCondi dc) {
 
-		Map<String, String> fieldMap = getFieldsMap(dc.getEntityClass());
+		Map<String, FieldDef> fieldMap = getFieldsMap(dc.getEntityClass());
 		StringBuffer sql = new StringBuffer("SELECT ").append(getSelectFieldNames(fieldMap, dc.getFmb()));
 
 		sql.append(" FROM " + dc.getTableName());
@@ -146,24 +150,33 @@ public class SqlMaker {
 		return sql.toString();
 	}
 
-	static Map<Class, Map<String, String>> clazzFieldsMap = new HashMap<Class, Map<String, String>>();
+	static Map<Class, Map<String, FieldDef>> clazzFieldsMap = new HashMap<Class, Map<String, FieldDef>>();
 
-	public static Map<String, String> getFieldsMap(Class clazz) {
+	@AllArgsConstructor
+	public static class FieldDef {
+		String sqlCol;
+		Field feild;
+	}
 
-		Map<String, String> fieldsMap = clazzFieldsMap.get(clazz);
+	public static Map<String, FieldDef> getFieldsMap(Class clazz) {
+
+		Map<String, FieldDef> fieldsMap = clazzFieldsMap.get(clazz);
 		if (fieldsMap == null) {
 			synchronized (clazzFieldsMap) {
 				fieldsMap = clazzFieldsMap.get(clazz);
 				if (fieldsMap == null) {
-					fieldsMap = new HashMap<String, String>();
+					fieldsMap = new HashMap<String, FieldDef>();
 					for (Field field : FieldUtils.allDeclaredField(clazz)) {
 						// 从注解里获取列名
 						Col fieldColAnno = field.getAnnotation(Col.class);
 						if (fieldColAnno != null) {
-							fieldsMap.put(field.getName(),
-									FieldUtils.field2SqlColomn(fieldColAnno.tableAlias() + "." + fieldColAnno.name()));
+							FieldDef fd = new FieldDef(
+									FieldUtils.field2SqlColomn(fieldColAnno.tableAlias() + "." + fieldColAnno.name()),
+									field);
+							fieldsMap.put(field.getName(), fd);
 						} else {
-							fieldsMap.put(field.getName(), FieldUtils.field2SqlColomn(field.getName()));
+							fieldsMap.put(field.getName(),
+									new FieldDef(FieldUtils.field2SqlColomn(field.getName()), field));
 						}
 					}
 					clazzFieldsMap.put(clazz, fieldsMap);
@@ -173,15 +186,9 @@ public class SqlMaker {
 
 		return fieldsMap;
 	}
-	
-	
-	
 
 	public static void addPageLimit(PageInfo para, StringBuffer sql) {
 		if (para != null) {
-			if (StringUtils.isNotBlank(para.getSort())) {
-				sql.append(" ORDER BY " + para.getSort());
-			}
 			if (Integer.MAX_VALUE != para.getLimit() || para.getSkip() > 0) {
 				// sql=
 				String orgsql = sql.toString();

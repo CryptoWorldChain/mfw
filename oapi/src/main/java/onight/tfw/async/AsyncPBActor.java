@@ -50,18 +50,29 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 						@Override
 						public void onFinished(FramePacket retpack) {
 							try {
+								 
 								if (retpack == null) {
 									resp.getOutputStream().write(PacketHelper.toJsonBytes(
 											PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_NOBODYRETURN, "")));
 									return;
 								}
+								if (retpack.getFbody() instanceof ExceptionBody) {
+									 ExceptionBody eb = (ExceptionBody)retpack.getFbody();
+									 try {
+										int errcode = Integer.parseInt(eb.getErrCode());
+										resp.sendError(errcode,eb.getErrMsg());
+									} catch (Exception e) {
+										resp.sendError(HttpServletResponse.SC_EXPECTATION_FAILED,eb.getErrMsg());
+									}
+									 return;
+								};
 								retpack.getExtHead().buildFor(resp);
 								boolean bodyOnly = false;
 								if (StringUtils.equalsIgnoreCase("bd", retpack.getExtStrProp("resp"))) {
 									bodyOnly = true;
 								}
 
-								if (retpack.getFbody() != null & retpack.getFbody() instanceof Message) {
+								if (retpack.getFbody() != null && retpack.getFbody() instanceof Message) {
 									if (retpack.getFixHead().getEnctype() == 'P') {
 										byte[] bodyb = retpack.genBodyBytes();
 										byte[] extb = retpack.genExtBytes();

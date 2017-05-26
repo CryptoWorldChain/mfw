@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package org.fc.zippo.ordbutils.pbgens;
+
+enum PModule {
+	DBC = 0;
+};
+
+enum PCommand {
+	INF = 0; //获取当前状态
+	COM = 1; //节点校验
+	SEL = 2; //直接就是查询
+	TXS = 3; //批量事务操作，不同表之间！
+};
+
+message PSQueryBySQL {
+	string cols = 1;
+	string froms = 2;
+	string wheres = 3;
+	int32 limit = 4 ;
+	int32 skip = 5;
+	bool page = 6; //是否总数和分页
+	string groupby = 7;
+	string orderby = 8;
+}
+
+message PRetQueryBySQL {
+	repeated string rows = 1 [jstype = JS_NORMAL]; //请求的json数据;
+	int32 limit = 2;
+	int32 total_rows = 3;
+	int32 totalPages = 4;
+	int32 skip = 5;
+}
+
+message PSTransactions {
+	message PMSets {
+		string txid = 1;
+		string path = 2;
+		string body = 3 [jstype = JS_NORMAL];
+		string method = 4; //是insert还是update
+		map < string, string > params = 5; //update时候的条件
+	}
+
+	repeated PMSets sets = 1;
+}
+
+message PRetTransactions {
+	message PMResult {
+		string txid = 1; //事务id
+		int32 size = 2; //结果条数
+		string result = 3[jstype = JS_NORMAL];// 返回结果
+	}
+
+	repeated PMResult results = 1; //请求的json数据;
+}

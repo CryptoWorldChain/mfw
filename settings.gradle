@@ -16,4 +16,5 @@ include 'sm:sm-redisimpl'
 //include 'sm:sm-proxy'
 
 //include 'example:otrantest'
+include 'senders:httpimpl'
 rootProject.name = 'zippo'

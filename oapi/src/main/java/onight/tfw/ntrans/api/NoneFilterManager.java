@@ -7,12 +7,12 @@ public class NoneFilterManager implements FilterManager {
 
 	@Override
 	public boolean preRouteListner(ActWrapper actor, FramePacket pack, CompleteHandler handler) {
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean postRouteListner(ActWrapper actor, FramePacket pack, CompleteHandler handler) {
-		return false;
+		return true;
 	}
 
 }
