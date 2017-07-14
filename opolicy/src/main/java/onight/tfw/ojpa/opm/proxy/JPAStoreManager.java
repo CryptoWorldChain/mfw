@@ -125,25 +125,6 @@ public class JPAStoreManager {
 							dao = (DomainDaoSupport) anno.daoClass()
 									.getConstructor(ServiceSpec.class, Class.class, Class.class, Class.class)
 									.newInstance(ss, anno.domain(), anno.example(), anno.keyclass());
-							// new OJpaDAO(ss,
-							// anno.domain(),anno.example(),anno.keyclass());
-							setmethod.invoke(storeClient, dao);
-							if (dao instanceof OJpaDAO) {
-								OJpaDAO ojdao = (OJpaDAO) dao;
-								ojdao.setKeyField(anno.key());
-								if (!StringUtils.isBlank(anno.key())) {
-									List<Method> keyMethods = new ArrayList<Method>();
-									for (String keyf : anno.key().split(",")) {
-										try {
-											keyMethods.add(anno.domain()
-													.getMethod("get" + StringUtils.capitalize(keyf.trim())));
-										} catch (Exception e) {
-											log.warn("key get method not found:" + clazz + ",field=" + field.getName());
-										}
-									}
-									ojdao.setKeyMethods(keyMethods);
-								}
-							}
 						}
 						daos.add(dao);
 					} catch (Exception e) {

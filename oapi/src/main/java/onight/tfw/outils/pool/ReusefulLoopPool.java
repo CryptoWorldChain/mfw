@@ -43,10 +43,6 @@ public class ReusefulLoopPool<T> {
 		rwlock.writeLock().lock();
 		try {
 			T t = allObjs.poll();
-			if(t!=null)
-			{
-				allObjs.offer(t);
-			}
 			return t;
 		} finally {
 			rwlock.writeLock().unlock();

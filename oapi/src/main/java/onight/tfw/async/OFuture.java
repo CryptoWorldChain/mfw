@@ -66,11 +66,7 @@ public class OFuture<V> {
 
 	public OFuture<V> whenDone(CallBack<V> cb) {
 		if (result != null) {
-			if (failed) {
-				failed(e, result);
-			} else {
-				cb.onSuccess(result);
-			}
+			failed(e, result);
 		} else {
 			if (cbs != null) {
 				try {

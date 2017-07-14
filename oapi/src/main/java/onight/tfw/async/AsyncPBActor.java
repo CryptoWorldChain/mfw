@@ -54,10 +54,7 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 								}
 								retpack.getExtHead().buildFor(resp);
 								boolean bodyOnly = false;
-								if (StringUtils.equalsIgnoreCase("bd", retpack.getExtStrProp("resp"))) {
-									bodyOnly = true;
-								}
-
+								
 								if (retpack.getFbody() != null & retpack.getFbody() instanceof Message) {
 									if (retpack.getFixHead().getEnctype() == 'P') {
 										byte[] bodyb = retpack.genBodyBytes();
@@ -83,7 +80,7 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 													+ new String(SerializerUtil
 															.toBytes(jsons.serialize(retpack.getExtHead().getVkvs())))
 													+ "" //
-													+ ",\"body\":" + str + "" + "}";
+													+ ",\"body:" + str + "" + "}";
 											resp.getOutputStream().write(ret.getBytes("UTF-8"));
 
 										}
@@ -100,7 +97,7 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 												+ ",\"eh\":"
 												+ new String((byte[]) (jsons.serialize(retpack.getExtHead().getVkvs())))
 												+ "" //
-												+ ",\"body\":"
+												+ ",\"body:"
 												+ new String((byte[]) jsons.serialize(retpack.getFbody())) + "" + "}";
 
 										resp.getOutputStream().write(ret.getBytes("UTF-8"));
@@ -117,7 +114,7 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 												+ ",\"eh\":"
 												+ new String((byte[]) (jsons.serialize(retpack.getExtHead().getVkvs())))
 												+ "" //
-												+ ",\"body\":" + new String(retpack.getBody()) + "" + "}";
+												+ ",\"body:" + new String(retpack.getBody()) + "" + "}";
 										resp.getOutputStream().write(ret.getBytes("UTF-8"));
 									}
 

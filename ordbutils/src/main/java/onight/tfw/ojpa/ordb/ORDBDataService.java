@@ -403,23 +403,14 @@ public class ORDBDataService extends SerializedDomainDao {
 
 	@Override
 	public Object doInTransaction(TransactionExecutor exec) throws JPAException {
-		DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-		def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
-		TransactionStatus status = txManager.getTransaction(def);
 		Object ret = null;
 		try {
 			ret = exec.doInTransaction();
 			if (ret != null && ret instanceof ResultSet) {
 				ret = result2List((ResultSet) ret);
 			}
-			txManager.commit(status);
 		} catch (Exception e) {
 			log.error("exception in execSql:" + exec, e);
-			try {
-				txManager.rollback(status);
-			} catch (Exception e1) {
-				log.error("rollback error:", e);
-			}
 			throw new JPAException(e);
 		}
 		return ret;
