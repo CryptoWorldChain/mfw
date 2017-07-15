@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Instantiate;
@@ -23,7 +22,6 @@ import com.ning.http.client.AsyncHttpClient.BoundRequestBuilder;
 import com.ning.http.client.cookie.Cookie;
 
 import lombok.Data;
-import lombok.val;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.async.CallBack;
 import onight.tfw.async.FutureSender;
@@ -32,13 +30,11 @@ import onight.tfw.ntrans.api.ActorService;
 import onight.tfw.otransio.api.IPacketSender;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
-import onight.tfw.otransio.api.beans.CookieBean;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.bean.JsonPBFormat;
 import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.serialize.ISerializer;
 import onight.tfw.outils.serialize.SerializerFactory;
-import onight.tfw.outils.serialize.SerializerUtil;
 
 @Component
 @Instantiate(name = "http")
@@ -67,7 +63,7 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 
 	protected ISerializer jsons = SerializerFactory.getSerializer(SerializerFactory.SERIALIZER_JSON);
 
-	public void writePx(FramePacket retpack, OutputStream output) throws IOException {
+	public void writePx(FramePacket retpack, OutputStream output, BoundRequestBuilder builder) throws IOException {
 		if (retpack.getFbody() != null) {
 			if (retpack.getFixHead().getEnctype() == 'P') {
 				if (retpack.getFbody() instanceof Message) {
@@ -81,6 +77,7 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 					output.write((byte[]) jsons.serialize(retpack.getFbody()));
 				}
 			} else if (retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON) {
+				builder.addHeader("Content-Type", "application/json");
 				if (retpack.getFbody() instanceof Message) {
 					Message msg = (Message) retpack.getFbody();
 					String str = new JsonPBFormat().printToString(msg);
@@ -125,30 +122,59 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 				}
 			}
 		}
-		
+	}
 
+	public void appendHeader(FramePacket pack, BoundRequestBuilder builder) {
+		if (pack.getExtHead() != null && pack.getExtHead().getVkvs() != null) {
+			for (Entry<String, Object> pair : pack.getExtHead().getVkvs().entrySet()) {
+				if (!pair.getKey().startsWith(PackHeader.EXT_HIDDEN)) {
+					try {
+						builder.addHeader(pair.getKey(), pair.getValue() + "");
+					} catch (Exception e) {
+						log.debug("add cookie fail:", e);
+					}
+				}
+			}
+		}
 	}
 
 	@Override
 	public void asyncSend(final FramePacket pack, final CallBack<FramePacket> cb) {
 
-		String desturl = pack.getExtStrProp("url");
+		String desturl = pack.getExtStrProp(PackHeader.FORWORD_URL);
 		if (StringUtils.isBlank(desturl)) {
 			desturl = backend + pack.getModule().toLowerCase() + "/pb" + pack.getCMD().toLowerCase() + ".do?fh="
 					+ pack.getFixHead().toStrHead() + "&resp=bd&1=1";
 		}
-		val builder = asyncHttpClient.preparePost(desturl);
+		String method = pack.getExtStrProp(PackHeader.FORWORD_METHOD);
+		BoundRequestBuilder builder = null;
+		if (method == null || StringUtils.equalsIgnoreCase(method, "get")) {
+			builder = asyncHttpClient.prepareGet(desturl);
+		} else if (StringUtils.equalsIgnoreCase(method, "delete")) {
+			builder = asyncHttpClient.prepareDelete(desturl);
+		} else if (StringUtils.equalsIgnoreCase(method, "put")) {
+			builder = asyncHttpClient.preparePut(desturl);
+		} else {
+			builder = asyncHttpClient.preparePost(desturl);
+		}
 
 		try (ByteArrayOutputStream output = new ByteArrayOutputStream(16 + pack.getFixHead().getTotalSize())) {
-			writePx(pack, output);
-			builder.setBody(output.toByteArray());
-			appendCookie(pack,builder);
+			writePx(pack, output, builder);
+			byte body[] = output.toByteArray();
+			if (body != null && body.length > 0) {
+				builder.setBody(body);
+			}
+			appendCookie(pack, builder);
+			appendHeader(pack,builder);
 			final FramePacket ret = PacketHelper.clonePacket(pack);
 			builder.execute(new AsyncCompletionHandler<FramePacket>() {
 
 				@Override
 				public void onThrowable(Throwable t) {
 					// Something wrong happened.
+					// ret.setBody(response.getResponseBodyAsBytes());
+					log.debug("error", t);
+					cb.onFailed(new RuntimeException(t), pack);
 				}
 
 				@Override

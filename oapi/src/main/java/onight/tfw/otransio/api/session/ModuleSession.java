@@ -3,15 +3,16 @@ package onight.tfw.otransio.api.session;
 import java.util.HashMap;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.beans.FramePacket;
 
 @Slf4j
 @Data
+@EqualsAndHashCode(callSuper=true)
 public class ModuleSession extends PSession {
 	protected String module;
-
 	protected HashMap<String, CMDService> serviceByCMD = new HashMap<>();
 
 	public void onPacket(FramePacket pack, final CompleteHandler handler) {

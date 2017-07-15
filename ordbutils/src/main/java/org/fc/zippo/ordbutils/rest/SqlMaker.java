@@ -112,7 +112,7 @@ public class SqlMaker {
 							dbcolName = sf.getFieldName();
 						}
 						fields.append(dbcolName).append(",");
-					}else{
+					} else {
 						fields.append(FieldUtils.field2SqlColomn(sf.getFieldName())).append(",");
 					}
 				}
@@ -129,10 +129,21 @@ public class SqlMaker {
 	}
 
 	public static String getSQL(DbCondi dc) {
+		
+		if (dc.getOther()!=null&&StringUtils.isNotBlank(""+dc.getOther().get("SQL"))) {
+			StringBuffer sql=new StringBuffer( ""+dc.getOther().get("SQL"));
+			
+			getOrderBy(dc, sql);
+			getGroupBy(dc, sql);
+			addPageLimit(dc.getPageinfo(), sql);
 
+			return sql.toString();
+		}
+		
+		
 		Map<String, FieldDef> fieldMap = getFieldsMap(dc.getEntityClass());
 		StringBuffer sql = new StringBuffer("SELECT ").append(getSelectFieldNames(fieldMap, dc.getFmb()));
-
+		
 		sql.append(" FROM " + dc.getTableName());
 
 		if (dc.getQmb() != null) {
@@ -170,13 +181,10 @@ public class SqlMaker {
 						// 从注解里获取列名
 						Col fieldColAnno = field.getAnnotation(Col.class);
 						if (fieldColAnno != null) {
-							FieldDef fd = new FieldDef(
-									FieldUtils.field2SqlColomn(fieldColAnno.tableAlias() + "." + fieldColAnno.name()),
-									field);
+							FieldDef fd = new FieldDef(FieldUtils.field2SqlColomn(fieldColAnno.tableAlias() + "." + fieldColAnno.name()), field);
 							fieldsMap.put(field.getName(), fd);
 						} else {
-							fieldsMap.put(field.getName(),
-									new FieldDef(FieldUtils.field2SqlColomn(field.getName()), field));
+							fieldsMap.put(field.getName(), new FieldDef(FieldUtils.field2SqlColomn(field.getName()), field));
 						}
 					}
 					clazzFieldsMap.put(clazz, fieldsMap);
@@ -195,11 +203,10 @@ public class SqlMaker {
 				sql.delete(0, sql.length());
 				// for ORACLE
 				if (Integer.MAX_VALUE == para.getLimit() || para.getLimit() == -1) {
-					sql.append("SELECT * FROM (SELECT A.*, ROWNUM RN FROM (" + orgsql + ") A WHERE ROWNUM <= "
-							+ (Integer.MAX_VALUE) + ") WHERE RN > " + para.getSkip());
+					sql.append("SELECT * FROM (SELECT A.*, ROWNUM RN FROM (" + orgsql + ") A WHERE ROWNUM <= " + (Integer.MAX_VALUE) + ") WHERE RN > " + para.getSkip());
 				} else {
-					sql.append("SELECT * FROM (SELECT A.*, ROWNUM RN FROM (" + orgsql + ") A WHERE ROWNUM <= "
-							+ (para.getLimit() + para.getSkip()) + ") WHERE RN > " + para.getSkip());
+					sql.append("SELECT * FROM (SELECT A.*, ROWNUM RN FROM (" + orgsql + ") A WHERE ROWNUM <= " + (para.getLimit() + para.getSkip()) + ") WHERE RN > "
+							+ para.getSkip());
 				}
 				// sql.append(" limit
 				// ").append(para.getSkip()).append(",").append(para.getLimit());

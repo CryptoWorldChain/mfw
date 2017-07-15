@@ -54,7 +54,6 @@ public class ExcelDownload extends DirectOutputStreamException {
 
 	HashMap<String, HashMap<String, String>> emap = new HashMap<>();
 
-	
 	public ExcelDownload(HttpServletRequest req, DbCondi dc, int totalCount, CommonSqlMapper mapper) {
 		super();
 		this.req = req;
@@ -87,8 +86,7 @@ public class ExcelDownload extends DirectOutputStreamException {
 
 			}
 			if (req.getParameter("remap") != null) {
-				HashMap<String, String> remap = JsonSerializer.getInstance().deserialize(req.getParameter("remap"),
-						coltitle.getClass());
+				HashMap<String, String> remap = JsonSerializer.getInstance().deserialize(req.getParameter("remap"), coltitle.getClass());
 				for (Map.Entry<String, String> em : remap.entrySet()) {
 					HashMap<String, String> map = new HashMap<>();
 					if (em.getValue().startsWith("db@")) {// tb,key,display
@@ -100,11 +98,11 @@ public class ExcelDownload extends DirectOutputStreamException {
 							String where = "";
 							if (dbinfo.length > 3)
 								where = " WHERE " + dbinfo[3];
-							List<Map<String, Object>> rt = mapper.executeSql("SELECT " + FieldUtils.field2SqlColomn(key)
-									+ "," + FieldUtils.field2SqlColomn(display) + " FROM " + tb + where);
+							List<Map<String, Object>> rt = mapper
+									.executeSql("SELECT " + FieldUtils.field2SqlColomn(key) + "," + FieldUtils.field2SqlColomn(display) + " FROM " + tb + where);
 							for (Map<String, Object> dbmap : rt) {// map
-								String ekey = ""+dbmap.get(FieldUtils.field2SqlColomn(key));
-								String evalue = ""+dbmap.get(FieldUtils.field2SqlColomn(display));
+								String ekey = "" + dbmap.get(FieldUtils.field2SqlColomn(key));
+								String evalue = "" + dbmap.get(FieldUtils.field2SqlColomn(display));
 								map.put(ekey, evalue);
 							}
 							emap.put(em.getKey(), map);
@@ -124,23 +122,35 @@ public class ExcelDownload extends DirectOutputStreamException {
 			}
 
 			int pageId = 0;
-			for (int i = 0; i < totalCount; i += pageSize) {
-				fetchPage(wb, emtitle, pageSize, nameCols, dbCols, i, pageId, coltitle);
-				pageId++;
+			if (totalCount == 0) {
+				fetchPage(wb, emtitle, pageSize, nameCols, dbCols, 0, pageId, coltitle);
+			} else {
+				for (int i = 0; i < totalCount; i += pageSize) {
+					fetchPage(wb, emtitle, pageSize, nameCols, dbCols, i, pageId, coltitle);
+					pageId++;
+				}
 			}
 
 			wb.write(out);
+			
 		} catch (Exception e) {
 			try {
+				log.warn("下载excel失败",e);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "导出失败:" + e.getMessage());
 			} catch (IOException e1) {
+			}
+		}finally{
+			try {
+				if(wb!=null){
+					wb.close();
+				}
+			} catch (IOException e) {
 			}
 		}
 
 	}
 
-	public void writeHeader(Sheet sheet, Workbook wb, String emtitle, int pageSize, String nameCols[], String dbCols[],
-			int skip, int pageId, HashMap<String, String> coltitle) {
+	public void writeHeader(Sheet sheet, Workbook wb, String emtitle, int pageSize, String nameCols[], String dbCols[], int skip, int pageId, HashMap<String, String> coltitle) {
 		// 写入前面两行
 		Row row0 = sheet.createRow(0);
 		Row row1 = sheet.createRow(1);
@@ -167,7 +177,7 @@ public class ExcelDownload extends DirectOutputStreamException {
 		));
 		Row row2 = sheet.createRow(2);
 		Cell celldate = row2.createCell(0);
-		celldate.setCellValue(new SimpleDateFormat("YYYY-MM-DD HH:mm:ss").format(new Date()));
+		celldate.setCellValue(new SimpleDateFormat("YYYY-MM-dd HH:mm:ss").format(new Date()));
 
 		if (subheadstyle == null) {
 			Font tfont = wb.createFont();
@@ -243,8 +253,7 @@ public class ExcelDownload extends DirectOutputStreamException {
 	CellStyle cellstyle;
 	CellStyle sumstyle;
 
-	public void fetchPage(Workbook wb, String emtitle, int pageSize, String nameCols[], String dbCols[], int skip,
-			int pageId, HashMap<String, String> coltitle) {
+	public void fetchPage(Workbook wb, String emtitle, int pageSize, String nameCols[], String dbCols[], int skip, int pageId, HashMap<String, String> coltitle) {
 		Sheet sheet = wb.createSheet("第" + (pageId + 1) + "页");
 		writeHeader(sheet, wb, emtitle, pageSize, nameCols, dbCols, skip, pageId, coltitle);
 		// do for each page!
@@ -348,8 +357,7 @@ public class ExcelDownload extends DirectOutputStreamException {
 
 		SheetConditionalFormatting sheetCF = sheet.getSheetConditionalFormatting();
 
-		ConditionalFormattingRule rule1 = sheetCF.createConditionalFormattingRule(ComparisonOperator.NOT_EQUAL,
-				"111111110");
+		ConditionalFormattingRule rule1 = sheetCF.createConditionalFormattingRule(ComparisonOperator.NOT_EQUAL, "111111110");
 
 		BorderFormatting bordFmt = rule1.createBorderFormatting();
 		bordFmt.setBorderBottom(BorderFormatting.BORDER_THIN);
@@ -365,7 +373,6 @@ public class ExcelDownload extends DirectOutputStreamException {
 		CellRangeAddress[] regions = { CellRangeAddress.valueOf("A1:" + a + (list.size() + 5)) };
 
 		sheetCF.addConditionalFormatting(regions, cfRules);
-
 	}
 
 }

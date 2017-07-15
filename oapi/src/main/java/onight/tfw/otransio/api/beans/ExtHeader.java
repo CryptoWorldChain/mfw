@@ -2,7 +2,6 @@ package onight.tfw.otransio.api.beans;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -11,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 
 import lombok.Data;
@@ -76,12 +76,12 @@ public class ExtHeader {
 					} else if (kv.length == 1) {// 仅仅就是设置
 						append(kv[0], "1");
 					} else {
-						log.trace("Unknow ext header:size=" + kv.length + ",str=" + strkv + ",data=" + data);
+						//log.trace("Unknow ext header:size=" + kv.length + ",str=" + strkv + ",data=" + new String(data));
 					}
 				}
 			}
 		} catch (UnsupportedEncodingException e) {
-			log.warn("UnsupportedEncodingException：" + data, e);
+			log.warn("UnsupportedEncodingException：" + Hex.encodeHexString(data), e);
 		}
 	}
 
@@ -133,7 +133,7 @@ public class ExtHeader {
 		try {
 			data = sb.toString().getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			log.warn("UnsupportedEncodingException：" + data, e);
+			log.warn("UnsupportedEncodingException：", e);
 		}
 		return data;
 	}

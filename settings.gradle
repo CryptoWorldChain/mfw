@@ -9,6 +9,8 @@ include 'rmqimpl'
 include 'redisimpl'
 //include 'cassimpl'
 include 'otransio'
+include 'glock'
+
 include 'scheduler'
 include 'sm:sm-api'
 include 'sm:sm-redisimpl'

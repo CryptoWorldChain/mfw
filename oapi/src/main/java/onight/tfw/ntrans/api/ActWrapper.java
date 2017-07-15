@@ -163,9 +163,11 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 					} catch (Exception e) {
 						log.debug("doweb error:", e);
 						try {
-							FramePacket fp = PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION,
-									"UNKNOW_ERROR:" + e.getMessage());
-							resp.getOutputStream().write(PacketHelper.toJsonBytes(fp));
+//							FramePacket fp = PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION,
+//									"UNKNOW_ERROR:" + e.getMessage());
+							resp.sendError(500, "UNKNOW_ERROR:" + e.getMessage());
+
+//							resp.getOutputStream().write(PacketHelper.toJsonBytes(fp));
 						} catch (IOException e1) {
 							// e1.printStackTrace();
 							log.debug("error response:", e);
@@ -227,12 +229,23 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 	public FilterManager fm = new NoneFilterManager();
 
 	@Override
-	final public void doPacketWithFilter(FramePacket pack, CompleteHandler handler) {
+	final public void doPacketWithFilter(FramePacket pack,final CompleteHandler handler) {
 		try {
 			if (!fm.preRouteListner(this, pack, handler)) {
 				throw new FilterException("FilterBlock!");
 			}
-			onPacket(pack, handler);
+			onPacket(pack, new CompleteHandler() {
+				
+				@Override
+				public void onFinished(FramePacket endpack) {
+					try{
+						handler.onFinished(endpack);
+					}finally{
+						fm.onCompleteListner(ActWrapper.this, endpack);
+					}
+					
+				}
+			});
 		} catch (FilterException e) {
 			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_FILTER_EXCEPTION,"FilterBlocked:" + e.getMessage()));
 		} catch (Throwable e) {

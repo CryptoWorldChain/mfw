@@ -4,9 +4,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+import lombok.Data;
 import onight.tfw.otransio.api.LengthUtils;
 import onight.tfw.otransio.api.PackHeader;
-import lombok.Data;
 
 /**
  * 固定头长度

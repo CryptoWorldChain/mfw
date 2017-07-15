@@ -322,18 +322,22 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 				doPreFilter(packet, req, res);
 				String ret = tryPath(req.getPathInfo()).delete(getSafePath(req.getPathInfo().substring(1)), bytes, req,
 						res);
-				doPostFilter(packet, req, res);
 				res.getOutputStream().write(ret.getBytes("UTF-8"));
+
+				doPostFilter(packet, req, res);
 			} catch (FilterException e) {
-				doPostFilter(packet, req, res);
 				res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Filter Reject:" + e.getMessage());
-			} catch (PathException e) {
+
 				doPostFilter(packet, req, res);
+			} catch (PathException e) {
 				res.sendError(HttpServletResponse.SC_NOT_ACCEPTABLE, e.getMessage());
+
+				doPostFilter(packet, req, res);
 			} catch (Throwable t) {
 				log.debug("unknow Error", t);
-				doPostFilter(packet, req, res);
 				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:" + t.getMessage());
+
+				doPostFilter(packet, req, res);
 			}
 		}
 	}

@@ -28,4 +28,6 @@ public interface PacketFilter {
 
 	public boolean postRoute(ActWrapper actor, FramePacket pack, CompleteHandler handler) throws FilterException;
 
+	public boolean onComplete(ActWrapper actor, FramePacket completepack) throws FilterException;
+
 }

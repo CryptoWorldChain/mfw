@@ -15,4 +15,9 @@ public class NoneFilterManager implements FilterManager {
 		return true;
 	}
 
+	@Override
+	public boolean onCompleteListner(ActWrapper actor, FramePacket pack) {
+		return false;
+	}
+
 }

@@ -13,6 +13,11 @@ public class PackHeader {
 	public final static String EXT_IGNORE_RESPONSE = EXT_IGNORE + "b";
 
 	public final static String PEER_IP = EXT_IGNORE_RESPONSE + "_peerip";
+	
+	
+	public final static String FORWORD_URL = "_url";
+	public final static String FORWORD_METHOD = "_method";
+	
 	// public final static String ENC = "enc";
 	// public final static String CMD = "cmd";
 	// public final static String FROM = "from";

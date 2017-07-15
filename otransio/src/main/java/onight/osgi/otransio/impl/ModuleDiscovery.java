@@ -14,14 +14,12 @@ import lombok.extern.slf4j.Slf4j;
 import onight.osgi.annotation.NActorProvider;
 import onight.osgi.otransio.sm.MSessionSets;
 import onight.tfw.async.CallBack;
-import onight.tfw.async.CompleteHandler;
 import onight.tfw.mservice.NodeHelper;
 import onight.tfw.ntrans.api.NActor;
 import onight.tfw.ojpa.api.DomainDaoSupport;
 import onight.tfw.ojpa.api.annotations.StoreDAO;
 import onight.tfw.oparam.api.OParam;
 import onight.tfw.oparam.api.OTreeValue;
-import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.serialize.JsonSerializer;
@@ -34,8 +32,8 @@ public class ModuleDiscovery extends NActor {
 	}
 
 	@StoreDAO(target = "etcd", daoClass = OParam.class)
-	@Getter
-	OParam oparam;
+	@Getter 
+	OParam oparam=new HashParam();
 
 	public void setOparam(DomainDaoSupport daoparam) {
 		if (daoparam != null && daoparam instanceof OParam) {
@@ -197,7 +195,7 @@ public class ModuleDiscovery extends NActor {
 		NodeInfo nodeinfo = new NodeInfo(address, port, core, max);
 		try {
 			oparam.put("/zippo/nds/" + mss.getCurrentNodeID() + "/info", JsonSerializer.formatToString(nodeinfo));
-			log.debug("get zippo micro moudles===" + oparam.getDir("/zippo").get());
+			log.debug("get zippo micro moudles===,{}" , oparam.getDir("/zippo"));
 		} catch (Exception e) {
 			log.warn("dir.error", e);
 		}

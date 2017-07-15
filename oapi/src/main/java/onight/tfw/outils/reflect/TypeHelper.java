@@ -49,6 +49,7 @@ public class TypeHelper {
 		}
 		return type;
 	}
+	///*
 
 	public static TypeHelper getType(Class<?> clazz, Field field) {
 		TypeHelper type = new TypeHelper(null, null);
@@ -100,4 +101,5 @@ public class TypeHelper {
 
 		return type;
 	}
+	//*/
 }

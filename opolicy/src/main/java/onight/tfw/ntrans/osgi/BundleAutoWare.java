@@ -68,7 +68,7 @@ public class BundleAutoWare {
 		// serviceByName.put(service.getClass(), value)
 		// int serviceid=System.identityHashCode(service);
 
-		ArrayList<WaredInfo> wares = new ArrayList<WaredInfo>();
+		//ArrayList<WaredInfo> wares = new ArrayList<WaredInfo>();
 
 		for (Field field : getInheritedFields(clazz)) {
 			ActorRequire anno = field.getAnnotation(ActorRequire.class);

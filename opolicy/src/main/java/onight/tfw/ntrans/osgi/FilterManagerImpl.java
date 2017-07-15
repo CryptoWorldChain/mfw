@@ -142,4 +142,21 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 
 		return true;
 	}
+
+	@Override
+	public boolean onCompleteListner(ActWrapper actor, FramePacket pack) {
+		String module = actor.getModule();
+		ArrayList<PacketFilter> listeners = filterByModule.get(module);
+		for (PacketFilter pl : globalFilters) {
+			pl.onComplete(actor, pack);
+		}
+
+		if (listeners != null) {
+			for (PacketFilter pl : listeners) {
+				pl.onComplete(actor, pack);
+			}
+		}
+
+		return true;
+	}
 }

@@ -16,15 +16,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import lombok.extern.slf4j.Slf4j;
-import onight.tfw.outils.serialize.TransBeanSerializer;
-
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.JavaType;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
 import com.google.protobuf.MapEntry;
 import com.google.protobuf.Message;
+
+import lombok.extern.slf4j.Slf4j;
+import onight.tfw.outils.serialize.TransBeanSerializer;
 
 @Slf4j
 public class BeanPBUtil {

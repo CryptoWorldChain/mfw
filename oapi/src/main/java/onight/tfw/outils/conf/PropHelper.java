@@ -9,11 +9,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.lang3.StringUtils;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleReference;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 配置信息帮助类
@@ -28,43 +28,68 @@ public class PropHelper {
 
 	BundleContext context;
 
-	public PropHelper(BundleContext context, String propfile) {
+	static PropHelper instance;
 
-		if (context == null) {
-			context = BundleReference.class.cast(PropHelper.class.getClassLoader()).getBundle().getBundleContext();
-		}
-		this.context = context;
-		String config = context.getProperty(propfile);
-		if (config == null) {
-			config = "./conf/ofw.properties";
-			if (!new File(config).exists()) {
-				config = "../conf/ofw.properties";
+	private static String LOCK = "LOCK";
+
+	public PropHelper(BundleContext context, String propfile) {
+		synchronized (LOCK) {
+			if (instance == null) {
+				loadProps(context, propfile);
+				instance = this;
+			} else {
+				local_props.putAll(instance.local_props);
 			}
 		}
-		configFile = new File(config);
+
+	}
+
+	public void loadProps(BundleContext context, String propfile) {
+		String config = null;
+		if (context == null) {
+			try {
+				context = BundleReference.class.cast(PropHelper.class.getClassLoader()).getBundle().getBundleContext();
+				this.context = context;
+			} catch (Exception e) {
+			}
+		}
+		try {
+			config = context.getProperty(propfile);
+			if (config == null) {
+				config = "./conf/ofw.properties";
+				if (!new File(config).exists()) {
+					config = "../conf/ofw.properties";
+				}
+			}
+			configFile = new File(config);
+		} catch (Exception e) {
+			configFile = new File("../conf");
+		}
+
 		init();
 		for (String subdir : get("include", "").split(",")) {
 			if (StringUtils.isBlank(subdir))
 				continue;
-			File dir = new File(configFile.getParent()+File.separator+subdir);
+			File dir = new File(configFile.getParent() + File.separator + subdir);
 			if (dir.isDirectory()) {
-				for (File f : dir.listFiles(new FilenameFilter() {
-
+				File fs[] = dir.listFiles(new FilenameFilter() {
 					@Override
 					public boolean accept(File dir, String name) {
 						return name.endsWith("properties");
 					}
-				})) {
-					addFileProps(f);
+				});
+				if (fs != null) {
+					for (File f : fs) {
+						addFileProps(f);
+					}
 				}
-			}else if(dir.isFile()&&dir.getName().endsWith("properties")){
+			} else if (dir.isFile() && dir.getName().endsWith("properties")) {
 				addFileProps(dir);
 			}
 		}
 		log.debug("configFile::" + config + "::FF==" + configFile.exists());
-		
+
 		overrideWithProperties();
-		
 	}
 
 	public PropHelper(BundleContext context) {
@@ -89,8 +114,7 @@ public class PropHelper {
 			}
 			local_props.putAll(propsConf);
 
-			if (file == configFile)
-			{// try ext
+			if (file == configFile) {// try ext
 				Properties extpropsConf = new Properties();
 				String extconfig = "./conf/ofwext.properties";
 				if (!new File(extconfig).exists()) {
@@ -114,9 +138,9 @@ public class PropHelper {
 			}
 		}
 	}
-	
-	public void overrideWithProperties(){
-		for(Map.Entry<Object, Object> e:System.getProperties().entrySet()){
+
+	public void overrideWithProperties() {
+		for (Map.Entry<Object, Object> e : System.getProperties().entrySet()) {
 			local_props.put(e.getKey(), e.getValue());
 		}
 	}

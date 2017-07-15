@@ -135,6 +135,61 @@ public class PacketHelper {
 		return ret;
 	}
 
+	public static FramePacket buildUrlFromPB(Message body, String method, String url) {
+		FramePacket ret = new FramePacket();
+		ret.setFbody(body);
+		FixHeader fh = new FixHeader();
+		fh.setCmd("");
+		fh.setModule("");
+		fh.setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
+		ret.setFixHead(fh);
+		ret.setExtHead(new ExtHeader());
+		ret.getExtHead().append(PackHeader.FORWORD_URL, url);
+		ret.getExtHead().append(PackHeader.FORWORD_METHOD, method);
+		return ret;
+	}
+
+	public static FramePacket buildUrlFromJson(String jsbody, String method, String url) {
+		FramePacket ret = new FramePacket();
+		ret.setFbody(jsbody);
+		FixHeader fh = new FixHeader();
+		fh.setCmd("");
+		fh.setModule("");
+		fh.setEnctype(SerializerFactory.SERIALIZER_JSON);
+		ret.setFixHead(fh);
+		ret.setExtHead(new ExtHeader());
+		ret.getExtHead().append(PackHeader.FORWORD_URL, url);
+		ret.getExtHead().append(PackHeader.FORWORD_METHOD, method);
+		return ret;
+	}
+
+	public static FramePacket buildUrlForGet(String url) {
+		FramePacket ret = new FramePacket();
+		FixHeader fh = new FixHeader();
+		fh.setCmd("");
+		fh.setModule("");
+		fh.setEnctype(SerializerFactory.SERIALIZER_JSON);
+		ret.setFixHead(fh);
+		ret.setExtHead(new ExtHeader());
+		ret.getExtHead().append(PackHeader.FORWORD_URL, url);
+		ret.getExtHead().append(PackHeader.FORWORD_METHOD, "get");
+		return ret;
+	}
+
+
+	public static FramePacket buildUrlFromAny(Object body, String method,String url) {
+		FramePacket ret = new FramePacket();
+		ret.setFbody(body);
+		FixHeader fh = new FixHeader();
+		fh.setCmd("");
+		fh.setModule("");
+		fh.setEnctype(SerializerFactory.SERIALIZER_JSON);
+		ret.setFixHead(fh);
+		ret.setExtHead(new ExtHeader());
+		ret.getExtHead().append(PackHeader.FORWORD_URL, url);
+		ret.getExtHead().append(PackHeader.FORWORD_METHOD, method);
+		return ret;
+	}
 	public static FramePacket buildJsonFromStr(String jsbody, String gcmd) {
 		FramePacket ret = genPack(gcmd.substring(0, 3), gcmd.substring(3), jsbody, true, (byte) 0);
 		ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_JSON);

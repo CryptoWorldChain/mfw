@@ -7,7 +7,6 @@ import java.lang.annotation.Target;
 
 import org.apache.felix.ipojo.annotations.Stereotype;
 
-import lombok.Getter;
 import onight.tfw.ojpa.api.OJpaDAO;
 
 @Target(ElementType.FIELD)

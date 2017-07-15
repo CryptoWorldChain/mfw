@@ -241,10 +241,15 @@ public class JPAStoreManager {
 				}
 			}
 			if (ssp == null || dds == null) {
-				target = prop.get("org.zippo.store.default_target", "orcl");
-				ssp = storeServices.get(target);
+				String default_target = prop.get("org.zippo.store.default_target", "orcl");
+				ssp = storeServices.get(default_target);
 				if (ssp != null) {
 					dds = ssp.getDaoByBeanName(dao);
+				} else {
+					ssp = storeServices.get(target);
+					if (ssp != null) {
+						dds = ssp.getDaoByBeanName(dao);
+					}
 				}
 			}
 

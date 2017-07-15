@@ -11,10 +11,10 @@ import java.util.Map;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.DescriptorProtos.FieldOptions.JSType;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.Type;
-import com.google.protobuf.Descriptors;
 import com.google.protobuf.MapEntry;
 import com.google.protobuf.Message;
 import com.googlecode.protobuf.format.JsonFormat;

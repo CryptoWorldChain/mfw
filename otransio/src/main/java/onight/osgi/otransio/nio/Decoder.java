@@ -1,9 +1,6 @@
 package onight.osgi.otransio.nio;
 
-import lombok.extern.slf4j.Slf4j;
-import onight.tfw.otransio.api.beans.ExtHeader;
-import onight.tfw.otransio.api.beans.FixHeader;
-import onight.tfw.otransio.api.beans.FramePacket;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
@@ -12,15 +9,24 @@ import org.glassfish.grizzly.TransformationResult;
 import org.glassfish.grizzly.attributes.Attribute;
 import org.glassfish.grizzly.attributes.AttributeStorage;
 
+import lombok.extern.slf4j.Slf4j;
+import onight.tfw.otransio.api.beans.ExtHeader;
+import onight.tfw.otransio.api.beans.FixHeader;
+import onight.tfw.otransio.api.beans.FramePacket;
+
 @Slf4j
 public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 
 	protected final Attribute<FixHeader> headerStore;
+	protected final Attribute<AtomicLong> blankHeaderCount;
 	protected final Attribute<Long> lastCheckHealthMS;
 
+	public static final int MAX_BLANK_COUNT = 128;
+	
 	public Decoder() {
 		headerStore = attributeBuilder.createAttribute("Decoder.FixHeader");
 		lastCheckHealthMS = attributeBuilder.createAttribute("Decoder.CheckHealth");
+		blankHeaderCount = attributeBuilder.createAttribute("Decoder.blankcount");
 	}
 
 	@Override
@@ -29,19 +35,40 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 	}
 
 	@Override
-	protected TransformationResult<Buffer, FramePacket> transformImpl(AttributeStorage storage, Buffer input) throws TransformationException {
+	protected TransformationResult<Buffer, FramePacket> transformImpl(AttributeStorage storage, Buffer input)
+			throws TransformationException {
 		FixHeader header = headerStore.get(storage);
-		log.trace("Decoder.getHeader:" + header);
+		log.trace("Decoder.getHeader:{}", header);
 		if (header == null) {
+			byte first = '\n';
+			int blankcount = 0;
+			while (input.hasRemaining() && (first == '\n' || first == '\r' || first == ' ' || first == '\t')
+					&& blankcount < MAX_BLANK_COUNT) {
+				first = input.get();
+				blankcount++;
+			}
+			AtomicLong ll = blankHeaderCount.get(storage);
+			if(ll==null){
+				ll=new AtomicLong(0);
+				blankHeaderCount.set(storage, ll);
+			}
+			if (blankcount > 0) {
+				if (ll.addAndGet(blankcount) >= MAX_BLANK_COUNT) {
+					log.error("too many blank bytes {}", ll.get());
+					throw new TransformationException("too many blank bytes");
+				}
+			}
 			if (input.remaining() < FixHeader.LENGTH) {
 				return TransformationResult.createIncompletedResult(input);
 			}
+			ll.set(0);
 			byte headerbytes[] = new byte[FixHeader.LENGTH];
-			input.get(headerbytes, 0, FixHeader.LENGTH);
+			headerbytes[0] = first;
+			input.get(headerbytes, 1, FixHeader.LENGTH - 1);
 			try {
 				header = FixHeader.parseFrom(headerbytes);
 			} catch (Exception e) {
-				log.error("parse Head Error:header="+new String(headerbytes));
+				log.error("parse Head Error:header=" + new String(headerbytes));
 				throw e;
 			}
 			headerStore.set(storage, header);

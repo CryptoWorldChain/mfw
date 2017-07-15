@@ -49,4 +49,9 @@ public class SimplePacketFilter implements PacketFilter {
 		return true;
 	}
 
+	@Override
+	public boolean onComplete(ActWrapper actor, FramePacket completepack) throws FilterException {
+		return true;
+	}
+
 }

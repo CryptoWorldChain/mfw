@@ -1,19 +1,15 @@
 package onight.tfw.ntrans.api;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
+
+import com.google.protobuf.AbstractMessage.Builder;
 
 import lombok.extern.slf4j.Slf4j;
-import onight.tfw.async.CallBack;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.beans.FramePacket;
-import onight.tfw.outils.bean.BeanPBUtil;
 import onight.tfw.outils.bean.ClassUtils;
 import onight.tfw.outils.bean.JsonPBUtil;
 import onight.tfw.outils.serialize.SerializerFactory;
-
-import com.google.protobuf.AbstractMessage.Builder;
-import com.googlecode.protobuf.format.JsonFormat;
 
 /**
  * 处理节点的

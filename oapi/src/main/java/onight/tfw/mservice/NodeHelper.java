@@ -8,16 +8,9 @@ import onight.tfw.outils.conf.PropHelper;
 
 public class NodeHelper {
 
-	private static PropHelper prop;
+	private static PropHelper prop =  new PropHelper(null);
 
 	public static PropHelper getPropInstance() {
-		if (prop == null) {
-			synchronized (NodeHelper.class) {
-				if (prop == null) {
-					prop = new PropHelper(null);
-				}
-			}
-		}
 		return prop;
 	}
 

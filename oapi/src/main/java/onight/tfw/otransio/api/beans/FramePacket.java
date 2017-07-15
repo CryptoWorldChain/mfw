@@ -178,6 +178,15 @@ public class FramePacket {
 		}
 	}
 
+	public FixHeader genHeader(){
+		if(fixHead==null){
+			fixHead = new FixHeader();
+		}
+		fixHead.setBodysize(genBodyBytes().length);
+		fixHead.setExtsize(genExtBytes().length);
+		return fixHead;
+
+	}
 	public FramePacket(FixHeader fixHead, ExtHeader extHead, byte[] body, String globalCMD) {
 		super();
 		this.fixHead = fixHead;

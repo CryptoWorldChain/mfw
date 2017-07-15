@@ -112,10 +112,12 @@ public class SessionIDGenerator {
 
 	public static String timeTick = int2Str((int) (System.currentTimeMillis()), 100);
 	
+	public static String CounterLock="CounterLock";
+	
 	private final static String getCount() {
 		int curr = counter.get();
 		if (curr > 10000) {
-			synchronized (counter) {
+			synchronized (CounterLock) {
 				if (curr > 10000) {
 					counter.set(0);
 					timeTick = int2Str((int) (System.currentTimeMillis()), 100);

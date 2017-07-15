@@ -154,6 +154,8 @@ public class QueryMapperResolver {
 				|| StringUtils.containsIgnoreCase(value.toString(), "{\"$gt\":")
 				|| StringUtils.containsIgnoreCase(value.toString(), "{\"$gt\":")
 				|| StringUtils.containsIgnoreCase(value.toString(), "{\"$gte\":")
+				|| StringUtils.containsIgnoreCase(value.toString(), "{\"$isnotnull\":")
+				|| StringUtils.containsIgnoreCase(value.toString(), "{\"$isnull\":")
 				|| StringUtils.containsIgnoreCase(value.toString(), "{\"$ne\":"));
 	}
 
@@ -173,6 +175,10 @@ public class QueryMapperResolver {
 			return "in";
 		if (StringUtils.containsIgnoreCase(value.toString(), "{\"$nin\":"))
 			return "not in";
+		if (StringUtils.containsIgnoreCase(value.toString(), "{\"$isnotnull\":"))
+			return "is not null";
+		if (StringUtils.containsIgnoreCase(value.toString(), "{\"$isnull\":"))
+			return " is null";
 		return "=";
 	}
 
@@ -189,6 +195,10 @@ public class QueryMapperResolver {
 			return getValueByType(value.get("$gte"), fd);
 		if (StringUtils.containsIgnoreCase(value.toString(), "{\"$ne\":"))
 			return getValueByType(value.get("$ne"), fd);
+		if (StringUtils.containsIgnoreCase(value.toString(), "{\"$isnotnull\":"))
+			return "";
+		if (StringUtils.containsIgnoreCase(value.toString(), "{\"$isnull\":"))
+			return "";
 		if (StringUtils.containsIgnoreCase(value.toString(), "{\"$in\":")) {
 			if (value.get("$in").isArray()) {
 				Iterator<JsonNode> it = value.get("$in").iterator();

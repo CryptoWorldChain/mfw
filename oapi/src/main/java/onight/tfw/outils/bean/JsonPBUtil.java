@@ -4,8 +4,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import lombok.extern.slf4j.Slf4j;
-
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.DeserializationConfig.Feature;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -16,6 +14,8 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.JavaType;
 import com.google.protobuf.MapEntry;
 import com.google.protobuf.Message;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class JsonPBUtil {

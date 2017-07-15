@@ -2,8 +2,6 @@ package onight.tfw.otransio.api;
 
 import onight.tfw.async.CallBack;
 import onight.tfw.async.OFuture;
-import onight.tfw.otransio.api.IPacketSender;
-import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.beans.FramePacket;
 
 public class NonePackSender implements IPacketSender {
