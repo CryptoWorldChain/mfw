@@ -29,7 +29,7 @@ public class DESCoder {
 		String decryptStr = null;
 		try {
 			// 解密
-			Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+			Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Pading");
 
 			byte[] input = Base64.decodeBase64(cipherText.trim().getBytes(
 					CHARSET));
@@ -59,7 +59,7 @@ public class DESCoder {
 
 		try {
 			// 加密
-			Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+			Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Pading");
 			cipher.init(Cipher.ENCRYPT_MODE, genSecretKey(desKey));
 			byte[] cipherText = cipher
 					.doFinal(message.trim().getBytes(CHARSET));

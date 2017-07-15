@@ -1,0 +1,15 @@
+
+version='3.0.2'
+
+dependencies {
+	testCompile 'junit:junit:4.12'
+}
+
+jar {
+	manifest{
+		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
+		attributes( 'Import-Ignore':'onight.tfw.otransio.api,onight.tfw.ntrans.api')
+		attributes( 'DynamicImport-Package': '*')
+		attributes( 'Import-Lib': 'lib')
+	}
+}

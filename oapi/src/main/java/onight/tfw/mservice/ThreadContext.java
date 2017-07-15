@@ -11,7 +11,7 @@ public class ThreadContext {
 	}
 
 	public static void setContext(String key, Object object) {
-		ensureMap().put(key, object);
+		ensureMap().put("zp."+key, object);
 	}
 
 	public static HashMap<String, Object> ensureMap() {
