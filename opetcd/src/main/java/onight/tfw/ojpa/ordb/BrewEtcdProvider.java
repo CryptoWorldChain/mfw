@@ -67,14 +67,22 @@ public class BrewEtcdProvider implements StoreServiceProvider {
 			HttpRequestor req = new HttpRequestor();
 			req.setUrlbase(uris);
 			req.reload();
-			
-			req.changeMaxPerRoute(params.get("org.zippo.etcd.maxpreroute",100));
-			req.changeMaxTotal(params.get("org.zippo.etcd.maxtotal",100));
-			
+
+			req.changeMaxPerRoute(params.get("org.zippo.etcd.maxpreroute", 100));
+			req.changeMaxTotal(params.get("org.zippo.etcd.maxtotal", 100));
+
 			etcdImpl.setReq(req);
+			String rootpath = params.get("org.zippo.bc.org", "fbs");
+			if (rootpath.endsWith("/")) {
+				rootpath = rootpath.substring(0, rootpath.length() - 1);
+			}
+			if (!rootpath.startsWith("/")) {
+				rootpath = "/" + rootpath;
+			}
+			etcdImpl.setRootPath(rootpath);
 			etcdImpl.setDefault_ttl(params.get("org.zippo.etcd.ttl", 99999999));
 		} catch (Exception e) {
-			log.warn("consensus start error",e);
+			log.warn("consensus start error", e);
 		}
 		log.info("启动完成...");
 	}
@@ -82,7 +90,7 @@ public class BrewEtcdProvider implements StoreServiceProvider {
 	@Invalidate
 	public void shutdown() {
 		log.info("退出中...");
-		
+
 		if (etcdImpl.getReq() != null) {
 			try {
 				etcdImpl.getReq().destroy();

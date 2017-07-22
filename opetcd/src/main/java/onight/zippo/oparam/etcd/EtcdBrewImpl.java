@@ -37,6 +37,10 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	@Getter
 	int default_ttl = 99999999;
 
+	@Setter
+	@Getter
+	String rootPath = "fbs";
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -49,7 +53,8 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 			if ((Boolean) obj) {
 				try {
 					return JsonSerializer.formatToString(JsonSerializer.getInstance()
-							.deserialize(req.get("/v2/members"), EtcdMembersResponse.class).getMembers());
+							.deserialize(req.get("/v2/members"), EtcdMembersResponse.class)
+							.getMembers());
 				} catch (Exception e) {
 				}
 			}
@@ -66,7 +71,7 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> put(String key, String value) throws IOException {
-		return new FutureBrew(req.put(URLEncoder.encode(value,"UTF-8"), "/v2/keys" + key));
+		return new FutureBrew(req.put(URLEncoder.encode(value, "UTF-8"), "/v2/keys" + rootPath + key));
 	}
 
 	/*
@@ -76,7 +81,7 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> putDir(String dir) throws IOException {
-		return new FutureBrew(req.put("dir=true", "/v2/keys" + dir));
+		return new FutureBrew(req.put("dir=true", "/v2/keys" + rootPath + dir));
 
 		// return new
 		// FutureWP(etcd.putDir(dir).timeout(ThreadContext.getContextInt("wait.timeout",
@@ -92,7 +97,7 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> post(String key, String value) throws IOException {
-		return new FutureBrew(req.post(URLEncoder.encode(value,"UTF-8"), "/v2/keys" + key));
+		return new FutureBrew(req.post(URLEncoder.encode(value, "UTF-8"), "/v2/keys" + rootPath + key));
 	}
 
 	/*
@@ -102,7 +107,7 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> delete(String key) throws IOException {
-		return new FutureBrew(req.delete("/v2/keys" + key + "?recursive=true"));
+		return new FutureBrew(req.delete("/v2/keys" + rootPath + key + "?recursive=true"));
 	}
 
 	/*
@@ -112,7 +117,7 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> deleteDir(String dir) throws IOException {
-		return new FutureBrew(req.delete("/v2/keys" + dir + "?recursive=true&dir=true"));
+		return new FutureBrew(req.delete("/v2/keys" + rootPath + dir + "?recursive=true&dir=true"));
 
 	}
 
@@ -124,9 +129,9 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	@Override
 	public Future<OTreeValue> get(String key) throws IOException {
 		if (ThreadContext.getContextInt("sorted", 0) == 1) {
-			return new FutureBrew(req.get("/v2/keys" + key + "?recursive=true&sorted=true"));
+			return new FutureBrew(req.get("/v2/keys" + rootPath + key + "?recursive=true&sorted=true"));
 		}
-		return new FutureBrew(req.get("/v2/keys" + key + "?recursive=true"));
+		return new FutureBrew(req.get("/v2/keys" + rootPath + key + "?recursive=true"));
 	}
 
 	/*
@@ -146,7 +151,7 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	 */
 	@Override
 	public Future<OTreeValue> getAll() throws IOException {
-		return get("/v2/keys/?recursive=true");
+		return get("/v2/keys/" + rootPath + "?recursive=true");
 	}
 
 	/*
@@ -180,9 +185,9 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 							Future<OTreeValue> ret;
 							if (ThreadContext.getContextInt("sorted", 0) == 1) {
 								ret = new FutureBrew(
-										req.get("/v2/keys" + key + "?recursive=true&sorted=true&wait=true"));
+										req.get("/v2/keys" + rootPath + key + "?recursive=true&sorted=true&wait=true"));
 							}
-							ret = new FutureBrew(req.get("/v2/keys" + key + "?recursive=true&wait=true"));
+							ret = new FutureBrew(req.get("/v2/keys" + rootPath + key + "?recursive=true&wait=true"));
 
 							cb.onSuccess(ret.get());
 						} catch (Exception e) {
@@ -230,17 +235,17 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 
 	@Override
 	public Future<OTreeValue> compareAndDelete(String key, String value) throws IOException {
-		return new FutureBrew(
-				req.delete("/v2/keys" + key + "?recursive=true&prevValue=" + URLEncoder.encode(value, "UTF-8")));
+		return new FutureBrew(req.delete(
+				"/v2/keys" + rootPath + key + "?recursive=true&prevValue=" + URLEncoder.encode(value, "UTF-8")));
 	}
 
 	@Override
 	public Future<OTreeValue> compareAndSwap(String key, String newvalue, String comparevalue) throws IOException {
 		if (comparevalue == null) {
-			return new FutureBrew(req.put(URLEncoder.encode(newvalue,"UTF-8"), "/v2/keys" + key));
+			return new FutureBrew(req.put(URLEncoder.encode(newvalue, "UTF-8"), "/v2/keys" + rootPath + key));
 		}
-		return new FutureBrew(
-				req.put(URLEncoder.encode(newvalue,"UTF-8"), "/v2/keys" + key + "?prevValue=" + URLEncoder.encode(comparevalue, "UTF-8")));
+		return new FutureBrew(req.put(URLEncoder.encode(newvalue, "UTF-8"),
+				"/v2/keys" + rootPath + key + "?prevValue=" + URLEncoder.encode(comparevalue, "UTF-8")));
 	}
 
 }

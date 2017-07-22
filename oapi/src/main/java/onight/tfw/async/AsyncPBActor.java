@@ -71,7 +71,7 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 								;
 								retpack.getExtHead().buildFor(resp);
 								boolean bodyOnly = false;
-								if (StringUtils.equalsIgnoreCase("bd", retpack.getExtStrProp("resp"))) {
+								if (retpack.getExtStrProp("resp")==null||StringUtils.equalsIgnoreCase("bd", retpack.getExtStrProp("resp"))) {
 									bodyOnly = true;
 								}
 

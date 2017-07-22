@@ -2,6 +2,7 @@ package onight.tfw.otransio.api.beans;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.felix.ipojo.util.Log;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import lombok.Data;
@@ -169,7 +170,17 @@ public class FixHeader {
 
 	public static FixHeader buildFrom(HttpServletRequest req) {
 		if (req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD) == null) {
-			return new FixHeader();
+			FixHeader fh = new FixHeader();
+			try {
+				String paths[] = req.getServletPath().split("/");
+				if (paths.length > 2) {
+					fh.setCmd(paths[paths.length - 1].substring(2).replaceAll(".do", "").toUpperCase());
+					fh.setModule(paths[paths.length - 2].toUpperCase());
+					fh.setEnctype('J');
+				}
+			} catch (Throwable t) {
+			}
+			return fh;
 		}
 		return parseFrom(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD).getBytes());
 	}

@@ -3,7 +3,9 @@ package onight.tfw.outils.serialize;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import com.google.protobuf.AbstractMessage.Builder;
 import com.google.protobuf.MessageLite;
+import com.google.protobuf.MessageOrBuilder;
 
 class ProtobufSerializer implements ISerializer {
 
@@ -19,6 +21,9 @@ class ProtobufSerializer implements ISerializer {
 	@Override
 	public <T> byte[] serialize(T data) {
 		if (data != null) {
+			if (data instanceof Builder) {
+				return ((Builder) data).build().toByteArray();
+			}
 			return ((MessageLite) data).toByteArray();
 		}
 		return null;
@@ -31,10 +36,9 @@ class ProtobufSerializer implements ISerializer {
 			try {
 				Method method = clazz.getMethod(METHOD, dataArray.getClass());
 				if (method != null) {
-					return (T) method.invoke(clazz,(byte[]) dataArray);
+					return (T) method.invoke(clazz, (byte[]) dataArray);
 				} else {
-					throw new RuntimeException("protocol pojo hasn't method: "
-							+ METHOD);
+					throw new RuntimeException("protocol pojo hasn't method: " + METHOD);
 				}
 			} catch (Exception e) {
 				throw new RuntimeException(e);

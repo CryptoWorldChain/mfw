@@ -20,20 +20,19 @@ public class SerializerFactory {
 	public static final char SERIALIZER_MAPBEAN = 'M';
 	// transbean序列化
 	public static final char SERIALIZER_TRANSBEAN = 'T';
+	// http form 序列化
+	public static final char SERIALIZER_FORMDATA = 'F';
 
 	private static Map<Character, ISerializer> serializerHandlerMap = new HashMap<Character, ISerializer>();
 
 	static {
-		SerializerFactory.registerSerializer(SERIALIZER_AVRO,
-				AvroSerializer.getInstance());
-		SerializerFactory.registerSerializer(SERIALIZER_JSON,
-				JsonSerializer.getInstance());
-		SerializerFactory.registerSerializer(SERIALIZER_PROTOBUF,
-				ProtobufSerializer.getInstance());
-		SerializerFactory.registerSerializer(SERIALIZER_MAPBEAN,
-				MapBeanSerializer.getInstance());
-		SerializerFactory.registerSerializer(SERIALIZER_TRANSBEAN,
-				TransBeanSerializer.getInstance());
+		SerializerFactory.registerSerializer(SERIALIZER_AVRO, AvroSerializer.getInstance());
+		SerializerFactory.registerSerializer(SERIALIZER_JSON, JsonSerializer.getInstance());
+		SerializerFactory.registerSerializer(SERIALIZER_PROTOBUF, ProtobufSerializer.getInstance());
+		SerializerFactory.registerSerializer(SERIALIZER_MAPBEAN, MapBeanSerializer.getInstance());
+		SerializerFactory.registerSerializer(SERIALIZER_TRANSBEAN, TransBeanSerializer.getInstance());
+		SerializerFactory.registerSerializer(SERIALIZER_FORMDATA, FormDataSerializer.getInstance());
+
 	}
 
 	public static void registerSerializer(char type, ISerializer serializer) {

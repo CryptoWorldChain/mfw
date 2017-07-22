@@ -129,21 +129,20 @@ public class SqlMaker {
 	}
 
 	public static String getSQL(DbCondi dc) {
-		
-		if (dc.getOther()!=null&&StringUtils.isNotBlank(""+dc.getOther().get("SQL"))) {
-			StringBuffer sql=new StringBuffer( ""+dc.getOther().get("SQL"));
-			
+
+		if (dc.getOther() != null && StringUtils.isNotBlank("" + dc.getOther().get("SQL"))) {
+			StringBuffer sql = new StringBuffer("" + dc.getOther().get("SQL"));
+
 			getOrderBy(dc, sql);
 			getGroupBy(dc, sql);
 			addPageLimit(dc.getPageinfo(), sql);
 
 			return sql.toString();
 		}
-		
-		
+
 		Map<String, FieldDef> fieldMap = getFieldsMap(dc.getEntityClass());
 		StringBuffer sql = new StringBuffer("SELECT ").append(getSelectFieldNames(fieldMap, dc.getFmb()));
-		
+
 		sql.append(" FROM " + dc.getTableName());
 
 		if (dc.getQmb() != null) {
@@ -198,9 +197,11 @@ public class SqlMaker {
 	public static void addPageLimit(PageInfo para, StringBuffer sql) {
 		if (para != null) {
 			if (Integer.MAX_VALUE != para.getLimit() || para.getSkip() > 0) {
-				// sql=
+				 sql.append(" limit ").append(para.getSkip()).append(",").append(para.getLimit());
+				/*
 				String orgsql = sql.toString();
 				sql.delete(0, sql.length());
+				
 				// for ORACLE
 				if (Integer.MAX_VALUE == para.getLimit() || para.getLimit() == -1) {
 					sql.append("SELECT * FROM (SELECT A.*, ROWNUM RN FROM (" + orgsql + ") A WHERE ROWNUM <= " + (Integer.MAX_VALUE) + ") WHERE RN > " + para.getSkip());
@@ -208,8 +209,8 @@ public class SqlMaker {
 					sql.append("SELECT * FROM (SELECT A.*, ROWNUM RN FROM (" + orgsql + ") A WHERE ROWNUM <= " + (para.getLimit() + para.getSkip()) + ") WHERE RN > "
 							+ para.getSkip());
 				}
-				// sql.append(" limit
-				// ").append(para.getSkip()).append(",").append(para.getLimit());
+				 * */
+				 
 			}
 		}
 	}

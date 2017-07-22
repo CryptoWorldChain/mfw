@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import onight.tfw.otransio.api.beans.ExceptionBody;
 import onight.tfw.otransio.api.beans.ExtHeader;
 import onight.tfw.otransio.api.beans.FixHeader;
+import onight.tfw.otransio.api.beans.FormParamBody;
 import onight.tfw.otransio.api.beans.FrameBody;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.serialize.HttpHelper;
@@ -99,8 +100,8 @@ public class PacketHelper {
 	}
 
 	public static FramePacket buildHeaderFromHttpPost(HttpServletRequest req) throws IOException {
-		if (StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))
-			return null;
+		//if (StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))
+//			return null;
 		FramePacket ret = (FramePacket) req.getAttribute("__framepack");
 		if (ret != null) {
 			return ret;
@@ -163,6 +164,20 @@ public class PacketHelper {
 		return ret;
 	}
 
+	public static FramePacket buildUrlFromFormData(Object form, String method, String url) {
+		FramePacket ret = new FramePacket();
+		FixHeader fh = new FixHeader();
+		fh.setCmd("");
+		fh.setModule("");
+		ret.setFbody(form);
+		fh.setEnctype(SerializerFactory.SERIALIZER_FORMDATA);
+		ret.setFixHead(fh);
+		ret.setExtHead(new ExtHeader());
+		ret.getExtHead().append(PackHeader.FORWORD_URL, url);
+		ret.getExtHead().append(PackHeader.FORWORD_METHOD, method);
+		return ret;
+	}
+
 	public static FramePacket buildUrlForGet(String url) {
 		FramePacket ret = new FramePacket();
 		FixHeader fh = new FixHeader();
@@ -176,8 +191,7 @@ public class PacketHelper {
 		return ret;
 	}
 
-
-	public static FramePacket buildUrlFromAny(Object body, String method,String url) {
+	public static FramePacket buildUrlFromAny(Object body, String method, String url) {
 		FramePacket ret = new FramePacket();
 		ret.setFbody(body);
 		FixHeader fh = new FixHeader();
@@ -190,6 +204,7 @@ public class PacketHelper {
 		ret.getExtHead().append(PackHeader.FORWORD_METHOD, method);
 		return ret;
 	}
+
 	public static FramePacket buildJsonFromStr(String jsbody, String gcmd) {
 		FramePacket ret = genPack(gcmd.substring(0, 3), gcmd.substring(3), jsbody, true, (byte) 0);
 		ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_JSON);
@@ -270,9 +285,8 @@ public class PacketHelper {
 			ExtHeader eh = null;
 			if (dataNode.get("eh") != null) {
 				eh = new ExtHeader();
-				Map<String, Object> map = (mapper.<HashMap<String, Object>>readValue(dataNode.get("eh"),
-						new TypeReference<HashMap<String, Object>>() {
-						}));
+				Map<String, Object> map = (mapper.<HashMap<String, Object>>readValue(dataNode.get("eh"), new TypeReference<HashMap<String, Object>>() {
+				}));
 				for (Entry<String, Object> entry : map.entrySet()) {
 					eh.append(entry.getKey(), entry.getValue());
 				}

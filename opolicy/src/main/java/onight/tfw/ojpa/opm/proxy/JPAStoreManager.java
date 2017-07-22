@@ -227,7 +227,7 @@ public class JPAStoreManager {
 		if (clientset == null)
 			return;
 		log.debug("wireDaosForClient::" + clientset.client + ",daosize=" + clientset.daos.size() + ",id=@" + clientid);
-
+		boolean AlldaoReady = true;
 		for (DomainDaoSupport dao : clientset.daos) {
 			String target = dao.getServiceSpec().getTarget();
 			StoreServiceProvider ssp = null;
@@ -255,6 +255,8 @@ public class JPAStoreManager {
 
 			if (ssp == null) {
 				// dds = new NoneDomainDao();
+				AlldaoReady = false;
+				log.debug("nonDomainDao.DAO NOT READY " + clientid + ":" + dds+",AlldaoReady="+AlldaoReady);
 				dao.setDaosupport(new NoneDomainDao());
 			} else {
 				log.debug("RegisterDAO:" + dao.getDomainName() + "]@" + clientid + ":" + dds);
@@ -263,12 +265,15 @@ public class JPAStoreManager {
 					try {
 						clientset.client.onDaoServiceReady(dao);
 					} catch (Exception e) {
+						AlldaoReady = false;
 						log.error("wire dao err:" + dao, e);
 					}
 				}
 			}
 		}
-		clientset.client.onDaoServiceAllReady();
+		if (AlldaoReady) {
+			clientset.client.onDaoServiceAllReady();
+		}
 	}
 
 	public void wireDaos() {

@@ -6,9 +6,9 @@ public class StringHelper {
 
 	public static boolean toBool(String v) {
 		return StringUtils.isNotBlank(v) && (//
-		StringUtils.equalsIgnoreCase("1", v) //
-				|| StringUtils.equalsIgnoreCase("true", v) //
-				|| StringUtils.equalsIgnoreCase("on", v)//
+		StringUtils.equalsIgnoreCase("1", v.trim()) //
+				|| StringUtils.equalsIgnoreCase("true", v.trim()) //
+				|| StringUtils.equalsIgnoreCase("on", v.trim())//
 		);
 	}
 
