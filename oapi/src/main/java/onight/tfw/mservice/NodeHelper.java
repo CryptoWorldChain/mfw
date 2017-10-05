@@ -8,7 +8,7 @@ import onight.tfw.outils.conf.PropHelper;
 
 public class NodeHelper {
 
-	private static PropHelper prop =  new PropHelper(null);
+	private static PropHelper prop = new PropHelper(null);
 
 	public static PropHelper getPropInstance() {
 		return prop;
@@ -22,16 +22,27 @@ public class NodeHelper {
 		return "localhost";
 	}
 
-	public static String getCurrNodeID() {
-		String def = getPropInstance().get("otrans.node.id", getCurrNodeListenOutAddr()+"."+getCurrNodeListenOutPort());
-		String envid = System.getProperty("otrans.node.id", def);
+	public static String envInEnv(String envid) {
+		if (envid.startsWith("${") && envid.length() > 3) {
+			envid = System.getProperty(envid.substring(2, envid.length() - 1), envid);
+		} else if (envid.startsWith("$") && envid.length() > 2) {
+			envid = System.getProperty(envid.substring(1), envid);
+		}
 		return envid;
+	}
+
+	public static String getCurrNodeID() {
+		String def = getPropInstance().get("otrans.node.id",
+				getCurrNodeListenOutAddr() + "." + getCurrNodeListenOutPort());
+		String envid = System.getProperty("otrans.node.id", def);
+
+		return envInEnv(envid);
 	}
 
 	public static String getCurrNodeListenInAddr() {
 		String def = getPropInstance().get("otrans.addr.in", "0.0.0.0");
 		String envid = System.getProperty("otrans.addr.in", def);
-		return envid;
+		return envInEnv(envid);
 	}
 
 	public static String getCurrNodeListenOutAddr() {
@@ -39,7 +50,7 @@ public class NodeHelper {
 		try {
 			def = getPropInstance().get("otrans.addr.out", InetAddress.getLocalHost().getHostAddress());
 			String envid = System.getProperty("otrans.addr.out", def);
-			return envid;
+			return envInEnv(envid);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
@@ -55,7 +66,7 @@ public class NodeHelper {
 		String envid = System.getProperty("otrans.port.in", def);
 
 		try {
-			return Integer.parseInt(envid);
+			return Integer.parseInt(envInEnv(envid));
 		} catch (NumberFormatException e) {
 			String range[] = def.split("\\[|,|\\]");
 			if (range.length == 3)
@@ -98,7 +109,7 @@ public class NodeHelper {
 		if (envid == null)
 			return getCurrNodeListenInPort();
 		try {
-			return Integer.parseInt(envid);
+			return Integer.parseInt(envInEnv(envid));
 		} catch (NumberFormatException e) {
 			return 5100;
 		}

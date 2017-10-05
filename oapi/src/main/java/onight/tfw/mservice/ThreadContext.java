@@ -24,12 +24,12 @@ public class ThreadContext {
 	}
 
 	public static Object getContext(String key) {
-		return ensureMap().get(key);
+		return ensureMap().get("zp."+key);
 	}
 
 	public static int getContextInt(String key, int defaultv) {
 		try {
-			Object v = ensureMap().get(key);
+			Object v = ensureMap().get("zp."+key);
 			if(v==null){
 				return defaultv;
 			}
@@ -49,7 +49,7 @@ public class ThreadContext {
 
 	public static String getContextStr(String key, String defaultv) {
 		try {
-			Object v =  ensureMap().get(key);
+			Object v =  ensureMap().get("zp."+key);
 			if (v != null && v instanceof String) {
 				return (String)v;
 			}

@@ -98,6 +98,8 @@ public class HttpRequestor {
 		} catch (HttpResponseException he) {
 			if (he.getStatusCode() == 404) {
 				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
+			} else if (he.getStatusCode() == 412) {
+				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
 			}
 			throw he;
 		} catch (Exception e) {
@@ -133,6 +135,8 @@ public class HttpRequestor {
 		} catch (HttpResponseException he) {
 			if (he.getStatusCode() == 404) {
 				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
+			} else if (he.getStatusCode() == 412) {
+				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
 			}
 			throw he;
 		} catch (Exception e) {
@@ -162,6 +166,8 @@ public class HttpRequestor {
 			throw so;
 		} catch (HttpResponseException he) {
 			if (he.getStatusCode() == 404) {
+				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
+			} else if (he.getStatusCode() == 412) {
 				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
 			}
 			throw he;
@@ -205,6 +211,8 @@ public class HttpRequestor {
 			throw so;
 		} catch (HttpResponseException he) {
 			if (he.getStatusCode() == 404) {
+				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
+			} else if (he.getStatusCode() == 412) {
 				return "{\"errorCode\":100,\"message\":\"Key not found\"}";
 			}
 			throw he;

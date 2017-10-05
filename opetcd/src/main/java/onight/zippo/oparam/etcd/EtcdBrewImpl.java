@@ -3,21 +3,11 @@ package onight.zippo.oparam.etcd;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.ClientProtocolException;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import mousio.client.promises.ResponsePromise;
-import mousio.etcd4j.EtcdClient;
-import mousio.etcd4j.promises.EtcdResponsePromise;
-import mousio.etcd4j.requests.EtcdKeyGetRequest;
-import mousio.etcd4j.responses.EtcdKeysResponse;
-import mousio.etcd4j.responses.EtcdMembersResponse;
+import onight.zippo.oparam.etcd.EtcdMembersResponse;
 import onight.tfw.async.CallBack;
 import onight.tfw.mservice.ThreadContext;
 import onight.tfw.ojpa.api.DomainDaoSupport;
@@ -53,8 +43,7 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 			if ((Boolean) obj) {
 				try {
 					return JsonSerializer.formatToString(JsonSerializer.getInstance()
-							.deserialize(req.get("/v2/members"), EtcdMembersResponse.class)
-							.getMembers());
+							.deserialize(req.get("/v2/members"), EtcdMembersResponse.class).getMembers());
 				} catch (Exception e) {
 				}
 			}
@@ -242,7 +231,7 @@ public class EtcdBrewImpl implements OPFace, DomainDaoSupport {
 	@Override
 	public Future<OTreeValue> compareAndSwap(String key, String newvalue, String comparevalue) throws IOException {
 		if (comparevalue == null) {
-			return new FutureBrew(req.put(URLEncoder.encode(newvalue, "UTF-8"), "/v2/keys" + rootPath + key));
+			return new FutureBrew(req.put(URLEncoder.encode(newvalue, "UTF-8")+"", "/v2/keys" + rootPath + key+"?prevExist=false"));
 		}
 		return new FutureBrew(req.put(URLEncoder.encode(newvalue, "UTF-8"),
 				"/v2/keys" + rootPath + key + "?prevValue=" + URLEncoder.encode(comparevalue, "UTF-8")));

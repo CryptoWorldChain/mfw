@@ -222,7 +222,11 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 			}
 		} catch (DirectOutputStreamException be) {
 			doPostFilter(packet, req, res);
-			be.doReponse(res);
+			try{
+				be.doReponse(res);
+			}catch(Exception e){
+				res.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknow Error:1:" + e.getMessage());
+			}
 		} catch (FilterException e) {
 			doPostFilter(packet, req, res);
 			res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Filter Reject:" + e.getMessage());
