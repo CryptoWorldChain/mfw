@@ -4,7 +4,7 @@ classpath "org.fc.zippo:org.fc.zippo.oapi:3.0.6"
 
 } }
 
-version = '3.0.2'
+version = '3.0.3'
 
 
 group = "org.fc.zippo.sender"

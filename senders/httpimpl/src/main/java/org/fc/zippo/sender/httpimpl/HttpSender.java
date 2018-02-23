@@ -84,7 +84,7 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 					output.write((byte[]) jsons.serialize(retpack.getFbody()));
 				}
 			} else if (retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON) {
-				builder.addHeader("Content-Type", "application/json");
+				builder.setHeader("Content-Type", "application/json");
 				if (retpack.getFbody() instanceof Message) {
 					Message msg = (Message) retpack.getFbody();
 					String str = new JsonPBFormat().printToString(msg);
@@ -154,7 +154,7 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 			for (Entry<String, Object> pair : pack.getExtHead().getVkvs().entrySet()) {
 				if (!pair.getKey().startsWith(PackHeader.EXT_HIDDEN)) {
 					try {
-						builder.addHeader(pair.getKey(), pair.getValue() + "");
+						builder.setHeader(pair.getKey(), pair.getValue() + "");
 					} catch (Exception e) {
 						log.debug("add cookie fail:", e);
 					}

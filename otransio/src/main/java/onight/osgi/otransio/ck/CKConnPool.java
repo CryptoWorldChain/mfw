@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.nio.OClient;
 import onight.osgi.otransio.sm.MSessionSets;
+import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.beans.ExtHeader;
 import onight.tfw.otransio.api.beans.FixHeader;
@@ -40,24 +41,51 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		this.max = max;
 		this.mss = mss;
 	}
-	
-	public String getJsonStr(){
-		StringBuffer sb=new StringBuffer();
-		sb.append("{\"ip\":\""+ip+"\"");
-		sb.append(",\"port\":"+port+"");
-		sb.append(",\"core\":"+core+"");
-		sb.append(",\"max\":"+max+"");
-		sb.append(",\"curr\":"+this.size()+"");
+
+	public String getJsonStr() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("{\"ip\":\"" + ip + "\"");
+		sb.append(",\"port\":" + port + "");
+		sb.append(",\"core\":" + core + "");
+		sb.append(",\"max\":" + max + "");
+		sb.append(",\"curr\":" + this.size() + "");
 		sb.append("}");
 		return sb.toString();
 	}
+
 	public synchronized Connection createOneConnection() {
-		return createOneConnection(0);
+		return createOneConnection(5);
+	}
+
+	public void sendMessage(final FramePacket pack) throws MessageException{
+		for (int i = 0; i < 3; i++) {
+			Connection conn = null;
+			try {
+				conn = borrow();
+				if (conn != null) {
+					if (conn.isOpen()) {
+						conn.write(pack);
+						break;
+					} else {
+						removeObject(conn);
+						conn = null;
+					}
+				}
+				Thread.sleep(100);
+				createOneConnection(3);
+			} catch (Exception e) {
+				log.error("sendMessageError:" + pack, e);
+				throw new MessageException(e);
+			} finally {
+				if (conn != null && conn.isOpen()) {
+					retobj(conn);
+				}
+			}
+		}
 	}
 
 	public synchronized Connection createOneConnection(int maxtries) {
-
-		if (size() < max && maxtries < 5) {
+		for (int i = 0; i < maxtries && size() < max; i++) {
 			try {
 				final Connection conn = client.getConnection(ip, port);
 				if (conn != null) {
@@ -77,10 +105,8 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					//
 					conn.write(pack);
 					this.addObject(conn);
-				} else {
-					createOneConnection(maxtries + 1);
+					return conn;
 				}
-				return conn;
 			} catch (Exception e) {
 				log.warn("error in create out conn:" + ip + ",port=" + port, e);
 			}

@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ojpa.api.DomainDaoSupport;
 import onight.tfw.ojpa.api.ServiceSpec;
 import onight.tfw.ojpa.api.StoreServiceProvider;
+import onight.tfw.oparam.api.HashParam;
+import onight.tfw.oparam.api.OPFace;
 import onight.tfw.outils.conf.PropHelper;
 import onight.zippo.oparam.etcd.EtcdBrewImpl;
 import onight.zippo.oparam.etcd.HttpRequestor;
@@ -31,7 +33,7 @@ public class BrewEtcdProvider implements StoreServiceProvider {
 
 	BundleContext bundleContext;
 	PropHelper params;
-	EtcdBrewImpl etcdImpl = new EtcdBrewImpl();
+	OPFace etcdImpl = new HashParam();
 
 	public URI[] getURI(String urilist) {
 		try {
@@ -63,39 +65,44 @@ public class BrewEtcdProvider implements StoreServiceProvider {
 		String passwd = params.get("org.zippo.etcd.passwd", null);
 		String uris = params.get("org.zippo.etcd.uris", "http://127.0.0.1:2379");
 		String ssluris = params.get("org.zippo.etcd.ssluris", null);
-		try {
-			HttpRequestor req = new HttpRequestor();
-			req.setUrlbase(uris);
-			req.reload();
+		if (uris.length() > 0)
+			try {
 
-			req.changeMaxPerRoute(params.get("org.zippo.etcd.maxpreroute", 100));
-			req.changeMaxTotal(params.get("org.zippo.etcd.maxtotal", 100));
+				HttpRequestor req = new HttpRequestor();
+				req.setUrlbase(uris);
+				req.reload();
 
-			etcdImpl.setReq(req);
-			String rootpath = params.get("org.zippo.bc.org", "fbs");
-			if (rootpath.endsWith("/")) {
-				rootpath = rootpath.substring(0, rootpath.length() - 1);
+				req.changeMaxPerRoute(params.get("org.zippo.etcd.maxpreroute", 100));
+				req.changeMaxTotal(params.get("org.zippo.etcd.maxtotal", 100));
+				EtcdBrewImpl _etcdimp = new EtcdBrewImpl();
+				_etcdimp.setReq(req);
+				String rootpath = params.get("org.zippo.bc.org", "fbs");
+				if (rootpath.endsWith("/")) {
+					rootpath = rootpath.substring(0, rootpath.length() - 1);
+				}
+				if (!rootpath.startsWith("/")) {
+					rootpath = "/" + rootpath;
+				}
+				_etcdimp.setRootPath(rootpath);
+				_etcdimp.setDefault_ttl(params.get("org.zippo.etcd.ttl", 99999999));
+				etcdImpl = _etcdimp;
+			} catch (Exception e) {
+				log.warn("consensus start error", e);
 			}
-			if (!rootpath.startsWith("/")) {
-				rootpath = "/" + rootpath;
-			}
-			etcdImpl.setRootPath(rootpath);
-			etcdImpl.setDefault_ttl(params.get("org.zippo.etcd.ttl", 99999999));
-		} catch (Exception e) {
-			log.warn("consensus start error", e);
-		}
 		log.info("启动完成...");
 	}
 
 	@Invalidate
 	public void shutdown() {
 		log.info("退出中...");
-
-		if (etcdImpl.getReq() != null) {
-			try {
-				etcdImpl.getReq().destroy();
-			} catch (Exception e) {
-				log.warn("close etcd error", e);
+		if (etcdImpl instanceof EtcdBrewImpl) {
+			EtcdBrewImpl _etcdImpl = (EtcdBrewImpl) etcdImpl;
+			if (_etcdImpl.getReq() != null) {
+				try {
+					_etcdImpl.getReq().destroy();
+				} catch (Exception e) {
+					log.warn("close etcd error", e);
+				}
 			}
 		}
 		log.info("退出完成...");

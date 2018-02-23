@@ -22,7 +22,8 @@ public class FixHeader {
 	// -- 1字节：flag 用后4位，sync(前2位)|bits进制数（后2位），
 	// -- sync=0表示同步，=1为异步
 	// -- bits
-	// 0表示16进制（扩展头部最大255,body最大4k)，1表示78进制（大小写字母+数字，扩展头部最大6k,body最大474k),2表示采用字节方式
+	// 0表示16进制（扩展头部最大255,body最大4k)，1表示78进制（大小写字母+数字，扩展头部最大6k,body最大474k),2表示采用字节方式,
+	// 3表示第一个字节是
 	// --
 	// 例如0表示同步16进制，1表示同步78进制，0100=4表示异步16进制，0101=5表示异步78进制，0010=2表示同步字节，0110=6表示异步字节
 	// -- 一共有2*4=8种情况
@@ -31,7 +32,7 @@ public class FixHeader {
 	// 3字节body（最大4k）
 	// -- 1字节：enc编码，
 	// -- 1字节：优先级
-	// -- 1字节：预留
+	// -- 1字节：预留,0-请求包,1相应包
 	// -- 一共16个字节
 	byte[] data;
 
@@ -64,6 +65,10 @@ public class FixHeader {
 		this.data = data;
 	}
 
+	public boolean isResp() {
+		return this.data[15] == 1 || (this.data[15] - '0') == 1;
+	}
+
 	public FixHeader() {
 		this.data = new byte[16];
 		reset();
@@ -94,69 +99,98 @@ public class FixHeader {
 		}
 	}
 
+	public void setResp(boolean resp) {
+		if (resp) {
+			reserved = '1';
+		} else {
+			reserved = '0';// 0000,0100==>1111,1011==>
+		}
+	}
+
 	boolean dataAlreadyGen = false;
 
 	public byte[] toBytes(boolean sync) {
 		// if (dataAlreadyGen) {
 		// return data;
 		// }
-		data[0] = (byte) (ver);
-		System.arraycopy(cmd.getBytes(), 0, data, 1, 3);
-		System.arraycopy(module.getBytes(), 0, data, 4, 3);
-		data[7] = 0;
-		if (sync) {
-			data[7] |= 4;
-		}
-		if (extsize < 16 * 16 && bodysize < 16 * 16 * 16) {// 采用16进制
-			LengthUtils.format16V2(extsize, 16, data, 8);
-			LengthUtils.format16V3(bodysize, 16, data, 10);
-		} else if (extsize < 78 * 78 || bodysize < 78 * 78 * 78) {
-			data[7] |= 1;// 78进制编码
-			LengthUtils.format78V2(extsize, 78, data, 8);
-			LengthUtils.format78V3(bodysize, 78, data, 10);
+		if (ver == 'B' || ver == 'b') {
+			data[0] = (byte) (ver);
+			System.arraycopy(cmd.getBytes(), 0, data, 1, 3);
+			System.arraycopy(module.getBytes(), 0, data, 4, 3);
+			LengthUtils.int2Byte3(extsize, data, 7);
+			LengthUtils.int2Byte4(bodysize, data, 10);
+			data[14] = (byte) enctype;
+			data[15] = reserved;
+			dataAlreadyGen = true;
 		} else {
-			data[7] |= 2;// 字节编码
-			LengthUtils.int2Byte2(extsize, data, 8);
-			LengthUtils.int2Byte3(bodysize, data, 10);
+			data[0] = (byte) (ver);
+			System.arraycopy(cmd.getBytes(), 0, data, 1, 3);
+			System.arraycopy(module.getBytes(), 0, data, 4, 3);
+			data[7] = 0;
+			if (sync) {
+				data[7] |= 4;
+			}
+			if (extsize < 16 * 16 && bodysize < 16 * 16 * 16) {// 采用16进制
+				LengthUtils.format16V2(extsize, 16, data, 8);
+				LengthUtils.format16V3(bodysize, 16, data, 10);
+			} else if (extsize < 78 * 78 || bodysize < 78 * 78 * 78) {
+				data[7] |= 1;// 78进制编码
+				LengthUtils.format78V2(extsize, 78, data, 8);
+				LengthUtils.format78V3(bodysize, 78, data, 10);
+			} else {
+				data[7] |= 2;// 字节编码
+				LengthUtils.int2Byte2(extsize, data, 8);
+				LengthUtils.int2Byte3(bodysize, data, 10);
+			}
+			if (data[7] < 10) {
+				data[7] = (byte) (data[7] + '0');
+			} else {
+				data[7] = (byte) (data[7] + 'A' - '0');
+			}
+			data[13] = (byte) enctype;
+			data[14] = (byte) (prio + '0');
+			data[15] = reserved;
+			dataAlreadyGen = true;
 		}
-		if (data[7] < 10) {
-			data[7] = (byte) (data[7] + '0');
-		} else {
-			data[7] = (byte) (data[7] + 'A' - '0');
-		}
-		data[13] = (byte) enctype;
-		data[14] = (byte) (prio + '0');
-		data[15] = (byte) (reserved + '0');
-		dataAlreadyGen = true;
 		return data;
 	}
 
 	private FixHeader parse() {
 		ver = (char) data[0];
-		cmd = new String(data, 1, 3).trim();
-		module = new String(data, 4, 3).trim();
-		if (data[7] <= '9') {
-			flag = (byte) (data[7] - '0');
-		} else {
-			flag = (byte) (data[7] - 'A' + 10);
-		}
-		if ((flag & 0x3) == 2) {// 去字节方式
-			extsize = LengthUtils.byte2Int(data[8], data[9]);
-			bodysize = LengthUtils.byte2Int(data[10], data[11], data[12]);
-		} else {
-			int radix = 16;
-			if ((flag & 0x3) == 1) {// 取后2位
-				radix = 78;
-				extsize = LengthUtils.parseInt(new String(data, 8, 2), radix);
-				bodysize = LengthUtils.parseInt(new String(data, 10, 3), radix);
+		if (ver == 'B' || ver == 'b') {// 2进制版本
+			cmd = new String(data, 1, 3).trim();
+			module = new String(data, 4, 3).trim();
+			flag = 2;
+			extsize = LengthUtils.byte2Int(data[7], data[8], data[9]);
+			bodysize = LengthUtils.byte2Int(data[10], data[11], data[12], data[13]);
+			enctype = (char) data[14];
+			reserved = (byte) (data[15]);
+		} else {//
+			cmd = new String(data, 1, 3).trim();
+			module = new String(data, 4, 3).trim();
+			if (data[7] <= '9') {
+				flag = (byte) (data[7] - '0');
 			} else {
-				extsize = Integer.parseInt(new String(data, 8, 2), radix);
-				bodysize = Integer.parseInt(new String(data, 10, 3), radix);
+				flag = (byte) (data[7] - 'A' + 10);
 			}
+			if ((flag & 0x3) == 2) {// 去字节方式
+				extsize = LengthUtils.byte2Int(data[8], data[9]);
+				bodysize = LengthUtils.byte2Int(data[10], data[11], data[12]);
+			} else {
+				int radix = 16;
+				if ((flag & 0x3) == 1) {// 取后2位
+					radix = 78;
+					extsize = LengthUtils.parseInt(new String(data, 8, 2), radix);
+					bodysize = LengthUtils.parseInt(new String(data, 10, 3), radix);
+				} else {
+					extsize = Integer.parseInt(new String(data, 8, 2), radix);
+					bodysize = Integer.parseInt(new String(data, 10, 3), radix);
+				}
+			}
+			enctype = (char) data[13];
+			prio = (byte) (data[14] - '0');
+			reserved = (byte) (data[15]);
 		}
-		enctype = (char) data[13];
-		prio = (byte) (data[14] - '0');
-		reserved = (byte) (data[15] - '0');
 		return this;
 	}
 

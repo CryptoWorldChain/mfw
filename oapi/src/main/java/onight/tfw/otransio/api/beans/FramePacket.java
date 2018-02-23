@@ -72,19 +72,19 @@ public class FramePacket {
 		}
 		return extHead.append(key, value);
 	}
-	
-	public HttpServletRequest getHttpServerletRequest(){
-		Object ret =  extHead.get(PackHeader.EXT_IGNORE_HTTP_REQUEST);
-		if(ret!=null&&ret instanceof HttpServletRequest){
-			return (HttpServletRequest)ret;
+
+	public HttpServletRequest getHttpServerletRequest() {
+		Object ret = extHead.get(PackHeader.EXT_IGNORE_HTTP_REQUEST);
+		if (ret != null && ret instanceof HttpServletRequest) {
+			return (HttpServletRequest) ret;
 		}
 		return null;
 	}
-	
-	public HttpServletResponse getHttpServerletResponse(){
-		Object ret =  extHead.get(PackHeader.EXT_IGNORE_HTTP_RESPONSE);
-		if(ret!=null&&ret instanceof HttpServletResponse){
-			return (HttpServletResponse)ret;
+
+	public HttpServletResponse getHttpServerletResponse() {
+		Object ret = extHead.get(PackHeader.EXT_IGNORE_HTTP_RESPONSE);
+		if (ret != null && ret instanceof HttpServletResponse) {
+			return (HttpServletResponse) ret;
 		}
 		return null;
 	}
@@ -178,8 +178,8 @@ public class FramePacket {
 		}
 	}
 
-	public FixHeader genHeader(){
-		if(fixHead==null){
+	public FixHeader genHeader() {
+		if (fixHead == null) {
 			fixHead = new FixHeader();
 		}
 		fixHead.setBodysize(genBodyBytes().length);
@@ -187,6 +187,7 @@ public class FramePacket {
 		return fixHead;
 
 	}
+
 	public FramePacket(FixHeader fixHead, ExtHeader extHead, byte[] body, String globalCMD) {
 		super();
 		this.fixHead = fixHead;
@@ -196,4 +197,7 @@ public class FramePacket {
 		this.sio = SerializerFactory.getSerializer(fixHead.enctype);
 	}
 
+	public boolean isResp() {
+		return fixHead.isResp();
+	}
 }

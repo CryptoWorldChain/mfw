@@ -52,7 +52,7 @@ public class SessionFilter extends BaseFilter {
 						try {
 							String packfrom = vpacket.getExtStrProp(OSocketImpl.PACK_FROM);
 							log.debug("get Pack callback from :"+packfrom);
-							vpacket.putHeader(OSocketImpl.PACK_TO, packfrom);
+//							vpacket.putHeader(OSocketImpl.PACK_TO, packfrom);
 							vpacket.getExtHead().reset();
 							vpacket.getExtHead().genBytes();
 							conn.write(vpacket);

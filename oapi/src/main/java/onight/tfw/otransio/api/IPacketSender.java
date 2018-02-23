@@ -20,7 +20,9 @@ public interface IPacketSender {
 	
 	public OFuture<FramePacket> asyncSend(FramePacket fp);
 
-	
 	public void post(FramePacket fp);
+	
+	//!释放连接
+	public void tryDropConnection(String dest);
 
 }

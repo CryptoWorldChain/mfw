@@ -22,18 +22,15 @@ import com.googlecode.protobuf.format.JsonFormat;
 public class JsonPBFormat extends JsonFormat {
 
 	@Override
-	public void printField(FieldDescriptor field, Object value,
-			JsonGenerator generator) throws IOException {
+	public void printField(FieldDescriptor field, Object value, JsonGenerator generator) throws IOException {
 		printSingleField(field, value, generator);
 	}
 
 	@Override
-	protected void print(Message message, JsonGenerator generator)
-			throws IOException {
+	protected void print(Message message, JsonGenerator generator) throws IOException {
 		Map<Descriptors.FieldDescriptor, Object> mapf = message.getAllFields();
 		boolean hasprev = false;
-		for (Iterator<FieldDescriptor> it = message.getDescriptorForType()
-				.getFields().iterator(); it.hasNext();) {
+		for (Iterator<FieldDescriptor> it = message.getDescriptorForType().getFields().iterator(); it.hasNext();) {
 			FieldDescriptor fd = it.next();
 			if (mapf.get(fd) == null) {
 				if (!isNumberType(fd.getType()))
@@ -72,16 +69,13 @@ public class JsonPBFormat extends JsonFormat {
 
 	}
 
-	private void printSingleField(FieldDescriptor field, Object value,
-			JsonGenerator generator) throws IOException {
+	private void printSingleField(FieldDescriptor field, Object value, JsonGenerator generator) throws IOException {
 		if (field.isExtension()) {
 			generator.print("\"");
 			// We special-case MessageSet elements for compatibility with
 			// proto1.
-			if (field.getContainingType().getOptions()
-					.getMessageSetWireFormat()
-					&& (field.getType() == FieldDescriptor.Type.MESSAGE)
-					&& (field.isOptional())
+			if (field.getContainingType().getOptions().getMessageSetWireFormat()
+					&& (field.getType() == FieldDescriptor.Type.MESSAGE) && (field.isOptional())
 					// object equality
 					&& (field.getExtensionScope() == field.getMessageType())) {
 				generator.print(field.getMessageType().getFullName());
@@ -113,13 +107,10 @@ public class JsonPBFormat extends JsonFormat {
 			// Repeated field. Print each element.
 			if (field.isMapField()) {
 				generator.print("{");
-				for (Iterator<?> iter = ((List<?>) value).iterator(); iter
-						.hasNext();) {
+				for (Iterator<?> iter = ((List<?>) value).iterator(); iter.hasNext();) {
 					MapEntry map = (MapEntry) (iter.next());
 					generator.print("\"" + map.getKey() + "\":");
-					printFieldValue(
-							map.getDescriptorForType().getFields().get(1),
-							map.getValue(), generator);
+					printFieldValue(map.getDescriptorForType().getFields().get(1), map.getValue(), generator);
 					if (iter.hasNext()) {
 						generator.print(",");
 					}
@@ -127,8 +118,7 @@ public class JsonPBFormat extends JsonFormat {
 				generator.print("}");
 			} else {
 				generator.print("[");
-				for (Iterator<?> iter = ((List<?>) value).iterator(); iter
-						.hasNext();) {
+				for (Iterator<?> iter = ((List<?>) value).iterator(); iter.hasNext();) {
 					printFieldValue(field, iter.next(), generator);
 					if (iter.hasNext()) {
 						generator.print(",");
@@ -144,8 +134,7 @@ public class JsonPBFormat extends JsonFormat {
 		}
 	}
 
-	private void printFieldValue(FieldDescriptor field, Object value,
-			JsonGenerator generator) throws IOException {
+	private void printFieldValue(FieldDescriptor field, Object value, JsonGenerator generator) throws IOException {
 		switch (field.getType()) {
 		case INT32:
 		case INT64:
@@ -171,9 +160,20 @@ public class JsonPBFormat extends JsonFormat {
 			break;
 
 		case STRING:
-			if (field.getOptions().hasJstype()
-					&& field.getOptions().getJstype() == JSType.JS_NORMAL) {
-				generator.print((String) value);
+			if (field.getOptions().hasJstype() && field.getOptions().getJstype() == JSType.JS_NORMAL) {
+				if (value != null && value instanceof String) {
+					String v = ((String) value).trim();
+					if (v.startsWith("{") && v.endsWith("}")) {
+						generator.print((String) value);
+					}else{
+						generator.print("\"");
+						generator.print(escapeText((String) value));
+						generator.print("\"");
+
+					}
+				} else {
+					generator.print((String) value);
+				}
 			} else {
 				generator.print("\"");
 				generator.print(escapeText((String) value));
@@ -207,8 +207,7 @@ public class JsonPBFormat extends JsonFormat {
 	static String escapeText(String input) {
 		StringBuilder builder = new StringBuilder(input.length());
 		CharacterIterator iter = new StringCharacterIterator(input);
-		for (char c = iter.first(); c != CharacterIterator.DONE; c = iter
-				.next()) {
+		for (char c = iter.first(); c != CharacterIterator.DONE; c = iter.next()) {
 			switch (c) {
 			case '\b':
 				builder.append("\\b");

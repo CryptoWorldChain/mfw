@@ -1,10 +1,7 @@
 package onight.osgi.otransio.sm;
 
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.SocketAddress;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.glassfish.grizzly.CloseListener;
@@ -15,89 +12,68 @@ import org.glassfish.grizzly.ICloseType;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Futures;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import onight.osgi.otransio.ck.CKConnPool;
+import onight.osgi.otransio.impl.NodeInfo;
 import onight.osgi.otransio.impl.OSocketImpl;
 import onight.tfw.async.CompleteHandler;
+import onight.tfw.mservice.NodeHelper;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
-import onight.tfw.otransio.api.beans.LoopPackBody;
 import onight.tfw.otransio.api.beans.SendFailedBody;
-import onight.tfw.otransio.api.session.CMDService;
-import onight.tfw.otransio.api.session.ModuleSession;
-import onight.tfw.outils.pool.ReusefulLoopPool;
+import onight.tfw.otransio.api.session.PSession;
 
 @Slf4j
-public class RemoteModuleSession extends ModuleSession {
+@Data
+public class RemoteModuleSession extends PSession {
 
 	@Setter
 	@Getter
-	ReusefulLoopPool<Connection> connsPool = new ReusefulLoopPool<>();
+	CKConnPool connsPool = null;
 	MSessionSets mss;
-	String remoteNodeID;
-	String packIDKey;
-
-	private ConcurrentHashMap<String, FutureImpl<FramePacket>> packMaps = new ConcurrentHashMap<>();
-
+	NodeInfo nodeInfo;
 	AtomicLong counter = new AtomicLong(0);
 
-	final String rand = "r_"
-			+ String.format("%05d", (int) (Math.random() * 100000)) + "_";
+	final String rand = "r_" + String.format("%05d", (int) (Math.random() * 100000)) + "_";
 
 	private String genPackID() {
-		return rand + System.currentTimeMillis() + "_"
-				+ counter.incrementAndGet();
+		return rand + System.currentTimeMillis() + "_" + counter.incrementAndGet();
 	}
 
 	public String getJsonStr() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("{\"module\":\"" + module + "\"");
-		sb.append(",\"cmds\":").append("[");
-		int v = 0;
-		for (CMDService service : serviceByCMD.values()) {
-			if (v > 0)
-				sb.append(",");
-			v++;
-			for (String cmd : service.getCmds()) {
-				sb.append("\"").append(cmd).append("\"");
-			}
-
-		}
-		sb.append("]");
-		sb.append(",\"remoteid\":\"").append(remoteNodeID).append("\"");
+		sb.append("{\"remoteid\":\"").append(nodeInfo.getNodeName()).append("\"");
 		sb.append(",\"channels\":").append(connsPool.size()).append("");
 		sb.append(",\"chdetails\":[");
-		Iterator<Connection> it = connsPool.getAllObjs().iterator() ;
-		while(it.hasNext())
-		{
+		Iterator<Connection> it = connsPool.iterator();
+		while (it.hasNext()) {
 			Connection conn = it.next();
 			sb.append("{\"local\":\"").append(conn.getLocalAddress()).append("\"");
 			sb.append(",\"peer\":\"").append(conn.getPeerAddress()).append("\"");
 			sb.append("}");
-			if(it.hasNext())sb.append(",");
+			if (it.hasNext())
+				sb.append(",");
 		}
 		sb.append("]");
 		sb.append("}");
 		return sb.toString();
 	}
-	public RemoteModuleSession(String moduleid, String remoteNodeID,
-			MSessionSets mss) {
-		super(moduleid);
+
+	public RemoteModuleSession(NodeInfo nodeInfo, MSessionSets mss) {
 		this.mss = mss;
-		this.remoteNodeID = remoteNodeID;
-		packIDKey = moduleid + "." + mss.getCurrentNodeID() + ".SID";
+		this.nodeInfo = nodeInfo;
 	}
 
 	public RemoteModuleSession addConnection(Connection<?> conn) {
 		if (conn != null && connsPool.addObject(conn)) {
 			conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 				@Override
-				public void onClosed(Closeable closeable, ICloseType type)
-						throws IOException {
-					log.info("RemoteModuleSession remove Connection!:"
-							+ closeable);
+				public void onClosed(Closeable closeable, ICloseType type) throws IOException {
+					log.info("RemoteModuleSession remove Connection!:" + closeable);
 					if (closeable instanceof Connection) {
 						removeConnection((Connection) closeable);
 					}
@@ -110,43 +86,23 @@ public class RemoteModuleSession extends ModuleSession {
 	public RemoteModuleSession removeConnection(Connection<?> conn) {
 		connsPool.removeObject(conn);
 		if (connsPool.size() <= 0) {
-			log.info("Remove RemoteModule Session:" + module + ",@" + this);
-			mss.removeModule(this.module, remoteNodeID);
+			log.info("Remove RemoteModule Session:@" + this);
 		}
 		return this;
 	}
 
 	@Override
 	public void onPacket(final FramePacket pack, final CompleteHandler handler) {
-
-		FutureImpl<FramePacket> future = null;
-		String packid = null;
 		if (pack.isSync()) {
-			
-			if (pack.getExtHead().isExist(packIDKey)) {
-				// 检查是否为响应包
-				String expackid = pack.getExtStrProp(packIDKey);
-				future = packMaps.remove(expackid);
-				if (future != null) {
-					Object opackid = pack.getExtHead().remove(packIDKey);
-					Object ofrom = pack.getExtHead().remove(OSocketImpl.PACK_FROM);
-					Object oto = pack.getExtHead().remove(OSocketImpl.PACK_TO);
-					log.debug("oldfrom = "+ofrom+",oto="+oto+",opackid="+opackid);
-					future.result(pack);
-				} else {
-					log.warn("unknow ack:" + expackid + ",module="
-							+ this.getModule() + ",packid="
-							+ pack.getExtProp(packIDKey));
-					handler.onFinished(PacketHelper.toPBReturn(pack,
-							new LoopPackBody(packIDKey, pack)));
-				}
-				return;
-			}
+			FutureImpl<FramePacket> future = null;
+			String packid = null;
+			// 发送到远程
 			packid = genPackID();
 			future = Futures.createSafeFuture();
-			pack.putHeader(packIDKey, packid);
-			packMaps.put(packid, future);
-			pack.putHeader(OSocketImpl.PACK_FROM, remoteNodeID);
+			pack.putHeader(mss.packIDKey, packid);
+			pack.putHeader(OSocketImpl.PACK_FROM, "" + NodeHelper.getCurrNodeIdx());
+			pack.getExtHead().remove(OSocketImpl.PACK_TO);
+			pack.getExtHead().remove(OSocketImpl.PACK_TO_IDX);
 			future.addCompletionHandler(new CompletionHandler<FramePacket>() {
 				@Override
 				public void updated(FramePacket result) {
@@ -154,8 +110,7 @@ public class RemoteModuleSession extends ModuleSession {
 
 				@Override
 				public void failed(Throwable throwable) {
-					handler.onFinished(PacketHelper.toPBReturn(pack,
-							new SendFailedBody(packIDKey, pack)));
+					handler.onFinished(PacketHelper.toPBReturn(pack, new SendFailedBody(mss.packIDKey, pack)));
 				}
 
 				@Override
@@ -165,37 +120,36 @@ public class RemoteModuleSession extends ModuleSession {
 
 				@Override
 				public void cancelled() {
-					handler.onFinished(PacketHelper.toPBReturn(pack,
-							new SendFailedBody(packIDKey, pack)));
+					handler.onFinished(PacketHelper.toPBReturn(pack, new SendFailedBody(mss.packIDKey, pack)));
 				}
 			});
-			log.debug("sendPack:packid=" + packid + ",@nodid="
-					+ mss.currentNodeID + ",module=" + this + ",maps.size="
-					+ packMaps.size());
-		} else {
-			log.debug("postPack:=" + ",@nodid=" + mss.currentNodeID
-					+ ",module=" + this + ",maps.size=" + packMaps.size());
-		}
-		// 发送到远程
-		for (int i = 0; i < 3; i++) {
-			try {
-				Connection conn = connsPool.get();
-				if (conn != null) {
-					connsPool.get().write(pack);
-					break;
-				} else {
-					Thread.sleep(100);
-				}
+			mss.packMaps.put(packid, future);
+			log.debug("sendPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
 
+		}
+
+		try {
+			connsPool.sendMessage(pack);
+		} catch (MessageException me) {
+
+			throw me;
+		} catch (Exception e) {
+			log.error("sendMessageError:" + pack, e);
+			throw new MessageException(e);
+		}
+	}
+	
+	public void destroy(){
+		connsPool.setStop(true);
+		Iterator<Connection> it=connsPool.iterator();
+		while(it.hasNext()){
+			try {
+				it.next().close();
 			} catch (Exception e) {
-				log.error("sendMessageError:" + pack, e);
-				if (packid != null) {
-					packMaps.remove(packid);
-				}
-				throw new MessageException(e);
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
-
 	}
 
 }

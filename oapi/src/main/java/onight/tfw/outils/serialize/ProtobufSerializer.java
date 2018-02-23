@@ -23,8 +23,11 @@ class ProtobufSerializer implements ISerializer {
 		if (data != null) {
 			if (data instanceof Builder) {
 				return ((Builder) data).build().toByteArray();
+			} else if (data instanceof MessageLite)
+				return ((MessageLite) data).toByteArray();
+			else {
+				return null;
 			}
-			return ((MessageLite) data).toByteArray();
 		}
 		return null;
 	}

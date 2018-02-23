@@ -72,4 +72,9 @@ public class OTransSender extends FutureSender {
 		});
 	}
 
+	@Override
+	public void tryDropConnection(String pack_to) {
+		osock.tryDropConnection(pack_to);
+	}
+
 }

@@ -1,6 +1,7 @@
 package onight.osgi.otransio.ck;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -25,8 +26,6 @@ public class CheckHealth {
 
 	protected final Attribute<Long> lastCheckHealthMS;
 	protected final AttributeBuilder attributeBuilder = Grizzly.DEFAULT_ATTRIBUTE_BUILDER;
-
-
 
 	int delay;
 
@@ -55,11 +54,10 @@ public class CheckHealth {
 	public void addCheckHealth(final Connection conn) {
 		if (conn == null)
 			return;
-		if(lastCheckHealthMS.isSet(conn.getAttributes())){
+		if (lastCheckHealthMS.isSet(conn.getAttributes())) {
 			return;
 		}
 		lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
-		
 
 		exec.scheduleAtFixedRate(new Runnable() {
 			@Override
@@ -69,10 +67,11 @@ public class CheckHealth {
 						conn.close();
 						exec.remove(this);
 					} else {
-						if(lastCheckHealthMS.get(conn.getAttributes())-System.currentTimeMillis()>delay*1000){
-							//!!conn.write(hbpack);	
+						if (lastCheckHealthMS.get(conn.getAttributes()) - System.currentTimeMillis() > delay * 1000) {
+							// !!conn.write(hbpack);
 							lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
-							log.trace("!!CheckHealth TO:" + conn.getPeerAddress()+",From="+conn.getLocalAddress()+",pack="+hbpack.getFixHead());
+							log.trace("!!CheckHealth TO:" + conn.getPeerAddress() + ",From=" + conn.getLocalAddress()
+									+ ",pack=" + hbpack.getFixHead());
 						}
 					}
 
@@ -89,10 +88,22 @@ public class CheckHealth {
 			public void run() {
 				try {
 					if (pool.isStop()) {
+						log.debug("stop Pool:" + pool);
+						try {
+							Iterator<Connection> conn = pool.iterator();
+							while (conn.hasNext()) {
+								try {
+									conn.next().close();
+								} catch (Exception e) {
+								}
+							}
+						} catch (Throwable t) {
+
+						}
 						exec.remove(this);
 					} else {
 						for (int i = pool.size(); i < pool.getCore(); i++) {
-							Connection conn=pool.createOneConnection();
+							Connection conn = pool.createOneConnection();
 							addCheckHealth(conn);
 						}
 					}

@@ -77,15 +77,14 @@ public class ORDBDataService extends SerializedDomainDao {
 			return dao.insert(localBean(record));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
-		}catch(SQLIntegrityConstraintViolationException e){
+		} catch (SQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
-		}catch(DuplicateKeyException e){
+		} catch (DuplicateKeyException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
-			if (e.getMessage()!=null&&(e.getMessage().contains("MySQLIntegrityConstraintViolationException")||
-					e.getMessage().contains("SQLIntegrityConstraintViolationException")||
-					e.getMessage().contains("ORA-00001: unique constraint"))) {
-			throw new JPADuplicateIDException(e);
+			if (e.getMessage() != null && (e.getMessage().contains("MySQLIntegrityConstraintViolationException")
+					|| e.getMessage().contains("SQLIntegrityConstraintViolationException") || e.getMessage().contains("ORA-00001: unique constraint"))) {
+				throw new JPADuplicateIDException(e);
 			} else
 				throw new JPAException(e.getMessage());
 		}
@@ -117,14 +116,13 @@ public class ORDBDataService extends SerializedDomainDao {
 			return dao.insertSelective(localBean(record));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
-		}catch(SQLIntegrityConstraintViolationException e){
+		} catch (SQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
-		}catch(DuplicateKeyException e){
+		} catch (DuplicateKeyException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
-			if (e.getMessage()!=null&&(e.getMessage().contains("MySQLIntegrityConstraintViolationException")||
-					e.getMessage().contains("SQLIntegrityConstraintViolationException")||
-					e.getMessage().contains("ORA-00001: unique constraint"))) {
+			if (e.getMessage() != null && (e.getMessage().contains("MySQLIntegrityConstraintViolationException")
+					|| e.getMessage().contains("SQLIntegrityConstraintViolationException") || e.getMessage().contains("ORA-00001: unique constraint"))) {
 				throw new JPADuplicateIDException(e);
 			} else
 				throw new JPAException(e.getMessage());
@@ -137,14 +135,13 @@ public class ORDBDataService extends SerializedDomainDao {
 			return dao.batchInsert(localBean2List(records));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
-		}catch(SQLIntegrityConstraintViolationException e){
+		} catch (SQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
-		}catch(DuplicateKeyException e){
+		} catch (DuplicateKeyException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
-			if (e.getMessage()!=null&&(e.getMessage().contains("MySQLIntegrityConstraintViolationException")||
-					e.getMessage().contains("SQLIntegrityConstraintViolationException")||
-					e.getMessage().contains("ORA-00001: unique constraint"))) {
+			if (e.getMessage() != null && (e.getMessage().contains("MySQLIntegrityConstraintViolationException")
+					|| e.getMessage().contains("SQLIntegrityConstraintViolationException") || e.getMessage().contains("ORA-00001: unique constraint"))) {
 				throw new JPADuplicateIDException(e);
 			} else
 				throw new JPAException(e.getMessage());
@@ -152,15 +149,14 @@ public class ORDBDataService extends SerializedDomainDao {
 	}
 
 	@Override
-	public int batchUpdate(List<Object> records) {
+	public int batchUpdate(List<Object> records) {	
 		try {
 			return dao.batchUpdate(localBean2List(records));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
-			if (e.getMessage()!=null&&(e.getMessage().contains("MySQLIntegrityConstraintViolationException")||
-					e.getMessage().contains("SQLIntegrityConstraintViolationException")||
-					e.getMessage().contains("ORA-00001: unique constraint"))) {
+			if (e.getMessage() != null && (e.getMessage().contains("MySQLIntegrityConstraintViolationException")
+					|| e.getMessage().contains("SQLIntegrityConstraintViolationException") || e.getMessage().contains("ORA-00001: unique constraint"))) {
 
 				throw new JPADuplicateIDException(e);
 			} else
@@ -275,8 +271,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	}
 
 	private boolean needTransaction(String sql) {
-		if (StringUtils.containsIgnoreCase(sql, "INSERT") || StringUtils.containsIgnoreCase(sql, "UPDATE")
-				|| StringUtils.containsIgnoreCase(sql, "DELETE")) {
+		if (StringUtils.containsIgnoreCase(sql, "INSERT") || StringUtils.containsIgnoreCase(sql, "UPDATE") || StringUtils.containsIgnoreCase(sql, "DELETE")) {
 			return true;
 		}
 		return false;
@@ -316,7 +311,7 @@ public class ORDBDataService extends SerializedDomainDao {
 		JdbcTransactionObjectSupport txObject = null;
 		try {
 
-			if (txconn == null) {
+			if (txconn == null||conn==null||conn.isClosed()) {
 				DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 				def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
 				status = txManager.getTransaction(def);
@@ -352,7 +347,7 @@ public class ORDBDataService extends SerializedDomainDao {
 				}
 			}
 			if (txconn == null) {
-				ThreadContext.ensureMap().remove("__connection");
+				ThreadContext.ensureMap().remove("zp."+"__connection");
 			}
 			if (txObject != null) {
 				try {
@@ -412,14 +407,13 @@ public class ORDBDataService extends SerializedDomainDao {
 			return dao.insert(localBean(entity));
 		} catch (MySQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
-		}catch(SQLIntegrityConstraintViolationException e){
+		} catch (SQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
-		}catch(DuplicateKeyException e){
+		} catch (DuplicateKeyException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
-			if (e.getMessage()!=null&&(e.getMessage().contains("MySQLIntegrityConstraintViolationException")||
-					e.getMessage().contains("SQLIntegrityConstraintViolationException")||
-					e.getMessage().contains("ORA-00001: unique constraint"))) {
+			if (e.getMessage() != null && (e.getMessage().contains("MySQLIntegrityConstraintViolationException")
+					|| e.getMessage().contains("SQLIntegrityConstraintViolationException") || e.getMessage().contains("ORA-00001: unique constraint"))) {
 				throw new JPADuplicateIDException(e);
 			} else
 				throw new JPAException(e.getMessage());
@@ -430,8 +424,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	public Object increAnGetInt(CASCriteria<?> counterCri) throws JPAException {
 		String tablename = counterCri.getTable();
 		String colname = transNames(counterCri.getColumn());
-		String sql = "UPDATE " + tablename + " SET " + colname + "=" + colname + "+" + counterCri.getIncrements()
-				+ " WHERE " + counterCri.getWhereCause();
+		String sql = "UPDATE " + tablename + " SET " + colname + "=" + colname + "+" + counterCri.getIncrements() + " WHERE " + counterCri.getWhereCause();
 		return doBySQL(sql);
 	}
 
@@ -450,8 +443,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	public Object checkAndIncr(CASCriteria<?> counterCri) throws JPAException {
 		String tablename = "T_" + transNames(counterCri.getTable());
 		String colname = transNames(counterCri.getColumn());
-		String sql = "UPDATE " + tablename + " SET " + colname + "=" + colname + "+" + counterCri.getIncrements()
-				+ " WHERE " + counterCri.getWhereCause();
+		String sql = "UPDATE " + tablename + " SET " + colname + "=" + colname + "+" + counterCri.getIncrements() + " WHERE " + counterCri.getWhereCause();
 		return doBySQL(sql);
 	}
 
@@ -464,7 +456,8 @@ public class ORDBDataService extends SerializedDomainDao {
 		JdbcTransactionObjectSupport txObject = null;
 		try {
 
-			if (txconn == null) {
+			if (txconn == null||conn==null||conn.isClosed()) {
+				log.debug("recreate tx");
 				DefaultTransactionDefinition def = new DefaultTransactionDefinition();
 				def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
 				status = txManager.getTransaction(def);
@@ -505,7 +498,7 @@ public class ORDBDataService extends SerializedDomainDao {
 			throw new JPAException(e);
 		} finally {
 			if (txconn == null) {
-				ThreadContext.ensureMap().remove("__connection");
+				ThreadContext.ensureMap().remove("zp."+"__connection");
 			}
 			if (txObject != null) {
 				try {
@@ -529,10 +522,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public Object checkAndSet(CASCriteria<?> counterCri) throws JPAException {
 		String tablename = "T_" + transNames(counterCri.getTable());
 		String colname = transNames(counterCri.getColumn());
-		String sql = "SELECT " + colname + " FROM " + tablename + " WHERE " + counterCri.getWhereCause()
-				+ " FOR UPDATE;";
-		sql += "UPDATE " + tablename + " SET " + colname + "=" + counterCri.getIncrements() + " WHERE "
-				+ counterCri.getWhereCause();
+		String sql = "SELECT " + colname + " FROM " + tablename + " WHERE " + counterCri.getWhereCause() + " FOR UPDATE;";
+		sql += "UPDATE " + tablename + " SET " + colname + "=" + counterCri.getIncrements() + " WHERE " + counterCri.getWhereCause();
 		return doBySQL(sql);
 	}
 

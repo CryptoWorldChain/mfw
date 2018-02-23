@@ -14,6 +14,10 @@ public class ThreadContext {
 		ensureMap().put("zp."+key, object);
 	}
 
+	
+	public static void removeContext(String key) {
+		ensureMap().remove("zp."+key);
+	}
 	public static HashMap<String, Object> ensureMap() {
 		HashMap<String, Object> map = context.get();
 		if (map == null) {

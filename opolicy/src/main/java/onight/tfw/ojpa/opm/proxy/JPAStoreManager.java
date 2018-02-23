@@ -129,8 +129,7 @@ public class JPAStoreManager {
 		StoreClientSet clientset = daosByClient.get(System.identityHashCode(storeClient));
 		if (clientset == null) {
 			List<DomainDaoSupport> daos = new ArrayList<DomainDaoSupport>();
-			daosByClient.put(System.identityHashCode(storeClient),
-					new StoreClientSet(storeClient, daos, ref.getBundle()));
+			daosByClient.put(System.identityHashCode(storeClient), new StoreClientSet(storeClient, daos, ref.getBundle()));
 
 			Class clazz = storeClient.getClass();
 
@@ -141,8 +140,7 @@ public class JPAStoreManager {
 					try {
 						Method setmethod = null;
 						try {
-							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()),
-									DomainDaoSupport.class);
+							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()), DomainDaoSupport.class);
 						} catch (Exception e1) {
 							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()), OJpaDAO.class);
 						}
@@ -159,17 +157,14 @@ public class JPAStoreManager {
 						}
 
 						dao = (DomainDaoSupport) getmethod.invoke(storeClient);
-						if (dao == null) {
+//						if (dao == null) {
 
 							Class domainClazz = anno.domain();
-							if ((domainClazz == null || domainClazz == Object.class)
-									&& field.getGenericType() instanceof ParameterizedType) {
-								for (Type type : ((ParameterizedType) field.getGenericType())
-										.getActualTypeArguments()) {
+							if ((domainClazz == null || domainClazz == Object.class) && field.getGenericType() instanceof ParameterizedType) {
+								for (Type type : ((ParameterizedType) field.getGenericType()).getActualTypeArguments()) {
 									if (type instanceof Class) {
 										domainClazz = (Class) type;
-										log.debug("get JPADAOType==" + domainClazz + ",type=" + type + ",typeclass="
-												+ type.getClass());
+										log.debug("get JPADAOType==" + domainClazz + ",type=" + type + ",typeclass=" + type.getClass());
 									}
 								}
 							}
@@ -189,9 +184,8 @@ public class JPAStoreManager {
 							}
 							ss = new ServiceSpec(target);
 
-							dao = (DomainDaoSupport) anno.daoClass()
-									.getConstructor(ServiceSpec.class, Class.class, Class.class, Class.class)
-									.newInstance(ss, domainClazz, anno.example(), anno.keyclass());
+							dao = (DomainDaoSupport) anno.daoClass().getConstructor(ServiceSpec.class, Class.class, Class.class, Class.class).newInstance(ss, domainClazz,
+									anno.example(), anno.keyclass());
 							setmethod.invoke(storeClient, dao);
 							if (dao instanceof OJpaDAO) {
 								OJpaDAO ojdao = (OJpaDAO) dao;
@@ -201,8 +195,7 @@ public class JPAStoreManager {
 									List<Method> keyMethods = new ArrayList<Method>();
 									for (String keyf : anno.key().split(",")) {
 										try {
-											keyMethods.add(
-													domainClazz.getMethod("get" + StringUtils.capitalize(keyf.trim())));
+											keyMethods.add(domainClazz.getMethod("get" + StringUtils.capitalize(keyf.trim())));
 										} catch (Exception e) {
 											log.warn("key get method not found:" + clazz + ",field=" + field.getName());
 										}
@@ -210,7 +203,7 @@ public class JPAStoreManager {
 									ojdao.setKeyMethods(keyMethods);
 								}
 							}
-						}
+//						}
 						daos.add(dao);
 					} catch (Exception e) {
 						log.debug("wair dao error:", e);
@@ -239,24 +232,24 @@ public class JPAStoreManager {
 				if (ssp != null) {
 					dds = ssp.getDaoByBeanName(dao);
 				}
+			} else {//
+				ssp = storeServices.get(target);
+				if (ssp != null) {
+					dds = ssp.getDaoByBeanName(dao);
+				}
 			}
-			if (ssp == null || dds == null) {
+			if (ssp == null || dds == null) {// 动态配置取默认值
 				String default_target = prop.get("org.zippo.store.default_target", "orcl");
 				ssp = storeServices.get(default_target);
 				if (ssp != null) {
 					dds = ssp.getDaoByBeanName(dao);
-				} else {
-					ssp = storeServices.get(target);
-					if (ssp != null) {
-						dds = ssp.getDaoByBeanName(dao);
-					}
 				}
 			}
 
 			if (ssp == null) {
 				// dds = new NoneDomainDao();
 				AlldaoReady = false;
-				log.debug("nonDomainDao.DAO NOT READY " + clientid + ":" + dds+",AlldaoReady="+AlldaoReady);
+				log.debug("nonDomainDao.DAO NOT READY " + clientid + ":" + dds + ",AlldaoReady=" + AlldaoReady);
 				dao.setDaosupport(new NoneDomainDao());
 			} else {
 				log.debug("RegisterDAO:" + dao.getDomainName() + "]@" + clientid + ":" + dds);

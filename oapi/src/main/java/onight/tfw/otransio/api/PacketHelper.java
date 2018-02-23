@@ -37,6 +37,7 @@ public class PacketHelper {
 		ret.setFbody(body);
 		ret.setExtHead(fp.getExtHead());
 		ret.setFixHead(fp.getFixHead());
+		ret.getFixHead().setResp(true);
 		ret.getFixHead().reset();
 		// ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
 		return ret;
@@ -47,6 +48,7 @@ public class PacketHelper {
 		ret.setFbody(new ExceptionBody(errorCode, errorMessage));
 		ret.setExtHead(fp.getExtHead());
 		ret.setFixHead(fp.getFixHead());
+		ret.getFixHead().setResp(true);
 		ret.getFixHead().reset();
 		// ret.getFixHead().setEnctype(SerializerFactory.SERIALIZER_PROTOBUF);
 		return ret;
@@ -100,8 +102,9 @@ public class PacketHelper {
 	}
 
 	public static FramePacket buildHeaderFromHttpPost(HttpServletRequest req) throws IOException {
-		//if (StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))
-//			return null;
+		// if
+		// (StringUtils.isBlank(req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD)))
+		// return null;
 		FramePacket ret = (FramePacket) req.getAttribute("__framepack");
 		if (ret != null) {
 			return ret;
@@ -285,8 +288,9 @@ public class PacketHelper {
 			ExtHeader eh = null;
 			if (dataNode.get("eh") != null) {
 				eh = new ExtHeader();
-				Map<String, Object> map = (mapper.<HashMap<String, Object>>readValue(dataNode.get("eh"), new TypeReference<HashMap<String, Object>>() {
-				}));
+				Map<String, Object> map = (mapper.<HashMap<String, Object>>readValue(dataNode.get("eh"),
+						new TypeReference<HashMap<String, Object>>() {
+						}));
 				for (Entry<String, Object> entry : map.entrySet()) {
 					eh.append(entry.getKey(), entry.getValue());
 				}

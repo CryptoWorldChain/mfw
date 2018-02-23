@@ -1,6 +1,7 @@
 package onight.tfw.outils.pool;
 
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -9,15 +10,19 @@ import lombok.Getter;
 public class ReusefulLoopPool<T> {
 
 	@Getter
-	ConcurrentLinkedQueue<T> allObjs = new ConcurrentLinkedQueue<>();
+	ConcurrentHashMap<T, T> allObjs = new ConcurrentHashMap<>();
+
+	@Getter
+	ConcurrentLinkedQueue<T> activeObjs = new ConcurrentLinkedQueue<>();
 
 	ReentrantReadWriteLock rwlock = new ReentrantReadWriteLock();
 
 	public boolean addObject(T t) {
 		rwlock.writeLock().lock();
 		try {
-			if (!allObjs.contains(t)) {
-				allObjs.add(t);
+			if (!allObjs.containsKey(t)) {
+				allObjs.put(t, t);
+				activeObjs.offer(t);
 				return true;
 			}
 		} finally {
@@ -29,26 +34,37 @@ public class ReusefulLoopPool<T> {
 	public boolean removeObject(T t) {
 		rwlock.writeLock().lock();
 		try {
-		return	allObjs.remove(t);
+			allObjs.remove(t);
+			return activeObjs.remove(t);
 		} finally {
 			rwlock.writeLock().unlock();
 		}
 	}
-	
-	public Iterator<T> iterator(){
-		return allObjs.iterator();
+
+	public Iterator<T> iterator() {
+		return allObjs.values().iterator();
 	}
 
-	public T get() {
+	public T borrow() {
 		rwlock.writeLock().lock();
 		try {
-			T t = allObjs.poll();
+			T t = activeObjs.poll();
 			return t;
 		} finally {
 			rwlock.writeLock().unlock();
 		}
 	}
-	public int size(){
+
+	public void retobj(T t) {
+		rwlock.writeLock().lock();
+		try {
+			activeObjs.offer(t);
+		} finally {
+			rwlock.writeLock().unlock();
+		}
+	}
+
+	public int size() {
 		return allObjs.size();
 	}
 

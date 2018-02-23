@@ -18,6 +18,13 @@ public class PackHeader {
 	public final static String FORWORD_URL = "_url";
 	public final static String FORWORD_METHOD = "_method";
 	
+	public static String PACK_FROM = PackHeader.EXT_HIDDEN + "_" + "from";
+	public static String PACK_TO = PackHeader.EXT_HIDDEN + "_" + "to";
+	public static String PACK_FROM_IDXX = PackHeader.EXT_HIDDEN + "_" + "from.idx";
+	public static String PACK_TO_IDX = PackHeader.EXT_HIDDEN + "_" + "to.idxx";
+	public static String PACK_URI = PackHeader.EXT_HIDDEN + "_" + "uri";
+
+	
 	// public final static String ENC = "enc";
 	// public final static String CMD = "cmd";
 	// public final static String FROM = "from";
@@ -31,10 +38,10 @@ public class PackHeader {
 	// public final static String SUBCMD = "subcmd";
 
 	public final static String TO = "to";
-	public final static String CMD_HB = "HBL";
+	public final static String CMD_HB = "HBL***";
 
-	public final static String REMOTE_LOGIN = "RLG";
-	public final static String REMOTE_LOGIN_RET = "BLG";
+	public final static String REMOTE_LOGIN = "RLG***";
+	public final static String REMOTE_LOGIN_RET = "BLG***";
 	public final static String REMOTE_MODULE = "***";
 
 	public final static String IQ = "iq";

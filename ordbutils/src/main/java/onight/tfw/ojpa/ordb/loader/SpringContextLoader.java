@@ -235,7 +235,9 @@ public class SpringContextLoader {
 		ds.setMaxIdleTime(propHelper.get("ofw.ordb.maxidletime", 1800));
 		ds.setMaxStatements(propHelper.get("ofw.ordb.maxstatements", 0));
 		ds.setMaxStatementsPerConnection(propHelper.get("ofw.ordb.maxstatementsperconn", 0));
-
+		ds.setPreferredTestQuery("SELECT 1");
+		ds.setTestConnectionOnCheckout(true);
+		ds.setIdleConnectionTestPeriod(propHelper.get("ofw.ordb.idletest", 60));
 		try {
 			ds.setDriverClass(propHelper.get("ofw.ordb.driver", "com.mysql.jdbc.Driver"));
 		} catch (PropertyVetoException e) {

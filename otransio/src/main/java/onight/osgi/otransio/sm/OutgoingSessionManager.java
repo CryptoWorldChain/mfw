@@ -1,9 +1,8 @@
 package onight.osgi.otransio.sm;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
-import java.util.HashSet;
-
-import org.apache.commons.lang3.StringUtils;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -12,12 +11,11 @@ import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.ck.CheckHealth;
 import onight.osgi.otransio.ck.NodeConnectionPool;
 import onight.osgi.otransio.exception.NoneServerException;
+import onight.osgi.otransio.impl.NodeInfo;
 import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.nio.OClient;
 import onight.tfw.mservice.NodeHelper;
-import onight.tfw.otransio.api.session.ModuleSession;
 import onight.tfw.outils.conf.PropHelper;
-import onight.tfw.outils.conf.PropHelper.IFinder;
 
 @Slf4j
 public class OutgoingSessionManager {
@@ -33,12 +31,12 @@ public class OutgoingSessionManager {
 	@Setter
 	boolean ready;
 	@Getter
-	NodeConnectionPool nodePool;
+	NodeConnectionPool nodePool = new NodeConnectionPool();
 
 	public String getJsonInfo() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{\"cur\":{");
-		sb.append("\"nodeid\":\"").append(mss.currentNodeID).append("\"");
+		sb.append("\"nodeidx\":\"").append(NodeHelper.getCurrNodeIdx()).append("\"");
 		sb.append(",\"inaddr\":\"").append(NodeHelper.getCurrNodeListenInAddr()).append("\"");
 		sb.append(",\"inport\":\"").append(NodeHelper.getCurrNodeListenInPort()).append("\"");
 		sb.append(",\"outaddr\":\"").append(NodeHelper.getCurrNodeListenOutAddr()).append("\"");
@@ -57,29 +55,7 @@ public class OutgoingSessionManager {
 		ck = new CheckHealth(params.get("otrans.checkhealth.size", 2), params.get("otrans.checkhealth.delay", 30));
 	}
 
-	public synchronized void initNetPool() {
-		nodePool = new NodeConnectionPool();
-		final HashSet<String> nodeNames = new HashSet<String>();
-		params.findMatch("otrans.servers.node.*", new IFinder() {
-			@Override
-			public void onMatch(String key, String v) {
-				nodeNames.add(key.substring("otrans.servers.node.".length()).split("\\.")[0]);
-			}
-		});
-
-		for (String key : nodeNames) {
-			String node = key;
-			key = "otrans.servers.node." + key;
-			String address = params.get(key + ".addr", "127.0.0.1");
-			int port = params.get(key + ".port", params.get("otrans.servers.default.port", 5100));
-			int core = params.get(key + ".core", params.get("otrans.servers.default.core", 2));
-			int max = params.get(key + ".max", params.get("otrans.servers.default.max", 10));
-			nodePool.addPool(client, node, address, port, core, max, mss);
-		}
-
-	}
-
-	public synchronized void rmNetPool(String nodeID, String addrport) {
+	public synchronized void rmNetPool(Integer nodeID, String addrport) {
 		CKConnPool pool = nodePool.getPool(nodeID);// unknow modules
 		if (pool != null) {
 			pool.setStop(true);
@@ -87,79 +63,62 @@ public class OutgoingSessionManager {
 
 	}
 
-	public synchronized void addNetPool(String nodeID, String addrport, int coreconn, int maxconn) {
+	public synchronized CKConnPool addNetPool(int nodeIdx, String addrport, int coreconn, int maxconn)
+			throws NoneServerException {
 		if (addrport == null)
-			return;
+			throw new NoneServerException("addrPort is null");
 		String addrports[] = addrport.split(":");
 		if (addrports.length != 2)
-			return;
-		if (StringUtils.equalsIgnoreCase(nodeID, NodeHelper.getCurrNodeID())) {
+			throw new NoneServerException("addrports format error try 'host:port' :" + addrport);
+		if (nodeIdx == NodeHelper.getCurrNodeIdx()) {
 			log.trace("same node ,not need to add net pool");
-			return;
+			return null;
 		}
 
 		try {
 			String addr = addrports[0].trim();
 			int port = Integer.parseInt(addrports[1].trim());
-			String key = "otrans.servers.node." + nodeID;
+			String key = "otrans.servers.node." + nodeIdx;
 			int core = coreconn;
 			if (core == 0) {
-				core=params.get(key + ".core", params.get("otrans.servers.default.core", 1));
+				core = params.get(key + ".core", params.get("otrans.servers.default.core", 1));
 			}
 			int max = maxconn;
 			if (max == 0) {
 				max = params.get(key + ".max", params.get("otrans.servers.default.max", 3));
 			}
-			CKConnPool pool = nodePool.getPool(nodeID);// unknow modules
+			CKConnPool pool = nodePool.getPool(nodeIdx);// unknow modules
 			if (pool == null) {
-				pool = nodePool.addPool(client, nodeID, addr, port, core, max, mss);
+				pool = nodePool.addPool(client, nodeIdx, addr, port, core, max, mss);
 				ck.addCheckHealth(pool);
 			}
-
+			return pool;
 		} catch (Exception e) {
+			throw new NoneServerException("add net pool error :" + e.getMessage(), e);
 		}
 
 	}
 
 	public synchronized void init() {
 
-		initNetPool();
-
-		final HashSet<String> mmidNames = new HashSet<String>();
-
-		params.findMatch("otrans.servers.mmid.*", new IFinder() {
-			@Override
-			public void onMatch(String key, String v) {
-				String module = key.substring("otrans.servers.mmid.".length()).split("\\.")[0];
-				mmidNames.add(module);
-			}
-		});
-		// String mmids = params.get("otrans.servers.mmids", "");
-		log.info("otrans.servers.mmids=" + mmidNames);
-		for (String mmid : mmidNames) {
-			try {
-				createOutgoingSS(mmid);
-			} catch (NoneServerException e) {
-				log.warn("error in creating servers:" + mmid);
-			}
-		}
 		this.ready = true;
 	}
 
-	public void createOutgoingSS(String module) throws NoneServerException {
-		String nodeIDs = params.get("otrans.servers.mmid." + module + ".nodes", "");
-		for (String nodeID : nodeIDs.split(",")) {
-			ModuleSession ms = mss.byModuleAndNodeID(module, nodeID);
-			OutgoingModuleSession rms = new OutgoingModuleSession(module, nodeID, mss);
-			if (ms != null) {
-				log.warn("Override Existing Remote Module:module=" + module + ",nodeid=" + nodeID + ",ms=" + ms);
-			}
-			mss.addOutogingModule(rms, nodeID);
-			CKConnPool ckpool = nodePool.getPool(nodeID);
-			rms.setConnsPool(ckpool);
-			ck.addCheckHealth(ckpool);
-		}
+	public RemoteModuleSession createOutgoingSSByURI(NodeInfo node) throws NoneServerException {
+		CKConnPool pool = addNetPool(node.getNodeIdx(), node.getAddr() + ":" + node.getPort(), 0, 0);
+		return createOutgoingSS(node, pool);
+	}
 
+	public synchronized RemoteModuleSession createOutgoingSS(NodeInfo node, CKConnPool ckpool)
+			throws NoneServerException {
+		RemoteModuleSession ms = mss.byNodeIdx(node.getNodeIdx());
+		if (ms != null) {
+			log.warn("Override Existing Remote nodeIdx=" + node.getNodeIdx() + ",ms=" + ms);
+		}
+		RemoteModuleSession rms = mss.addRemoteSession(node, null);
+		rms.setConnsPool(ckpool);
+		ck.addCheckHealth(ckpool);
+		return rms;
 	}
 
 	public void wallLocalModule() {
@@ -186,13 +145,6 @@ public class OutgoingSessionManager {
 			log.warn("getParamV NumberFormatError for Key=" + key + ",defaultv=" + defaultv + ",maps=" + map, e);
 		}
 		return defaultv;
-	}
-
-	public static void main(String[] args) {
-		String m = "otrans.servers.node.*";
-		String key = "otrans.servers.node.n1.addr";
-		System.out.println("match=" + key.matches(m));
-
 	}
 
 }

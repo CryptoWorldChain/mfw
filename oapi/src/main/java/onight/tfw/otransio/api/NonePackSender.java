@@ -26,4 +26,9 @@ public class NonePackSender implements IPacketSender {
 		throw new MessageException("No Sender Found");
 	}
 
+	@Override
+	public void tryDropConnection(String dest) {
+		throw new MessageException("No Sender Found");
+	}
+
 }

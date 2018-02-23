@@ -12,6 +12,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,8 +47,7 @@ public class TransBeanSerializer implements ISerializer {
 		Field field;
 	}
 
-	public static class BeanMap<K, V> extends HashMap<K, V> implements
-			Externalizable {
+	public static class BeanMap<K, V> extends HashMap<K, V> implements Externalizable {
 		private static final long serialVersionUID = -2226652610945990798L;
 
 		@Override
@@ -66,8 +66,7 @@ public class TransBeanSerializer implements ISerializer {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public void readExternal(ObjectInput in) throws IOException,
-				ClassNotFoundException {
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 			int cc = in.readInt();
 			for (int i = 0; i < cc; i++) {
 				K key = (K) in.readObject();
@@ -94,8 +93,7 @@ public class TransBeanSerializer implements ISerializer {
 			return null;
 		Class clazz = data.getClass();
 		if (depth++ >= maxdeep) {
-			log.warn("bean对象层次过深，存在循环依赖，序列化抛弃属性：depth=" + (depth - 1)
-					+ "@class=" + clazz);
+			log.warn("bean对象层次过深，存在循环依赖，序列化抛弃属性：depth=" + (depth - 1) + "@class=" + clazz);
 			return null;
 		}
 		if (clazz.getClassLoader() == null || data instanceof BeanMap)
@@ -110,10 +108,8 @@ public class TransBeanSerializer implements ISerializer {
 						mb.put(bp.fieldName, value);
 					} else if (value instanceof Map) {// 是一个map
 						Map<Object, Object> map = new HashMap<Object, Object>();
-						for (Entry<Object, Object> kv : ((Map<Object, Object>) value)
-								.entrySet()) {
-							map.put(kv.getKey(),
-									_serialize(kv.getValue(), depth));
+						for (Entry<Object, Object> kv : ((Map<Object, Object>) value).entrySet()) {
+							map.put(kv.getKey(), _serialize(kv.getValue(), depth));
 						}
 						mb.put(bp.fieldName, map);
 					} else if (value instanceof List) {// list属性的处理
@@ -144,83 +140,95 @@ public class TransBeanSerializer implements ISerializer {
 		if (object == null)
 			return null;
 		if (depth++ >= maxdeep) {
-			log.warn("bean对象层次过深，存在循环依赖，反序列化抛弃属性：depth=" + (depth - 1)
-					+ "@class=" + clazz);
+			log.warn("bean对象层次过深，存在循环依赖，反序列化抛弃属性：depth=" + (depth - 1) + "@class=" + clazz);
 			return null;
 		}
 		if (isBaseType(clazz))
 			return (T) object;
 		if (clazz.getClassLoader() == null)
 			return (T) object;
-		if (!(object instanceof BeanMap)) {
+		if (!(object instanceof BeanMap) && !(object instanceof Map)) {
 			return (T) object;
 		}
-
 		T t = null;
 		try {
 			t = clazz.newInstance();
-			BeanMap<String, Object> mb = (BeanMap<String, Object>) object;
+			Map<String, Object> mb = (Map<String, Object>) object;
 			List<BeanProp> getsetMethods = extractMethods(clazz);
 			for (BeanProp bp : getsetMethods) {
-				if (!mb.containsKey(bp.fieldName)) {
-					continue;// no override
-				}
-				Object v = mb.get(bp.fieldName);
-				if (bp.isBasicType || v == null) {
-					bp.setM.invoke(t, v);
-				} else if (v instanceof List) {
-					List orginallist = (List) v;
-					if(orginallist.size()==0){
-						bp.setM.invoke(t, v);
+				Object v = null;
+				try {
+					if (!mb.containsKey(bp.fieldName)) {
+						continue;// no override
 					}
-					else if (isBaseType(orginallist.get(0).getClass())) {
-						bp.setM.invoke(t, v);
-					} else {
-
-						Type type = ((ParameterizedType) bp.field
-								.getGenericType()).getActualTypeArguments()[0];
-						// bp.setM.invoke(t, deserializeArray(v, (Class) type));
-						// Type type = ((ParameterizedType)
-						// field.getGenericType()).getActualTypeArguments()[0];
-						if (type == Map.class) {// 如果属性是List<Map>
-							bp.setM.invoke(t, v);
-						} else {// 如果属性是List<特定对象>
-							List list2 = new ArrayList<>();
-							Class transclazz = clazz;
-							if (type instanceof Class) {
-								transclazz = (Class) type;
-							} else {
-								Type tType = ((ParameterizedType) clazz
-										.getGenericSuperclass())
-										.getActualTypeArguments()[0];
-								transclazz = (Class) tType;
+					v = mb.get(bp.fieldName);
+					if (bp.isBasicType || v == null) {
+						if (v != null && v instanceof String) {
+							if (bp.fieldType == java.util.Date.class || bp.fieldType == java.sql.Date.class) {
+								try {
+									v = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse((String) v);
+								} catch (Exception e) {
+									try {
+										v = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse((String) v);
+									} catch (Exception e1) {
+										v = new SimpleDateFormat("yyyy-MM-dd").parse((String) v);
+									}
+								}
+							} else if (bp.fieldType == BigDecimal.class) {
+								v = BigDecimal.valueOf(Double.parseDouble((String) v));
+							} else if (bp.fieldType == java.sql.Timestamp.class) {
+								v = java.sql.Timestamp.valueOf((String) v);
 							}
-
-							for (Object obj : orginallist) {
-								Map<String, Object> map = (Map<String, Object>) obj;
-								list2.add(deserialize(map, (Class) transclazz));
-							}
-							bp.setM.invoke(t, list2);
+						} else if (v != null && bp.fieldType == BigDecimal.class && (v instanceof Double || v instanceof Integer || v instanceof Float)) {
+							v = BigDecimal.valueOf((double)v);
 						}
-					}
+						bp.setM.invoke(t, v);
+					} else if (v instanceof List) {
+						List orginallist = (List) v;
+						if (orginallist.size() == 0) {
+							bp.setM.invoke(t, v);
+						} else if (isBaseType(orginallist.get(0).getClass())) {
+							bp.setM.invoke(t, v);
+						} else {
+							Type type = ((ParameterizedType) bp.field.getGenericType()).getActualTypeArguments()[0];
+							// bp.setM.invoke(t, deserializeArray(v, (Class)
+							// type));
+							// Type type = ((ParameterizedType)
+							// field.getGenericType()).getActualTypeArguments()[0];
+							if (type == Map.class) {// 如果属性是List<Map>
+								bp.setM.invoke(t, v);
+							} else {// 如果属性是List<特定对象>
+								List list2 = new ArrayList<>();
+								Class transclazz = clazz;
+								if (type instanceof Class) {
+									transclazz = (Class) type;
+								} else {
+									Type tType = ((ParameterizedType) clazz.getGenericSuperclass()).getActualTypeArguments()[0];
+									transclazz = (Class) tType;
+								}
 
-				} else if (v instanceof BeanMap) {
-					bp.setM.invoke(t,
-							_deserialize(v, (Class) bp.fieldType, depth));
-				} else if (v instanceof HashMap) {
-					Type types[] = ((ParameterizedType) bp.field
-							.getGenericType()).getActualTypeArguments();
-					HashMap<Object, Object> newhash = new HashMap<Object, Object>();
-					for (Entry<Object, Object> entry : ((HashMap<Object, Object>) v)
-							.entrySet()) {
-						newhash.put(
-								deserialize(entry.getKey(), (Class) types[0]),
-								_deserialize(entry.getValue(),
-										(Class) types[1], depth));
+								for (Object obj : orginallist) {
+									Map<String, Object> map = (Map<String, Object>) obj;
+									list2.add(deserialize(map, (Class) transclazz));
+								}
+								bp.setM.invoke(t, list2);
+							}
+						}
+
+					} else if (v instanceof BeanMap) {
+						bp.setM.invoke(t, _deserialize(v, (Class) bp.fieldType, depth));
+					} else if (v instanceof HashMap) {
+						Type types[] = ((ParameterizedType) bp.field.getGenericType()).getActualTypeArguments();
+						HashMap<Object, Object> newhash = new HashMap<Object, Object>();
+						for (Entry<Object, Object> entry : ((HashMap<Object, Object>) v).entrySet()) {
+							newhash.put(deserialize(entry.getKey(), (Class) types[0]), _deserialize(entry.getValue(), (Class) types[1], depth));
+						}
+						bp.setM.invoke(t, newhash);
+					} else {
+						bp.setM.invoke(t, _serialize(v, depth));
 					}
-					bp.setM.invoke(t, newhash);
-				} else {
-					bp.setM.invoke(t, _serialize(v, depth));
+				} catch (Exception e) {
+					log.warn("将数据[" + v + "]@ " + bp.fieldName + "反序列化失败", e);
 				}
 			}
 		} catch (Exception e) {
@@ -246,9 +254,9 @@ public class TransBeanSerializer implements ISerializer {
 	@Override
 	public <T> List<T> deserializeArray(Object obj, Class<T> clazz) {
 		if (obj != null) {
-			List<BeanMap<String, Object>> maps = (List<BeanMap<String, Object>>) obj;
+			List<Map<String, Object>> maps = (List<Map<String, Object>>) obj;
 			List<T> list = new ArrayList<>();
-			for (BeanMap<String, Object> mb : maps) {
+			for (Map<String, Object> mb : maps) {
 				list.add((T) deserialize(mb, clazz));
 			}
 			return list;
@@ -261,8 +269,7 @@ public class TransBeanSerializer implements ISerializer {
 	public static List<BeanProp> extractMethods(Class<?> clazz) {
 		List<BeanProp> props = class2BPs.get(clazz);
 		if (props == null && clazz.getClassLoader() != null) {
-			String uniqueName = clazz.getClassLoader().getClass().getName()
-					+ clazz.getName();
+			String uniqueName = clazz.getClassLoader().getClass().getName() + clazz.getName();
 			synchronized (uniqueName.intern()) {
 				props = class2BPs.get(clazz);
 				if (props == null) {
@@ -274,13 +281,9 @@ public class TransBeanSerializer implements ISerializer {
 						PropertyDescriptor pd;
 						try {
 							pd = new PropertyDescriptor(field.getName(), clazz);
-							props.add(new BeanProp(field.getName(), pd
-									.getReadMethod(), pd.getWriteMethod(), pd
-									.getPropertyType(), isBaseType(pd
-									.getPropertyType()), field));
+							props.add(new BeanProp(field.getName(), pd.getReadMethod(), pd.getWriteMethod(), pd.getPropertyType(), isBaseType(pd.getPropertyType()), field));
 						} catch (IntrospectionException e) {
-							log.warn("cannot init BeanProp:for class=" + clazz
-									+ ",field=" + field.getName());
+							log.warn("cannot init BeanProp:for class=" + clazz + ",field=" + field.getName());
 						}
 					}
 					class2BPs.put(clazz, props);
@@ -307,14 +310,9 @@ public class TransBeanSerializer implements ISerializer {
 	}
 
 	public static boolean isBaseType(Class<?> clazz) {
-		if (clazz == String.class || clazz == Integer.class
-				|| clazz == Double.class || clazz == Short.class
-				|| clazz == Byte.class || clazz == Float.class
-				|| clazz == Boolean.class || clazz == Character.class
-				|| clazz == Long.class || clazz.isPrimitive()
-				|| clazz == BigDecimal.class || clazz == java.util.Date.class
-				|| clazz == java.sql.Date.class
-				|| clazz == java.sql.Timestamp.class) {
+		if (clazz == String.class || clazz == Integer.class || clazz == Double.class || clazz == Short.class || clazz == Byte.class || clazz == Float.class
+				|| clazz == Boolean.class || clazz == Character.class || clazz == Long.class || clazz.isPrimitive() || clazz == BigDecimal.class || clazz == java.util.Date.class
+				|| clazz == java.sql.Date.class || clazz == java.sql.Timestamp.class) {
 			return true;
 		}
 		return false;

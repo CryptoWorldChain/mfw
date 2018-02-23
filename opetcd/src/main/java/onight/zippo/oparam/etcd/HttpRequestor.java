@@ -115,8 +115,7 @@ public class HttpRequestor {
 		lock.readLock().lock();
 		try {
 			address = format(address);
-			log.debug("httppost:" + urlbase + address + ",data=" + xml);
-
+			log.debug("httpput:" + urlbase + address + ",data=" + xml);
 			httpclient.getParams().setParameter(SO_TIMEOUT, defaultHttpTimeoutMillis);
 			StringEntity entity = new StringEntity("value=" + xml, "UTF-8");
 			HttpPut httppost = new HttpPut(urlbase + address);

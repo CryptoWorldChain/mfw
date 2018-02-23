@@ -26,14 +26,14 @@ public class SenderPolicy {
 						Method wm = pd.getWriteMethod();
 						wm.invoke(senderClient, sender);
 					} catch (IntrospectionException e) {
-						log.warn("cannot init bindPSender class=" + clazz + ",field=" + field.getName(),e);
+						log.warn("cannot init bindPSender class=" + clazz + ",field=" + field.getName(), e);
 					}
 				} catch (Exception e) {
 				}
 			}
 		}
 	}
-	
+
 	public static void unBindPSender(PSenderService senderClient) {
 		Class clazz = senderClient.getClass();
 		for (Field field : clazz.getDeclaredFields()) {
@@ -46,12 +46,12 @@ public class SenderPolicy {
 						Method wm = pd.getWriteMethod();
 						wm.invoke(senderClient, new NonePackSender());
 					} catch (IntrospectionException e) {
-						log.warn("cannot init bindPSender class=" + clazz + ",field=" + field.getName(),e);
+						log.warn("cannot init bindPSender class=" + clazz + ",field=" + field.getName(), e);
 					}
 				} catch (Exception e) {
 				}
 			}
 		}
 	}
-	
+
 }
