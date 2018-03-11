@@ -1,0 +1,15 @@
+
+version = '3.3.0'
+project.group='org.fc.zippo.oparam'
+
+dependencies {
+	
+	includeInJar "com.sleepycat:je:5.0.73"
+	
+}
+
+jar {
+	manifest{
+		attributes( 'Import-Ignore':'com.sleepycat')
+	}
+}

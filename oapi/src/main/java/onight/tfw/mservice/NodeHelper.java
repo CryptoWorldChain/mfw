@@ -45,6 +45,21 @@ public class NodeHelper {
 		currentidx = newid;
 	}
 
+	public synchronized static int resetNodeIdx() {
+		currentidx = (int) (Math.random() * 100000 % getPropInstance().get("otrans.node.max_nodes", 256));
+		return currentidx;
+	}
+
+//	public static String getCurrNodeID() {
+//		return String.valueOf(getCurrNodeIdx());
+//	}
+	public static String getCurrNodeID() {
+		String def = getPropInstance().get("otrans.node.id",
+				getCurrNodeListenOutAddr() + "." + getCurrNodeListenOutPort());
+		String envid = System.getProperty("otrans.node.id", def);
+		return envInEnv(envid);
+	}
+
 	public synchronized static int getCurrNodeIdx() {
 		if (currentidx == -1) {
 			currentidx = (int) (Math.random() * 100000 % getPropInstance().get("otrans.node.max_nodes", 256));

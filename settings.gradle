@@ -8,6 +8,8 @@ include 'ordbutils'
 include 'rmqimpl'
 include 'redisimpl'
 //include 'cassimpl'
+
+include 'oparam:bdbimpl'
 include 'otransio'
 include 'glock'
 
