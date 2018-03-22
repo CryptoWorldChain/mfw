@@ -15,6 +15,7 @@ import onight.osgi.otransio.impl.NodeInfo;
 import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.nio.OClient;
 import onight.tfw.mservice.NodeHelper;
+import onight.tfw.otransio.api.session.PSession;
 import onight.tfw.outils.conf.PropHelper;
 
 @Slf4j
@@ -36,7 +37,7 @@ public class OutgoingSessionManager {
 	public String getJsonInfo() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{\"cur\":{");
-		sb.append("\"nodeidx\":\"").append(NodeHelper.getCurrNodeIdx()).append("\"");
+		sb.append("\"nodename\":\"").append(NodeHelper.getCurrNodeName()).append("\"");
 		sb.append(",\"inaddr\":\"").append(NodeHelper.getCurrNodeListenInAddr()).append("\"");
 		sb.append(",\"inport\":\"").append(NodeHelper.getCurrNodeListenInPort()).append("\"");
 		sb.append(",\"outaddr\":\"").append(NodeHelper.getCurrNodeListenOutAddr()).append("\"");
@@ -55,30 +56,26 @@ public class OutgoingSessionManager {
 		ck = new CheckHealth(params.get("otrans.checkhealth.size", 2), params.get("otrans.checkhealth.delay", 30));
 	}
 
-	public synchronized void rmNetPool(Integer nodeID, String addrport) {
-		CKConnPool pool = nodePool.getPool(nodeID);// unknow modules
+	public synchronized void rmNetPool(String nodeName, String addrport) {
+		CKConnPool pool = nodePool.getPool(nodeName);// unknow modules
 		if (pool != null) {
 			pool.setStop(true);
 		}
 
 	}
 
-	public synchronized CKConnPool addNetPool(int nodeIdx, String addrport, int coreconn, int maxconn)
+	public synchronized CKConnPool addNetPool(String nodeName, String addrport, int coreconn, int maxconn)
 			throws NoneServerException {
 		if (addrport == null)
 			throw new NoneServerException("addrPort is null");
 		String addrports[] = addrport.split(":");
 		if (addrports.length != 2)
 			throw new NoneServerException("addrports format error try 'host:port' :" + addrport);
-		if (nodeIdx == NodeHelper.getCurrNodeIdx()) {
-			log.trace("same node ,not need to add net pool");
-			return null;
-		}
 
 		try {
 			String addr = addrports[0].trim();
 			int port = Integer.parseInt(addrports[1].trim());
-			String key = "otrans.servers.node." + nodeIdx;
+			String key = "otrans.servers.node." + nodeName;
 			int core = coreconn;
 			if (core == 0) {
 				core = params.get(key + ".core", params.get("otrans.servers.default.core", 1));
@@ -87,9 +84,9 @@ public class OutgoingSessionManager {
 			if (max == 0) {
 				max = params.get(key + ".max", params.get("otrans.servers.default.max", 3));
 			}
-			CKConnPool pool = nodePool.getPool(nodeIdx);// unknow modules
+			CKConnPool pool = nodePool.getPool(nodeName);// unknow modules
 			if (pool == null) {
-				pool = nodePool.addPool(client, nodeIdx, addr, port, core, max, mss);
+				pool = nodePool.addPool(client, nodeName, addr, port, core, max, mss);
 				ck.addCheckHealth(pool);
 			}
 			return pool;
@@ -105,19 +102,21 @@ public class OutgoingSessionManager {
 	}
 
 	public RemoteModuleSession createOutgoingSSByURI(NodeInfo node) throws NoneServerException {
-		CKConnPool pool = addNetPool(node.getNodeIdx(), node.getAddr() + ":" + node.getPort(), 0, 0);
+		CKConnPool pool = addNetPool(node.getNodeName(), node.getAddr() + ":" + node.getPort(), 0, 0);
 		return createOutgoingSS(node, pool);
 	}
 
 	public synchronized RemoteModuleSession createOutgoingSS(NodeInfo node, CKConnPool ckpool)
 			throws NoneServerException {
-		RemoteModuleSession ms = mss.byNodeIdx(node.getNodeIdx());
+		PSession ms = mss.byNodeName(node.getNodeName());
 		if (ms != null) {
-			log.warn("Override Existing Remote nodeIdx=" + node.getNodeIdx() + ",ms=" + ms);
+			log.warn("Override Existing Remote nodeIdx=" + node.getNodeName() + ",ms=" + ms);
 		}
 		RemoteModuleSession rms = mss.addRemoteSession(node, null);
-		rms.setConnsPool(ckpool);
-		ck.addCheckHealth(ckpool);
+		if (rms != null) {
+			rms.setConnsPool(ckpool);
+			ck.addCheckHealth(ckpool);
+		}
 		return rms;
 	}
 

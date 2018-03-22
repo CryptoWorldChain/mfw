@@ -44,7 +44,7 @@ public abstract class NActor<T> extends ActWrapper implements NPacketProccsor, A
 	}
 
 	public T getPBBody(FramePacket pack) {
-		if (pack.getBody()!=null&&pack.getBody().length > 0) {
+		if (pack.getBody() != null && pack.getBody().length > 0) {
 			if (pack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_PROTOBUF) {
 				try {
 					if (getPBBuilder() != null) {
@@ -59,7 +59,7 @@ public abstract class NActor<T> extends ActWrapper implements NPacketProccsor, A
 					Builder builder = getPBBuilder();
 					if (builder != null) {
 						JsonPBUtil.json2PB(pack.getBody(), builder);
-//						JsonFormat.merge(jsonTxt, builder);
+						// JsonFormat.merge(jsonTxt, builder);
 						return (T) builder.build();
 					}
 					return null;
@@ -68,10 +68,15 @@ public abstract class NActor<T> extends ActWrapper implements NPacketProccsor, A
 					log.debug("cannot invoke pb builder for pack from JSON:" + pack.getFixHead(), e);
 				}
 			} else {
-				log.debug("cannot invoke  builder for pack this ENC TYPE:" + pack.getFixHead().getEnctype() + ",head=" + pack.getFixHead());
+				log.debug("cannot invoke  builder for pack this ENC TYPE:" + pack.getFixHead().getEnctype() + ",head="
+						+ pack.getFixHead());
 			}
 		}
-		return null;
+		try {
+			return (T)pack.getFbody();
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	Method bm;
@@ -84,25 +89,26 @@ public abstract class NActor<T> extends ActWrapper implements NPacketProccsor, A
 				log.warn("cannot found pb builder for class" + getBeanType(), e);
 			}
 		}
-		if(bm!=null)
-		try {
-			return (Builder) bm.invoke(null);
-		} catch (Exception e) {
-			log.warn("cannot found pb builder for class" + getBeanType(), e);
-		}
+		if (bm != null)
+			try {
+				return (Builder) bm.invoke(null);
+			} catch (Exception e) {
+				log.warn("cannot found pb builder for class" + getBeanType(), e);
+			}
 		return null;
 	}
 
 	public Class getBeanType() {
 		return ClassUtils.getFirstParameterizedClass(getClass());
-//		Class ret = null;
-//		try {
-//			ParameterizedType parameterizedType = (ParameterizedType) getClass().getGenericSuperclass();
-//			ret = (Class) parameterizedType.getActualTypeArguments()[0];
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//		return ret;
+		// Class ret = null;
+		// try {
+		// ParameterizedType parameterizedType = (ParameterizedType)
+		// getClass().getGenericSuperclass();
+		// ret = (Class) parameterizedType.getActualTypeArguments()[0];
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// }
+		// return ret;
 
 	}
 

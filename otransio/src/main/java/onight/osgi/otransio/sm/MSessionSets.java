@@ -17,6 +17,7 @@ import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.session.LocalModuleSession;
+import onight.tfw.otransio.api.session.PSession;
 import onight.tfw.outils.serialize.UUIDGenerator;
 
 @Data
@@ -31,7 +32,7 @@ public class MSessionSets {
 
 	OutgoingSessionManager osm;
 
-	HashMap<Integer, RemoteModuleSession> sessionByNodeIdx = new HashMap<>();
+	HashMap<String, PSession> sessionByNodeName = new HashMap<>();
 
 	HashMap<String, LocalModuleSession> localsessionByModule = new HashMap<>();
 
@@ -51,7 +52,7 @@ public class MSessionSets {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{\"locals\":[");
 		int i = 0;
-		for (Entry<Integer, RemoteModuleSession> kv : sessionByNodeIdx.entrySet()) {
+		for (Entry<String, PSession> kv : sessionByNodeName.entrySet()) {
 			if (i > 0)
 				sb.append(",");
 			i++;
@@ -69,36 +70,31 @@ public class MSessionSets {
 		return sb.toString();
 	}
 
-	public RemoteModuleSession byNodeIdx(Integer idx) {
-		if (sessionByNodeIdx.containsKey(idx)) {
-			return sessionByNodeIdx.get(idx);
-		}
-		return null;
-	}
+	// public RemoteModuleSession byNodeIdx(Integer idx) {
+	// if (sessionByNodeIdx.containsKey(idx)) {
+	// return sessionByNodeIdx.get(idx);
+	// }
+	// return null;
+	// }
 
-	public RemoteModuleSession byNodeName(String name) {
-		if (StringUtils.isBlank(name))
-			return null;
-		Integer idx = 0;
-		try {
-			idx = Integer.parseInt(name);
-		} catch (NumberFormatException e) {
-			idx = name.hashCode();
-		}
-		return sessionByNodeIdx.get(idx);
+	public PSession byNodeName(String name) {
+		return sessionByNodeName.get(name);
 	}
 
 	public synchronized RemoteModuleSession addRemoteSession(NodeInfo node, Connection<?> conn) {
-		RemoteModuleSession session = sessionByNodeIdx.get(node.getNodeIdx());
-		if (session == null) {
+		PSession psession = sessionByNodeName.get(node.getNodeName());
+		RemoteModuleSession session = null;
+		if (psession == null) {
 			session = new RemoteModuleSession(node, this);
-			sessionByNodeIdx.put(node.getNodeIdx(), session);
+			psession = session;
+			sessionByNodeName.put(node.getNodeName(), psession);
 		} //
+		if (session != null) {
 			// TODO: all connection should be verify!
-		if (conn != null && conn.isOpen()) {
-			session.addConnection(conn);
+			if (conn != null && conn.isOpen()) {
+				session.addConnection(conn);
+			}
 		}
-
 		return session;
 
 	}
@@ -127,15 +123,9 @@ public class MSessionSets {
 
 	public void dropSession(String name) {
 		if (StringUtils.isNotBlank(name)) {
-			Integer idx = 0;
-			try {
-				idx = Integer.parseInt(name);
-			} catch (NumberFormatException e) {
-				idx = name.hashCode();
-			}
-			RemoteModuleSession session=sessionByNodeIdx.remove(idx);
-			session.destroy();
-			
+			PSession session = sessionByNodeName.remove(name);
+			if (session instanceof RemoteModuleSession)
+				((RemoteModuleSession) session).destroy();
 		}
 	}
 

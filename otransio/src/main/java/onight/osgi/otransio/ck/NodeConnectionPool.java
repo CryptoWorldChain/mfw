@@ -10,14 +10,14 @@ import onight.osgi.otransio.sm.MSessionSets;
 @Slf4j
 public class NodeConnectionPool {
 
-	public ConcurrentHashMap<Integer, CKConnPool> ckPoolByNodeID = new ConcurrentHashMap<Integer, CKConnPool>();
+	public ConcurrentHashMap<String, CKConnPool> ckPoolByNodeName = new ConcurrentHashMap<String, CKConnPool>();
 
-	public CKConnPool addPool(OClient client,Integer nodeID, String ip, int port, int core, int max, MSessionSets mss) {
-		CKConnPool pool = ckPoolByNodeID.get(nodeID);
+	public CKConnPool addPool(OClient client,String nodeName, String ip, int port, int core, int max, MSessionSets mss) {
+		CKConnPool pool = ckPoolByNodeName.get(nodeName);
 		if (pool == null) {
 			pool = new CKConnPool(client, ip, port, core, max, mss);
 			log.debug("create new Pool :" + pool);
-			ckPoolByNodeID.put(nodeID, pool);
+			ckPoolByNodeName.put(nodeName, pool);
 		}
 		return pool;
 	}
@@ -26,10 +26,10 @@ public class NodeConnectionPool {
 		StringBuffer sb=new StringBuffer();
 		sb.append("[");
 		int i=0;
-		for(Entry<Integer,CKConnPool> sets:ckPoolByNodeID.entrySet()){
+		for(Entry<String,CKConnPool> sets:ckPoolByNodeName.entrySet()){
 			if(i>0)sb.append(",");
 			i++;
-			sb.append("{\"nodeid\":\""+sets.getKey()+"\"");
+			sb.append("{\"nodename\":\""+sets.getKey()+"\"");
 			sb.append(",\"conns\":"+sets.getValue().getJsonStr()+"");
 			sb.append("}");
 		}
@@ -37,13 +37,13 @@ public class NodeConnectionPool {
 		return sb.toString();
 	}
 	
-	public CKConnPool getPool(int nodeID){
-		return ckPoolByNodeID.get(nodeID);
+	public CKConnPool getPool(String nodeName){
+		return ckPoolByNodeName.get(nodeName);
 	}
 	
 	public void broadcastLocalModule(MSessionSets mss){
 		
-		for(CKConnPool pool:ckPoolByNodeID.values()){
+		for(CKConnPool pool:ckPoolByNodeName.values()){
 			try {
 				pool.broadcastMessage(mss.getLocalModulesPacket());
 			} catch (Exception e) {

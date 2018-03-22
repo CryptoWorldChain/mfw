@@ -40,6 +40,11 @@ public class RemoteModuleSession extends PSession {
 
 	final String rand = "r_" + String.format("%05d", (int) (Math.random() * 100000)) + "_";
 
+	@Override
+	public String toString() {
+		return "RemoteModuleSession("+nodeInfo.getNodeName()+")";
+	}
+
 	private String genPackID() {
 		return rand + System.currentTimeMillis() + "_" + counter.incrementAndGet();
 	}
@@ -102,7 +107,6 @@ public class RemoteModuleSession extends PSession {
 			pack.putHeader(mss.packIDKey, packid);
 			pack.putHeader(OSocketImpl.PACK_FROM, "" + NodeHelper.getCurrNodeIdx());
 			pack.getExtHead().remove(OSocketImpl.PACK_TO);
-			pack.getExtHead().remove(OSocketImpl.PACK_TO_IDX);
 			future.addCompletionHandler(new CompletionHandler<FramePacket>() {
 				@Override
 				public void updated(FramePacket result) {
@@ -138,11 +142,11 @@ public class RemoteModuleSession extends PSession {
 			throw new MessageException(e);
 		}
 	}
-	
-	public void destroy(){
+
+	public void destroy() {
 		connsPool.setStop(true);
-		Iterator<Connection> it=connsPool.iterator();
-		while(it.hasNext()){
+		Iterator<Connection> it = connsPool.iterator();
+		while (it.hasNext()) {
 			try {
 				it.next().close();
 			} catch (Exception e) {

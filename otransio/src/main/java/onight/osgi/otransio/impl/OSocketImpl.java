@@ -53,9 +53,11 @@ public class OSocketImpl implements Serializable, ActorService {
 	private PropHelper params;
 
 	public static String PACK_FROM = PackHeader.EXT_HIDDEN + "_" + "from";
-	public static String PACK_FROM_IDXX = PackHeader.EXT_HIDDEN + "_" + "from.idx";
+	// public static String PACK_FROM_IDXX = PackHeader.EXT_HIDDEN + "_" +
+	// "from.idx";
 	public static String PACK_TO = PackHeader.EXT_HIDDEN + "_" + "to";
-	public static String PACK_TO_IDX = PackHeader.EXT_HIDDEN + "_" + "to.idxx";
+	// public static String PACK_TO_IDX = PackHeader.EXT_HIDDEN + "_" +
+	// "to.idxx";
 	public static String PACK_URI = PackHeader.EXT_HIDDEN + "_" + "uri";
 
 	BundleContext context;
@@ -143,9 +145,9 @@ public class OSocketImpl implements Serializable, ActorService {
 		if (PackHeader.REMOTE_LOGIN.equals(pack.getGlobalCMD())) {// 来自远端的登录
 			RemoteModuleBean rmb = pack.parseBO(RemoteModuleBean.class);
 			String node_from = pack.getExtStrProp(PACK_FROM);
-			if (rmb.getNodeInfo().nodeIdx == NodeHelper.getCurrNodeIdx()) {
+			if (StringUtils.equals(rmb.getNodeInfo().nodeName, NodeHelper.getCurrNodeName())) {
 				log.debug("loop login from local");
-				//conn.close();
+				// conn.close();
 				return;
 			}
 			if (node_from != null) {
@@ -179,25 +181,26 @@ public class OSocketImpl implements Serializable, ActorService {
 			return;
 		}
 		String destTO = pack.getExtStrProp(PACK_TO);
-		String destTOIdx = pack.getExtStrProp(PACK_TO_IDX);
+		// String destTOIdx = pack.getExtStrProp(PACK_TO_IDX);
 		PSession ms = null;
-		if (StringUtils.isNotBlank(destTO) || StringUtils.isNotBlank(destTOIdx)) {// 固定给某个节点id的
-			ms = mss.byNodeName(destTOIdx);
-			if (ms == null) {
-				ms = mss.byNodeName(destTO);
-			}
+		if (StringUtils.isNotBlank(destTO)) {// 固定给某个节点id的
+			ms = mss.byNodeName(destTO);
 			if (ms == null) {// not found
-				String uri = pack.getExtStrProp(PACK_URI);
-				log.debug("createing new Connection:" + uri + ":name=" + destTO + ",idx=" + destTOIdx);
-				if (StringUtils.isNotBlank(uri)) {
-					NodeInfo node = NodeInfo.fromURI(uri);
-					try {
-						node.setNodeIdx(Integer.parseInt(destTOIdx));
-						node.setNodeName(destTO);
-						ms = osm.createOutgoingSSByURI(node);
-					} catch (Exception e) {
-						log.error("route ERROR:" + e.getMessage(), e);
-						throw new MessageException(e);
+				if (destTO.equals(NodeHelper.getCurrNodeName())) {
+					ms = mss.getLocalsessionByModule().get(pack.getModule());
+					log.debug("message from local:"+pack.getModule());
+				} else {
+					String uri = pack.getExtStrProp(PACK_URI);
+					log.debug("createing new Connection:" + uri + ":name=" + destTO);
+					if (StringUtils.isNotBlank(uri)) {
+						NodeInfo node = NodeInfo.fromURI(uri);
+						try {
+							node.setNodeName(destTO);
+							ms = osm.createOutgoingSSByURI(node);
+						} catch (Exception e) {
+							log.error("route ERROR:" + e.getMessage(), e);
+							throw new MessageException(e);
+						}
 					}
 				}
 			}
