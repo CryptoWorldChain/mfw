@@ -38,7 +38,7 @@ subprojects {
 	dependencies {
 		if(project.name!='oapi') {
 			//			compile project(":oapi")
-			compile ("org.fc.zippo:org.fc.zippo.oapi:3.2.0")
+			compile ("org.fc.zippo:org.fc.zippo.oapi:3.3.0")
 
 		}
 		

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.Future;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.ConcurrentUtils;
 
 import com.sleepycat.je.Database;
@@ -36,6 +37,12 @@ public class OBDBImpl implements OPFace, DomainDaoSupport {
 	private Environment dbEnv;
 	public static final String defaultEnvironmentFolder = "appdb";
 	public static final String STRING_DB = "stringDb";
+
+	public static final String BIG_VERSION = "v1.";
+	public static final String SUB_VERSION = "0.";
+	public static final String MIN_VERSION = "0";
+
+	public static final String FULL_VERSION = BIG_VERSION + SUB_VERSION + MIN_VERSION;
 
 	private final Database stringDb;
 
@@ -71,6 +78,30 @@ public class OBDBImpl implements OPFace, DomainDaoSupport {
 		dbconf.setAllowCreate(true);
 		dbconf.setSortedDuplicates(false);
 		this.stringDb = openDatabase(STRING_DB, true, false);
+
+		checkVersion();
+	}
+
+	public void checkVersion() {
+		try {
+			Future<OTreeValue> ver = this.get("BC_VERSION");
+			if (ver == null || ver.get() == null || ver.get().getValue() == null) {
+				this.put("BC_VERSION", FULL_VERSION);
+			} else if (!StringUtils.startsWith(ver.get().getValue(), BIG_VERSION)) {
+				//
+				log.error("DBVersion Check ERROR!Current="+FULL_VERSION+",db version="+ver.get().getValue()+". It will Cause Unknowm Problem!!");
+				System.exit(-1);
+			} else if (!StringUtils.startsWith(ver.get().getValue(), BIG_VERSION + SUB_VERSION)) {
+				//
+				log.warn("DBVersion Check Warning!Current="+FULL_VERSION+",db version="+ver.get().getValue()+". It will Cause Unknowm Problem!!");
+//				this.put("BC_VERSION", FULL_VERSION);
+			} else {
+				log.info("DBVersion Check SUCCESS:");
+			}
+		} catch (Exception e) {
+			log.error("DBVersion Check Failed", e);
+			System.exit(-1);
+		}
 
 	}
 

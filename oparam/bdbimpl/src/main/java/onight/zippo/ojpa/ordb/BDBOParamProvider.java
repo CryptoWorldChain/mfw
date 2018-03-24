@@ -35,15 +35,15 @@ public class BDBOParamProvider implements StoreServiceProvider {
 		super();
 		params = new PropHelper(bundleContext);
 		this.bundleContext = bundleContext;
+		String dir = params.get("org.bc.obdb.dir", "odb." + Math.abs(NodeHelper.getCurrNodeListenOutPort() - 5100));
+		bdbImpl = new OBDBImpl(dir);
 	}
 
 	@Validate
 	public synchronized void startup() {
 		log.info("启动中...@" + bundleContext);
 		log.debug("create: bdb oparam impl:");
-		String dir = params.get(""
-				+ "", "odb."+Math.abs(NodeHelper.getCurrNodeListenOutPort()-5100));
-		bdbImpl = new OBDBImpl(dir);
+
 		log.info("启动完成...");
 	}
 

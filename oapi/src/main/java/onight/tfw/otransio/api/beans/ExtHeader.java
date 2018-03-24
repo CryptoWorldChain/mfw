@@ -27,8 +27,8 @@ public class ExtHeader {
 	public final static String SPLIT_CHAR = "&";
 	public final static String EQUAL_CHAR = "=";
 	// public final static String HTTP_COOKIE_NAME = "__exth";
-	public final static String SESSIONID = PackHeader.EXT_HIDDEN + "_smid";
-	public final static String PACK_SESSION = PackHeader.EXT_IGNORE_RESPONSE + "__session";
+	public final static String SESSIONID = PackHeader.EXT_HIDDEN + "smid";
+	public final static String PACK_SESSION = PackHeader.EXT_IGNORE_RESPONSE + "_session";
 
 	Map<String, Object> hiddenkvs = new HashMap<String, Object>();
 	Map<String, Object> ignorekvs = new HashMap<String, Object>();

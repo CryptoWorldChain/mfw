@@ -33,22 +33,12 @@ public class NodeHelper {
 
 	public static String getCurrNodeName() {
 		String def = getPropInstance().get("otrans.node.name",
-				getCurrNodeListenOutAddr() + "." + getCurrNodeListenOutPort() + "." + getCurrNodeIdx());
+				getCurrNodeListenOutAddr() + "." + getCurrNodeListenOutPort() );
 		String envid = System.getProperty("otrans.node.name", def);
 
 		return envInEnv(envid);
 	}
-
-	static int currentidx = -1;
-
-	public synchronized static void setNodeIdx(int newid) {
-		currentidx = newid;
-	}
-
-	public synchronized static int resetNodeIdx() {
-		currentidx = (int) (Math.random() * 100000 % getPropInstance().get("otrans.node.max_nodes", 256));
-		return currentidx;
-	}
+	
 
 //	public static String getCurrNodeID() {
 //		return String.valueOf(getCurrNodeIdx());
@@ -58,19 +48,6 @@ public class NodeHelper {
 				getCurrNodeListenOutAddr() + "." + getCurrNodeListenOutPort());
 		String envid = System.getProperty("otrans.node.id", def);
 		return envInEnv(envid);
-	}
-
-	public synchronized static int getCurrNodeIdx() {
-		if (currentidx == -1) {
-			currentidx = (int) (Math.random() * 100000 % getPropInstance().get("otrans.node.max_nodes", 256));
-		}
-		String def = getPropInstance().get("otrans.node.idx", "" + currentidx);
-		String envid = System.getProperty("otrans.node.idx", def);
-		try {
-			return Integer.parseInt(envInEnv(envid));
-		} catch (NumberFormatException e) {
-			return currentidx;
-		}
 	}
 
 	public static String getCurrNodeListenInAddr() {

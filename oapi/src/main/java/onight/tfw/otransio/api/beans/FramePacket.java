@@ -25,7 +25,13 @@ import onight.tfw.outils.serialize.SerializerUtil;
 @AllArgsConstructor
 public class FramePacket {
 	FixHeader fixHead;
-	ExtHeader extHead = new ExtHeader();
+	
+	
+	protected ExtHeader genExtHeader() {
+		return new ExtHeader();
+	}
+
+	ExtHeader extHead = genExtHeader();
 
 	@JsonIgnore
 	protected byte[] body;

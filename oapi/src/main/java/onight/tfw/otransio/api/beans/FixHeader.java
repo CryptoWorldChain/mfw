@@ -35,13 +35,16 @@ public class FixHeader {
 	// -- 1字节：预留,0-请求包,1相应包
 	// -- 一共16个字节
 	byte[] data;
+	
+	
 
 	@JsonIgnore
 	public final static int LENGTH = 16;
 
 	// 版本号:1字节
 	@JsonIgnore
-	char ver = 'v';// 字母+数字，区分大小写，62个版本，够用了吧。
+	char ver = 'v';// 字母+数字，区分大小写，62个版本，够用了吧。如果是‘b’表示发送的是BC的包
+	
 	// 命令码:3字节
 	String cmd;
 	// 模块名:3字节
@@ -113,8 +116,14 @@ public class FixHeader {
 		// if (dataAlreadyGen) {
 		// return data;
 		// }
-		if (ver == 'B' || ver == 'b') {
-			data[0] = (byte) (ver);
+		if (ver == 'B' || ver == 'b') {//表示BC的包
+			data[0] = (byte) (ver);// 
+			//0-->表示类型，接着6位表示模块和：共1字节
+			//1-6 --> 命令+模块，共6字节
+			//7-9 --> 扩展信息长度，3个字节
+			//10->13->body长度，4个字节//
+			//14->编码类型
+			//15-->保留字段
 			System.arraycopy(cmd.getBytes(), 0, data, 1, 3);
 			System.arraycopy(module.getBytes(), 0, data, 4, 3);
 			LengthUtils.int2Byte3(extsize, data, 7);

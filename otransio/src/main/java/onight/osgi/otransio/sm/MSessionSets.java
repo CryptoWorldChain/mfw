@@ -27,7 +27,7 @@ public class MSessionSets {
 	String packIDKey = "";
 
 	public MSessionSets() {
-		packIDKey = UUIDGenerator.generate() + "." + NodeHelper.getCurrNodeIdx() + ".SID";
+		packIDKey = UUIDGenerator.generate() + ".SID";
 	}
 
 	OutgoingSessionManager osm;

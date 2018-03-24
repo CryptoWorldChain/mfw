@@ -3,7 +3,7 @@ package onight.tfw.otransio.api;
 import onight.tfw.mservice.NodeHelper;
 
 public class PackHeader {
-	public final static String EXT_HIDDEN = "_h";
+	public final static String EXT_HIDDEN = "_";
 
 	public final static String Set_COOKIE = "Set-Cookie";
 
@@ -18,11 +18,11 @@ public class PackHeader {
 	public final static String FORWORD_URL = "_url";
 	public final static String FORWORD_METHOD = "_method";
 	
-	public static String PACK_FROM = PackHeader.EXT_HIDDEN + "_" + "from";
-	public static String PACK_TO = PackHeader.EXT_HIDDEN + "_" + "to";
-	public static String PACK_FROM_IDXX = PackHeader.EXT_HIDDEN + "_" + "from.idx";
-	public static String PACK_TO_IDX = PackHeader.EXT_HIDDEN + "_" + "to.idxx";
-	public static String PACK_URI = PackHeader.EXT_HIDDEN + "_" + "uri";
+	public static String PACK_FROM = PackHeader.EXT_HIDDEN  + "f";
+	public static String PACK_TO = PackHeader.EXT_HIDDEN  + "t";
+//	public static String PACK_FROM_IDXX = PackHeader.EXT_HIDDEN + "_" + "from.idx";
+//	public static String PACK_TO_IDX = PackHeader.EXT_HIDDEN + "_" + "to.idxx";
+	public static String PACK_URI = PackHeader.EXT_HIDDEN + "u";
 
 	
 	// public final static String ENC = "enc";

@@ -105,8 +105,8 @@ public class RemoteModuleSession extends PSession {
 			packid = genPackID();
 			future = Futures.createSafeFuture();
 			pack.putHeader(mss.packIDKey, packid);
-			pack.putHeader(OSocketImpl.PACK_FROM, "" + NodeHelper.getCurrNodeIdx());
-			pack.getExtHead().remove(OSocketImpl.PACK_TO);
+//			pack.putHeader(OSocketImpl.PACK_FROM, "" + NodeHelper.getCurrNodeIdx());
+//			pack.getExtHead().remove(OSocketImpl.PACK_TO);
 			future.addCompletionHandler(new CompletionHandler<FramePacket>() {
 				@Override
 				public void updated(FramePacket result) {
