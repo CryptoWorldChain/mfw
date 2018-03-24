@@ -52,13 +52,9 @@ public class OSocketImpl implements Serializable, ActorService {
 	@Getter
 	private PropHelper params;
 
-	public static String PACK_FROM = PackHeader.EXT_HIDDEN + "_" + "from";
-	// public static String PACK_FROM_IDXX = PackHeader.EXT_HIDDEN + "_" +
-	// "from.idx";
-	public static String PACK_TO = PackHeader.EXT_HIDDEN + "_" + "to";
-	// public static String PACK_TO_IDX = PackHeader.EXT_HIDDEN + "_" +
-	// "to.idxx";
-	public static String PACK_URI = PackHeader.EXT_HIDDEN + "_" + "uri";
+	public static String PACK_FROM = PackHeader.PACK_FROM;
+	public static String PACK_TO = PackHeader.PACK_TO;
+	public static String PACK_URI = PackHeader.PACK_URI;
 
 	BundleContext context;
 
