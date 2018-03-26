@@ -41,6 +41,11 @@ public class ExtHeader {
 
 	public ExtHeader() {
 	}
+	
+	public void cloneKVS(Map<String,Object> mm){
+		mm.putAll(vkvs);
+		mm.putAll(hiddenkvs);
+	}
 
 	public void appendFrom(byte[] data) {
 		appendFrom(data, 0, data.length);
@@ -76,7 +81,8 @@ public class ExtHeader {
 					} else if (kv.length == 1) {// 仅仅就是设置
 						append(kv[0], "1");
 					} else {
-						//log.trace("Unknow ext header:size=" + kv.length + ",str=" + strkv + ",data=" + new String(data));
+						// log.trace("Unknow ext header:size=" + kv.length +
+						// ",str=" + strkv + ",data=" + new String(data));
 					}
 				}
 			}
@@ -113,7 +119,7 @@ public class ExtHeader {
 	}
 
 	public byte[] genBytes() {
-		if (vkvs.size() == 0)
+		if (vkvs.size() == 0 && hiddenkvs.size() == 0)
 			return PackHeader.EMPTY_BYTES;
 		if (data != null) {
 			return data;
@@ -222,8 +228,7 @@ public class ExtHeader {
 			} else {
 				cookie = (new Cookie(key, Base64.encodeBase64URLSafeString(SerializerUtil.toBytes(value))));
 			}
-			if(StringUtils.isNotBlank(PackHeader.CookieDomain))
-			{
+			if (StringUtils.isNotBlank(PackHeader.CookieDomain)) {
 				cookie.setDomain(PackHeader.CookieDomain);
 			}
 			cookie.setPath(PackHeader.CookiePath);

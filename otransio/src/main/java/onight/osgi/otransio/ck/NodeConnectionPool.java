@@ -15,8 +15,8 @@ public class NodeConnectionPool {
 	public CKConnPool addPool(OClient client,String nodeName, String ip, int port, int core, int max, MSessionSets mss) {
 		CKConnPool pool = ckPoolByNodeName.get(nodeName);
 		if (pool == null) {
-			pool = new CKConnPool(client, ip, port, core, max, mss);
-			log.debug("create new Pool :" + pool);
+			pool = new CKConnPool(client, ip, port, core, max, mss,nodeName);
+			log.debug("create new Pool :" + pool); 
 			ckPoolByNodeName.put(nodeName, pool);
 		}
 		return pool;
@@ -37,12 +37,29 @@ public class NodeConnectionPool {
 		return sb.toString();
 	}
 	
-	public CKConnPool getPool(String nodeName){
+	public synchronized CKConnPool getPool(String nodeName){
 		return ckPoolByNodeName.get(nodeName);
 	}
 	
+	public synchronized void changePoolName(String oldname,String newname){
+		CKConnPool pool =  ckPoolByNodeName.get(oldname);
+		if(pool!=null){
+			ckPoolByNodeName.put(newname, pool);
+		}
+		ckPoolByNodeName.remove(oldname);
+	}
+	public synchronized CKConnPool destroyPool(String nodeName){
+		return  ckPoolByNodeName.remove(nodeName);
+	}
+	
+	public synchronized void removeByPool(CKConnPool pool){
+		CKConnPool localPool=ckPoolByNodeName.get(pool.nameid);
+		if(localPool==pool){
+			ckPoolByNodeName.remove(pool.nameid);
+		}
+	}
+	
 	public void broadcastLocalModule(MSessionSets mss){
-		
 		for(CKConnPool pool:ckPoolByNodeName.values()){
 			try {
 				pool.broadcastMessage(mss.getLocalModulesPacket());

@@ -232,7 +232,10 @@ public class PacketHelper {
 		fp.getFixHead().genBytes();
 		SimpleFramePack jsonpack = new SimpleFramePack();
 		jsonpack.setFh(new String(fp.getFixHead().genBytes()));
-		jsonpack.setEh(fp.getExtHead().getVkvs());
+//		fp.getExtHead().getMap(key)
+		Map<String, Object> eh = new HashMap<>();
+		fp.getExtHead().cloneKVS(eh);
+		jsonpack.setEh(eh);
 		jsonpack.setBody(fp.getFbody());
 		return jsonpack;
 	}

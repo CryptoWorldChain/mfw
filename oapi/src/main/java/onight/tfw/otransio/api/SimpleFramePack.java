@@ -10,7 +10,7 @@ public class SimpleFramePack<T> {
 	// fix header
 	String fh;
 
-	Map<String, String> eh;
+	Map<String, Object> eh;
 
 	T body;
 

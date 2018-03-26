@@ -1,6 +1,5 @@
-package onight.osgi.otransio.nio;
 
-import onight.tfw.otransio.api.beans.FramePacket;
+package onight.osgi.otransio.nio;
 
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
@@ -8,10 +7,11 @@ import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.TransformationException;
 import org.glassfish.grizzly.TransformationResult;
 import org.glassfish.grizzly.attributes.Attribute;
-import org.glassfish.grizzly.attributes.AttributeBuilder;
 import org.glassfish.grizzly.attributes.AttributeStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import onight.tfw.otransio.api.beans.FramePacket;
 
 public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 

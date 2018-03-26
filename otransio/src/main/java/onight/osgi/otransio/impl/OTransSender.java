@@ -77,4 +77,15 @@ public class OTransSender extends FutureSender {
 		osock.tryDropConnection(pack_to);
 	}
 
+	@Override
+	public void changeNodeName(String oldname, String newname) {
+		osock.renameSession(oldname, newname);
+	}
+
+	@Override
+	public void setCurrentNodeName(String name) {
+		osock.mss.getRmb().getNodeInfo().setNodeName(name);
+	}
+
+	 
 }

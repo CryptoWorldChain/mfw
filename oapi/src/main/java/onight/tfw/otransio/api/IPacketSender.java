@@ -25,4 +25,8 @@ public interface IPacketSender {
 	//!释放连接
 	public void tryDropConnection(String dest);
 
+	public void setCurrentNodeName(String name);
+	
+	public void changeNodeName(String oldname,String newname);
+	
 }

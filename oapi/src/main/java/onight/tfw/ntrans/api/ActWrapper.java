@@ -139,7 +139,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 									+ ",\"eh\":"
 									+ new String(
 											SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs())))
-									+ "" //
+									+ "" // 
 									+ ",\"body\":" + str + "" + "}";
 
 							resp.getOutputStream().write(ret.getBytes("UTF-8"));

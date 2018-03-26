@@ -25,11 +25,11 @@ import onight.tfw.outils.serialize.SerializerUtil;
 @AllArgsConstructor
 public class FramePacket {
 	FixHeader fixHead;
-	
-	
+
 	protected ExtHeader genExtHeader() {
 		return new ExtHeader();
 	}
+
 
 	ExtHeader extHead = genExtHeader();
 

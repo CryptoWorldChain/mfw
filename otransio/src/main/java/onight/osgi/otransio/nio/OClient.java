@@ -2,6 +2,8 @@ package onight.osgi.otransio.nio;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.sm.OutgoingSessionManager;
@@ -54,16 +56,14 @@ public class OClient {
 		}
 	}
 
-	public Connection getConnection(String address, int port) throws InterruptedException, ExecutionException {
-		return transport.connect(address, port).get();
+	public Connection getConnection(String address, int port) throws InterruptedException, ExecutionException, TimeoutException {
+		return transport.connect(address, port).get(30,TimeUnit.SECONDS);
 	}
 
 	public void stop() {
 		try {
 			transport.shutdownNow();
 		} catch (IOException e) {
-			e.printStackTrace();
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			log.info("socket服务关闭");

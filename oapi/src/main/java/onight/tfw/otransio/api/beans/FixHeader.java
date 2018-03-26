@@ -35,8 +35,6 @@ public class FixHeader {
 	// -- 1字节：预留,0-请求包,1相应包
 	// -- 一共16个字节
 	byte[] data;
-	
-	
 
 	@JsonIgnore
 	public final static int LENGTH = 16;
@@ -44,13 +42,15 @@ public class FixHeader {
 	// 版本号:1字节
 	@JsonIgnore
 	char ver = 'v';// 字母+数字，区分大小写，62个版本，够用了吧。如果是‘b’表示发送的是BC的包
-	
+
 	// 命令码:3字节
 	String cmd;
 	// 模块名:3字节
 	String module;
 	// 标志位：1字节：用后4位，sync(前2位)|bits进制数（后2位），
 	int flag;
+	boolean isSync = true;
+	boolean isResp = false;
 	// kv扩展头部的大小: 2字节
 	int extsize;
 	// body的大小: 3字节
@@ -69,7 +69,7 @@ public class FixHeader {
 	}
 
 	public boolean isResp() {
-		return this.data[15] == 1 || (this.data[15] - '0') == 1;
+		return isResp;
 	}
 
 	public FixHeader() {
@@ -91,23 +91,20 @@ public class FixHeader {
 	}
 
 	public boolean isSync() {
-		return ((data[7] & 4) == 4);
+		return isSync;// ((data[7] & 4) == 4);
 	}
 
 	public void setSync(boolean sync) {
-		if (sync) {
-			data[7] |= 4;
-		} else {
-			data[7] &= 0xFB;// 0000,0100==>1111,1011==>
-		}
+		isSync = sync;
+		// if (sync) {
+		// data[7] |= 4;
+		// } else {
+		// data[7] &= 0xFB;// 0000,0100==>1111,1011==>
+		// }
 	}
 
 	public void setResp(boolean resp) {
-		if (resp) {
-			reserved = '1';
-		} else {
-			reserved = '0';// 0000,0100==>1111,1011==>
-		}
+		isResp = true;
 	}
 
 	boolean dataAlreadyGen = false;
@@ -116,20 +113,32 @@ public class FixHeader {
 		// if (dataAlreadyGen) {
 		// return data;
 		// }
-		if (ver == 'B' || ver == 'b') {//表示BC的包
-			data[0] = (byte) (ver);// 
-			//0-->表示类型，接着6位表示模块和：共1字节
-			//1-6 --> 命令+模块，共6字节
-			//7-9 --> 扩展信息长度，3个字节
-			//10->13->body长度，4个字节//
-			//14->编码类型
-			//15-->保留字段
+		if (ver == 'B' || ver == 'b') {// 表示BC的包
+			data[0] = (byte) (ver);//
+			// 0-->表示类型，接着6位表示模块和：共1字节
+			// 1-6 --> 命令+模块，共6字节
+			// 7-9 --> 扩展信息长度，3个字节
+			// 10->13->body长度，4个字节//
+			// 14->编码类型
+			// 15-->保留字段
 			System.arraycopy(cmd.getBytes(), 0, data, 1, 3);
 			System.arraycopy(module.getBytes(), 0, data, 4, 3);
 			LengthUtils.int2Byte3(extsize, data, 7);
 			LengthUtils.int2Byte4(bodysize, data, 10);
 			data[14] = (byte) enctype;
-			data[15] = reserved;
+			if (isSync) {
+				if (isResp) {
+					data[15] = '3';
+				} else {
+					data[15] = '2';
+				}
+			} else {
+				if (isResp) {
+					data[15] = '1';
+				} else {
+					data[15] = '0';
+				}
+			}
 			dataAlreadyGen = true;
 		} else {
 			data[0] = (byte) (ver);
@@ -174,6 +183,20 @@ public class FixHeader {
 			bodysize = LengthUtils.byte2Int(data[10], data[11], data[12], data[13]);
 			enctype = (char) data[14];
 			reserved = (byte) (data[15]);
+			if (reserved == '0') {
+				isSync = false;
+				isResp = false;
+			} else if (reserved == '1') {
+				isResp = true;
+				isSync = false;
+			} else if (reserved == '2') {
+				isResp = false;
+				isSync = true;
+			} else if (reserved == '3') {
+				isResp = true;
+				isSync = true;
+			}
+
 		} else {//
 			cmd = new String(data, 1, 3).trim();
 			module = new String(data, 4, 3).trim();
@@ -214,6 +237,7 @@ public class FixHeader {
 	public static FixHeader buildFrom(HttpServletRequest req) {
 		if (req.getParameter(PackHeader.HTTP_PARAM_FIX_HEAD) == null) {
 			FixHeader fh = new FixHeader();
+			fh.setSync(true);
 			try {
 				String paths[] = req.getServletPath().split("/");
 				if (paths.length > 2) {

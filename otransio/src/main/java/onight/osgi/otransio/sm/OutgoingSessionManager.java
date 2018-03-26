@@ -1,8 +1,14 @@
 package onight.osgi.otransio.sm;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.IOException;
 import java.util.HashMap;
+
+import org.glassfish.grizzly.CloseListener;
+import org.glassfish.grizzly.Closeable;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.ICloseType;
+import org.glassfish.grizzly.attributes.Attribute;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -36,15 +42,7 @@ public class OutgoingSessionManager {
 
 	public String getJsonInfo() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("{\"cur\":{");
-		sb.append("\"nodename\":\"").append(NodeHelper.getCurrNodeName()).append("\"");
-		sb.append(",\"inaddr\":\"").append(NodeHelper.getCurrNodeListenInAddr()).append("\"");
-		sb.append(",\"inport\":\"").append(NodeHelper.getCurrNodeListenInPort()).append("\"");
-		sb.append(",\"outaddr\":\"").append(NodeHelper.getCurrNodeListenOutAddr()).append("\"");
-		sb.append(",\"outport\":\"").append(NodeHelper.getCurrNodeListenOutPort()).append("\"");
-		sb.append("}");
-		sb.append(",\"conns\":").append(nodePool.getJsonStr());
-		sb.append("}");
+		sb.append(nodePool.getJsonStr());
 		return sb.toString();
 	}
 
@@ -56,8 +54,8 @@ public class OutgoingSessionManager {
 		ck = new CheckHealth(params.get("otrans.checkhealth.size", 2), params.get("otrans.checkhealth.delay", 30));
 	}
 
-	public synchronized void rmNetPool(String nodeName, String addrport) {
-		CKConnPool pool = nodePool.getPool(nodeName);// unknow modules
+	public synchronized void rmNetPool(String nodeName) {
+		CKConnPool pool = nodePool.destroyPool(nodeName);// unknow modules
 		if (pool != null) {
 			pool.setStop(true);
 		}
@@ -78,16 +76,16 @@ public class OutgoingSessionManager {
 			String key = "otrans.servers.node." + nodeName;
 			int core = coreconn;
 			if (core == 0) {
-				core = params.get(key + ".core", params.get("otrans.servers.default.core", 1));
+				core = params.get(key + ".core", params.get("otrans.servers.default.core", 3));
 			}
 			int max = maxconn;
 			if (max == 0) {
-				max = params.get(key + ".max", params.get("otrans.servers.default.max", 3));
+				max = params.get(key + ".max", params.get("otrans.servers.default.max", 10));
 			}
 			CKConnPool pool = nodePool.getPool(nodeName);// unknow modules
 			if (pool == null) {
 				pool = nodePool.addPool(client, nodeName, addr, port, core, max, mss);
-				ck.addCheckHealth(pool);
+				ck.addCheckHealth(nodePool,pool);
 			}
 			return pool;
 		} catch (Exception e) {
@@ -101,9 +99,59 @@ public class OutgoingSessionManager {
 		this.ready = true;
 	}
 
-	public RemoteModuleSession createOutgoingSSByURI(NodeInfo node) throws NoneServerException {
+	public synchronized RemoteModuleSession createOutgoingSSByURI(NodeInfo node) throws NoneServerException {
+		PSession ms = mss.byNodeName(node.getNodeName());
+		if (ms != null && ms instanceof RemoteModuleSession) {
+			RemoteModuleSession pms = (RemoteModuleSession) ms;
+			return pms;
+		}
 		CKConnPool pool = addNetPool(node.getNodeName(), node.getAddr() + ":" + node.getPort(), 0, 0);
 		return createOutgoingSS(node, pool);
+	}
+
+	protected final Attribute<RemoteModuleSession> osmStore = Grizzly.DEFAULT_ATTRIBUTE_BUILDER
+			.createAttribute("session.by.connection");
+
+	public RemoteModuleSession addIncomming(final String nodename, final Connection<?> conn) {
+		RemoteModuleSession rms = osmStore.get(conn);
+		if (rms == null) {
+			synchronized (nodename.intern()) {
+				PSession ms = mss.byNodeName(nodename);
+				if (ms != null) {
+					log.debug("get Existing Remote nodename=" + nodename + ",ms=" + ms);
+				}
+
+				if (ms != null) {
+					rms = (RemoteModuleSession) ms;
+					log.debug("add exist connection:uid=" + nodename + ",peer=" + conn.getPeerAddress());
+				} else {
+					NodeInfo ni = NodeInfo.fromName(nodename, conn);
+					CKConnPool pool = nodePool.getPool(nodename);// unknow
+																	// modules
+					if (pool == null) {
+						pool = nodePool.addPool(client, nodename, ni.getAddr(), ni.getPort(), ni.getCore(), ni.getMax(),
+								mss);
+						ck.addCheckHealth(nodePool,pool);
+					}
+					log.debug("add new connection:uid=" + nodename + ",peer=" + conn.getPeerAddress());
+					rms = mss.addRemoteSession(ni, pool);
+				}
+				rms.addConnection(conn);
+				osmStore.set(conn, rms);
+				conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
+					@Override
+					public void onClosed(Closeable closeable, ICloseType type) throws IOException {
+						try {
+							log.debug("remove attr from name=" + nodename + "conn:" + conn.getPeerAddress());
+							osmStore.remove(conn);
+						} catch (Exception e) {
+						}
+					}
+				});
+			}
+		}
+
+		return rms;
 	}
 
 	public synchronized RemoteModuleSession createOutgoingSS(NodeInfo node, CKConnPool ckpool)
@@ -112,11 +160,8 @@ public class OutgoingSessionManager {
 		if (ms != null) {
 			log.warn("Override Existing Remote nodeIdx=" + node.getNodeName() + ",ms=" + ms);
 		}
-		RemoteModuleSession rms = mss.addRemoteSession(node, null);
-		if (rms != null) {
-			rms.setConnsPool(ckpool);
-			ck.addCheckHealth(ckpool);
-		}
+		RemoteModuleSession rms = mss.addRemoteSession(node, ckpool);
+		
 		return rms;
 	}
 

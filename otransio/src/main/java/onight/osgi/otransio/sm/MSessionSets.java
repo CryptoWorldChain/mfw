@@ -11,6 +11,7 @@ import org.glassfish.grizzly.impl.FutureImpl;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.impl.NodeInfo;
 import onight.tfw.mservice.NodeHelper;
 import onight.tfw.otransio.api.PackHeader;
@@ -41,8 +42,9 @@ public class MSessionSets {
 	AtomicLong sendCounter = new AtomicLong(0);
 	AtomicLong duplCounter = new AtomicLong(0);
 	AtomicLong dropCounter = new AtomicLong(0);
-	AtomicLong allRCounter = new AtomicLong(0);
-	AtomicLong allSCounter = new AtomicLong(0);
+	AtomicLong sentCounter = new AtomicLong(0);
+	// AtomicLong allRCounter = new AtomicLong(0);
+	// AtomicLong allSCounter = new AtomicLong(0);
 	// ConcurrentHashMap<String,HashSet<PSession>> connsByNodeID=new
 	// ConcurrentHashMap<String, HashSet<PSession>>();
 
@@ -50,22 +52,42 @@ public class MSessionSets {
 
 	public String getJsonInfo() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("{\"locals\":[");
+		sb.append("{");
+		sb.append("\"name\":\"").append(rmb.getNodeInfo().getNodeName()).append("\"");
+		sb.append(",\"addr\":\"").append(rmb.getNodeInfo().getAddr()).
+		append(":").append(rmb.getNodeInfo().getPort()).append("\"");
+		sb.append(",\"modules\":[");
 		int i = 0;
+		for (Entry<String, LocalModuleSession> kv : localsessionByModule.entrySet()) {
+			if (kv.getKey().length() > 0) {
+				if (i > 0)
+					sb.append(",");
+				i++;
+				sb.append(kv.getValue().getJsonStr());
+			}
+		}
+
+		sb.append("],\"sessions\":[");
+		i = 0;
 		for (Entry<String, PSession> kv : sessionByNodeName.entrySet()) {
 			if (i > 0)
 				sb.append(",");
-			i++;
-			sb.append(kv.getValue().getMmid());
+			if (kv.getValue() instanceof RemoteModuleSession) {
+				sb.append(((RemoteModuleSession) kv.getValue()).getJsonStr());
+				i++;
+			} else {
+			}
+
 		}
 		sb.append("],\"stats\":{");
 		sb.append("\"recv\":").append(recvCounter.get());
 		sb.append(",\"send\":").append(sendCounter.get());
-		sb.append(",\"allR\":").append(allRCounter.get());
-		sb.append(",\"allS\":").append(allSCounter.get());
+		sb.append(",\"sent\":").append(sentCounter.get());
+		// sb.append(",\"allS\":").append(allSCounter.get());
 		sb.append(",\"drop\":").append(dropCounter.get());
 		sb.append(",\"dupl\":").append(duplCounter.get());
-
+		sb.append("}");
+//		sb.append(",\"osm\":").append(osm.getJsonInfo());
 		sb.append("}");
 		return sb.toString();
 	}
@@ -81,20 +103,16 @@ public class MSessionSets {
 		return sessionByNodeName.get(name);
 	}
 
-	public synchronized RemoteModuleSession addRemoteSession(NodeInfo node, Connection<?> conn) {
+	public synchronized RemoteModuleSession addRemoteSession(NodeInfo node, CKConnPool ckpool) {
 		PSession psession = sessionByNodeName.get(node.getNodeName());
 		RemoteModuleSession session = null;
 		if (psession == null) {
 			session = new RemoteModuleSession(node, this);
 			psession = session;
 			sessionByNodeName.put(node.getNodeName(), psession);
+			session.setConnsPool(ckpool);
+			// osm.ck.addCheckHealth(ckpool);
 		} //
-		if (session != null) {
-			// TODO: all connection should be verify!
-			if (conn != null && conn.isOpen()) {
-				session.addConnection(conn);
-			}
-		}
 		return session;
 
 	}
@@ -124,8 +142,29 @@ public class MSessionSets {
 	public void dropSession(String name) {
 		if (StringUtils.isNotBlank(name)) {
 			PSession session = sessionByNodeName.remove(name);
-			if (session instanceof RemoteModuleSession)
-				((RemoteModuleSession) session).destroy();
+			osm.rmNetPool(name);
+			if (session != null) {
+				dropCounter.incrementAndGet();
+				if (session instanceof RemoteModuleSession)
+					((RemoteModuleSession) session).destroy();
+			}
+
+		}
+	}
+
+	public synchronized void renameSession(String oldname, String newname) {
+		if (StringUtils.isNotBlank(oldname) && StringUtils.isNotBlank(newname)) {
+			PSession session = sessionByNodeName.get(oldname);
+			if (session != null) {
+				session.setMmid(newname);
+				osm.nodePool.changePoolName(oldname, newname);
+				if (session instanceof RemoteModuleSession) {
+					RemoteModuleSession rms = (RemoteModuleSession) session;
+					rms.nodeInfo.setNodeName(newname);
+				}
+				sessionByNodeName.put(newname, session);
+				sessionByNodeName.remove(oldname);
+			}
 		}
 	}
 

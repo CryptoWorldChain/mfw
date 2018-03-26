@@ -31,4 +31,15 @@ public class NonePackSender implements IPacketSender {
 		throw new MessageException("No Sender Found");
 	}
 
+	@Override
+	public void changeNodeName(String oldname, String newname) {
+		throw new MessageException("No Sender Found");
+	}
+
+	@Override
+	public void setCurrentNodeName(String name) {
+		throw new MessageException("No Sender Found");
+		
+	}
+
 }

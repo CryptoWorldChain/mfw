@@ -22,6 +22,7 @@ import onight.osgi.otransio.impl.OSocketImpl;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.mservice.NodeHelper;
 import onight.tfw.otransio.api.MessageException;
+import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.beans.SendFailedBody;
@@ -36,6 +37,11 @@ public class RemoteModuleSession extends PSession {
 	CKConnPool connsPool = null;
 	MSessionSets mss;
 	NodeInfo nodeInfo;
+	AtomicLong sendCounter = new AtomicLong(0);
+	AtomicLong dropCounter = new AtomicLong(0);
+	AtomicLong sentCounter = new AtomicLong(0);
+	AtomicLong recvCounter = new AtomicLong(0);
+
 	AtomicLong counter = new AtomicLong(0);
 
 	final String rand = "r_" + String.format("%05d", (int) (Math.random() * 100000)) + "_";
@@ -52,7 +58,16 @@ public class RemoteModuleSession extends PSession {
 	public String getJsonStr() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{\"remoteid\":\"").append(nodeInfo.getNodeName()).append("\"");
+		sb.append(",\"alias\":\"").append(connsPool.getAliasURI()).append("\"");
 		sb.append(",\"channels\":").append(connsPool.size()).append("");
+		sb.append(",\"recvcc\":").append(recvCounter.get()).append("");
+		sb.append(",\"sentcc\":").append(sendCounter.get()).append("");
+		sb.append(",\"sendcc\":").append(sentCounter.get()).append("");
+		sb.append(",\"dropcc\":").append(dropCounter.get()).append("");
+		sb.append(",\"core\":").append(nodeInfo.getCore()).append("");
+		sb.append(",\"max\":").append(nodeInfo.getMax()).append("");
+		sb.append(",\"uri\":\"").append(nodeInfo.getAddr()+":"+nodeInfo.getPort()).append("\"");
+		
 		sb.append(",\"chdetails\":[");
 		Iterator<Connection> it = connsPool.iterator();
 		while (it.hasNext()) {
@@ -93,6 +108,7 @@ public class RemoteModuleSession extends PSession {
 		if (connsPool.size() <= 0) {
 			log.info("Remove RemoteModule Session:@" + this);
 		}
+		dropCounter.incrementAndGet();
 		return this;
 	}
 
@@ -106,7 +122,7 @@ public class RemoteModuleSession extends PSession {
 			future = Futures.createSafeFuture();
 			pack.putHeader(mss.packIDKey, packid);
 //			pack.putHeader(OSocketImpl.PACK_FROM, "" + NodeHelper.getCurrNodeIdx());
-//			pack.getExtHead().remove(OSocketImpl.PACK_TO);
+			pack.getExtHead().remove(OSocketImpl.PACK_TO);
 			future.addCompletionHandler(new CompletionHandler<FramePacket>() {
 				@Override
 				public void updated(FramePacket result) {
@@ -131,9 +147,11 @@ public class RemoteModuleSession extends PSession {
 			log.debug("sendPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
 
 		}
-
 		try {
+			sendCounter.incrementAndGet();
 			connsPool.sendMessage(pack);
+			sentCounter.incrementAndGet();
+			mss.sentCounter.incrementAndGet();
 		} catch (MessageException me) {
 
 			throw me;
@@ -146,9 +164,14 @@ public class RemoteModuleSession extends PSession {
 	public void destroy() {
 		connsPool.setStop(true);
 		Iterator<Connection> it = connsPool.iterator();
+		FramePacket dropp = PacketHelper.buildFromBody(null, OSocketImpl.DROP_CONN);
+		dropp.genBodyBytes();
+		dropp.genHeader();
 		while (it.hasNext()) {
 			try {
-				it.next().close();
+				Connection conn =it.next();
+				conn.write(dropp);
+				conn.closeSilently();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
