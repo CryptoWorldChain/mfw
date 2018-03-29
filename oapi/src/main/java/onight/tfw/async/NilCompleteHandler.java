@@ -10,6 +10,12 @@ public class NilCompleteHandler implements CompleteHandler {
 	
 	public static final NilCompleteHandler handler=new NilCompleteHandler();
 
+	@Override
+	public void onFailed(Exception e) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	
 	
 	

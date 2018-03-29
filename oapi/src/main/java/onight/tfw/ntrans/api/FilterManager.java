@@ -10,5 +10,6 @@ public interface FilterManager {
 	public abstract boolean postRouteListner(ActWrapper actor, FramePacket pack, CompleteHandler handler);
 	
 	public abstract boolean onCompleteListner(ActWrapper actor, FramePacket pack);
+	public abstract boolean onErrorListner(ActWrapper actor, Exception e);
 
 }

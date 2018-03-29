@@ -159,4 +159,10 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 
 		return true;
 	}
+
+	@Override
+	public boolean onErrorListner(ActWrapper actor, Exception e) {
+//		String module = actor.getModule();
+		return true;
+	}
 }

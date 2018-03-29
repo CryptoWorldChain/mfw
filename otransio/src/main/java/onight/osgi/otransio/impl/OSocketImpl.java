@@ -226,7 +226,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					RemoteModuleSession rms = (RemoteModuleSession) ms;
 					rms.getConnsPool().setAliasURI(uri);
 				}
-				log.debug("using exist session:" + ms.getMmid());
+				log.debug("using exist session:" + ms);
 			}
 			mss.getSendCounter().incrementAndGet();
 		} else {// re

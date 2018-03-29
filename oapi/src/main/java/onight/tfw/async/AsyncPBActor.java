@@ -28,9 +28,10 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 	long def_timeout = new PropHelper(null).get("tfw.async.timeout", 60000);
 
 	@Override
-	public void doWeb(final HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack) throws IOException {
+	public void doWeb(final HttpServletRequest req, final HttpServletResponse resp, final FramePacket pack)
+			throws IOException {
 		resp.setCharacterEncoding("UTF-8");
-		
+
 		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_REQUEST, req);
 		pack.getExtHead().append(PackHeader.EXT_IGNORE_HTTP_RESPONSE, resp);
 
@@ -50,13 +51,14 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 						public void onFinished(FramePacket retpack) {
 							try {
 								if (retpack == null) {
-									resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_NOBODYRETURN, "")));
+									resp.getOutputStream().write(PacketHelper.toJsonBytes(
+											PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_NOBODYRETURN, "")));
 									return;
 								}
-								if(retpack.getExtProp(PackHeader.EXT_IGNORE_HTTP_RESPONSE+"_sended")!=null){
+								if (retpack.getExtProp(PackHeader.EXT_IGNORE_HTTP_RESPONSE + "_sended") != null) {
 									return;
 								}
-								retpack.putHeader(PackHeader.EXT_IGNORE_HTTP_RESPONSE+"_sended", "1");
+								retpack.putHeader(PackHeader.EXT_IGNORE_HTTP_RESPONSE + "_sended", "1");
 								resp.setHeader("Content-type", "application/json;charset=UTF-8");
 								if (retpack.getFbody() instanceof ExceptionBody) {
 									ExceptionBody eb = (ExceptionBody) retpack.getFbody();
@@ -71,7 +73,8 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 								;
 								retpack.getExtHead().buildFor(resp);
 								boolean bodyOnly = false;
-								if (retpack.getExtStrProp("resp")==null||StringUtils.equalsIgnoreCase("bd", retpack.getExtStrProp("resp"))) {
+								if (retpack.getExtStrProp("resp") == null
+										|| StringUtils.equalsIgnoreCase("bd", retpack.getExtStrProp("resp"))) {
 									bodyOnly = true;
 								}
 
@@ -94,8 +97,12 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 										} else {
 											retpack.getFixHead().genBytes();
 
-											String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-													+ ",\"eh\":" + new String(SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
+											String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes()))
+													+ "\""//
+													+ ",\"eh\":"
+													+ new String(SerializerUtil
+															.toBytes(jsons.serialize(retpack.getExtHead().getVkvs())))
+													+ "" //
 													+ ",\"body\":" + str + "" + "}";
 											resp.getOutputStream().write(ret.getBytes("UTF-8"));
 
@@ -103,40 +110,52 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 
 									}
 
-								} else if (retpack.getFbody() != null && retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON) {
+								} else if (retpack.getFbody() != null
+										&& retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON) {
 
 									if (bodyOnly) {
 										resp.getOutputStream().write((byte[]) jsons.serialize(retpack.getFbody()));
 									} else {
 										String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-												+ ",\"eh\":" + new String((byte[]) (jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
-												+ ",\"body\":" + new String((byte[]) jsons.serialize(retpack.getFbody())) + "" + "}";
+												+ ",\"eh\":"
+												+ new String((byte[]) (jsons.serialize(retpack.getExtHead().getVkvs())))
+												+ "" //
+												+ ",\"body\":"
+												+ new String((byte[]) jsons.serialize(retpack.getFbody())) + "" + "}";
 
 										resp.getOutputStream().write(ret.getBytes("UTF-8"));
 									}
 
 									//
-								} else if (retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON && retpack.getBody() != null) {
+								} else if (retpack.getFixHead().getEnctype() == SerializerFactory.SERIALIZER_JSON
+										&& retpack.getBody() != null) {
 									if (bodyOnly) {
 										resp.getOutputStream().write(retpack.getBody());
 
 									} else {
 										String ret = "{\"fh\":\"" + (new String(retpack.getFixHead().genBytes())) + "\""//
-												+ ",\"eh\":" + new String((byte[]) (jsons.serialize(retpack.getExtHead().getVkvs()))) + "" //
+												+ ",\"eh\":"
+												+ new String((byte[]) (jsons.serialize(retpack.getExtHead().getVkvs())))
+												+ "" //
 												+ ",\"body\":" + new String(retpack.getBody()) + "" + "}";
 										resp.getOutputStream().write(ret.getBytes("UTF-8"));
 									}
 
 									//
 								} else {
-									resp.getOutputStream().write(PacketHelper
-											.toJsonBytes(PacketHelper.toPBReturn(pack, new ExceptionBody(ExceptionBody.EC_UNKNOW_SERAILTYPE, retpack.getFixHead().toStrHead()))));
+									resp.getOutputStream()
+											.write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack,
+													new ExceptionBody(ExceptionBody.EC_UNKNOW_SERAILTYPE,
+															retpack.getFixHead().toStrHead()))));
 								}
 							} catch (Exception e) {
 								log.debug("doweb error:", e);
 								try {
-									//FramePacket fp = PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION, "UNKNOW_ERROR:" + e.getMessage());
-									//resp.getOutputStream().write(PacketHelper.toJsonBytes(fp));
+									// FramePacket fp =
+									// PacketHelper.toPBErrorReturn(pack,
+									// ExceptionBody.EC_SERVICE_EXCEPTION,
+									// "UNKNOW_ERROR:" + e.getMessage());
+									// resp.getOutputStream().write(PacketHelper.toJsonBytes(fp));
 									resp.sendError(500, "UNKNOW_ERROR:" + e.getMessage());
 								} catch (IOException e1) {
 									// e1.printStackTrace();
@@ -147,12 +166,21 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 							}
 
 						}
+
+						@Override
+						public void onFailed(Exception e) {
+							try {
+								resp.sendError(HttpServletResponse.SC_EXPECTATION_FAILED, e.getMessage());
+							} catch (IOException e1) {
+								log.error("onfailed:",e1);
+							}
+						}
 					});
 				} catch (Exception e) {
 					log.debug("doweb error:", e);
 					try {
-						resp.getOutputStream()
-								.write(PacketHelper.toJsonBytes(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION, "UNKNOW_ERROR:" + e.getMessage())));
+						resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBErrorReturn(pack,
+								ExceptionBody.EC_SERVICE_EXCEPTION, "UNKNOW_ERROR:" + e.getMessage())));
 					} catch (IOException e1) {
 						// e1.printStackTrace();
 						log.debug("error response:", e);

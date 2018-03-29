@@ -68,25 +68,29 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	}
 
 	public synchronized Connection createOneConnection() {
-		return createOneConnection(5);
+		return createOneConnection(1);
 	}
 
 	public void sendMessage(final FramePacket pack) throws MessageException {
+		boolean writed = false;
 		for (int i = 0; i < 3; i++) {
 			Connection conn = null;
 			try {
 				conn = borrow();
 				if (conn != null) {
 					if (conn.isOpen()) {
-						conn.write(pack);
+						if(conn.write(pack)!=null)
+						{
+							writed = true;
+						}
 						break;
 					} else {
 						removeObject(conn);
 						conn = null;
 					}
 				}
+				createOneConnection(1);
 				Thread.sleep(100);
-				createOneConnection(3);
 			} catch (Exception e) {
 				log.error("sendMessageError:" + pack, e);
 				throw new MessageException(e);
@@ -95,6 +99,9 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					retobj(conn);
 				}
 			}
+		}
+		if(!writed){
+			throw new MessageException("No More Connections");
 		}
 	}
 
@@ -122,6 +129,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					return conn;
 				}
 			} catch (TimeoutException te) {
+				log.debug("Timeout:",te);
 				if (StringUtils.isNotBlank(aliasURI))//try alias
 					try {
 						NodeInfo newin = NodeInfo.fromURI(aliasURI, this.nameid);

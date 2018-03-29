@@ -20,4 +20,10 @@ public class NoneFilterManager implements FilterManager {
 		return false;
 	}
 
+	@Override
+	public boolean onErrorListner(ActWrapper actor, Exception e) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import onight.tfw.async.CallBack;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.async.FutureSender;
+import onight.tfw.async.NilCompleteHandler;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.beans.FramePacket;
 
@@ -27,11 +28,16 @@ public class OTransSender extends FutureSender {
 	@Override
 	public FramePacket send(FramePacket fp, long timeoutMS) throws MessageException {
 		final FutureImpl<FramePacket> future = Futures.createSafeFuture();
-		
+
 		osock.routePacket(fp, new CompleteHandler() {
 			@Override
 			public void onFinished(FramePacket packet) {
 				future.result(packet);
+			}
+
+			@Override
+			public void onFailed(Exception error) {
+				future.failure(error);
 			}
 		});
 		try {
@@ -52,24 +58,28 @@ public class OTransSender extends FutureSender {
 	}
 
 	@Override
-	public void asyncSend(FramePacket fp, final CallBack<FramePacket> cb) {
+	public void asyncSend(final FramePacket fp, final CallBack<FramePacket> cb) {
 		fp.genBodyBytes();
 		osock.routePacket(fp, new CompleteHandler() {
 			@Override
-			public void onFinished(FramePacket packet) {
-				packet.genBodyBytes();
-				cb.onSuccess(packet);
+			public void onFailed(Exception e) {
+				cb.onFailed(e, fp);
 			}
+
+			@Override
+			public void onFinished(FramePacket rfp) {
+				rfp.genBodyBytes();
+				cb.onSuccess(rfp);
+			}
+
 		});
 	}
 
+	NilCompleteHandler hh = new NilCompleteHandler();
+
 	@Override
 	public void post(FramePacket fp) {
-		osock.routePacket(fp, new CompleteHandler() {
-			@Override
-			public void onFinished(FramePacket packet) {
-			}
-		});
+		osock.routePacket(fp, hh);
 	}
 
 	@Override
@@ -87,5 +97,4 @@ public class OTransSender extends FutureSender {
 		osock.mss.getRmb().getNodeInfo().setNodeName(name);
 	}
 
-	 
 }

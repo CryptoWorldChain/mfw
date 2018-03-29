@@ -18,14 +18,7 @@ public class LocalModuleSession extends PSession {
 	public void onPacket(FramePacket pack, final CompleteHandler handler) {
 		CMDService service = serviceByCMD.get(pack.getCMD());
 		if (service != null) {
-			service.doPacketWithFilter(pack, new CompleteHandler() {
-				@Override
-				public void onFinished(FramePacket packet) {
-					if (handler != null) {
-						handler.onFinished(packet);
-					}
-				}
-			});
+			service.doPacketWithFilter(pack,handler);
 		}
 	}
 

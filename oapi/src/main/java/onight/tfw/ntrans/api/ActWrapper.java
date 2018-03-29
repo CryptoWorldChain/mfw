@@ -31,6 +31,7 @@ import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.ExceptionBody;
 import onight.tfw.otransio.api.beans.FramePacket;
+import onight.tfw.otransio.api.beans.SendFailedBody;
 import onight.tfw.otransio.api.beans.UnknowCMDBody;
 import onight.tfw.otransio.api.session.CMDService;
 import onight.tfw.outils.bean.JsonPBFormat;
@@ -115,20 +116,21 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 				public void onFinished(FramePacket retpack) {
 					try {
 						if (retpack == null) {
-							resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBErrorReturn(pack,
-									ExceptionBody.EC_NOBODYRETURN, "")));
+							resp.getOutputStream().write(PacketHelper.toJsonBytes(
+									PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_NOBODYRETURN, "")));
 							return;
 						}
 						if (retpack.getFbody() instanceof ExceptionBody) {
-							 ExceptionBody eb = (ExceptionBody)retpack.getFbody();
-							 try {
+							ExceptionBody eb = (ExceptionBody) retpack.getFbody();
+							try {
 								int errcode = Integer.parseInt(eb.getErrCode());
-								resp.sendError(errcode,eb.getErrMsg());
+								resp.sendError(errcode, eb.getErrMsg());
 							} catch (Exception e) {
-								resp.sendError(HttpServletResponse.SC_EXPECTATION_FAILED,eb.getErrMsg());
+								resp.sendError(HttpServletResponse.SC_EXPECTATION_FAILED, eb.getErrMsg());
 							}
-							 return;
-						};
+							return;
+						}
+						;
 						retpack.getExtHead().buildFor(resp);
 
 						if (retpack.getFbody() != null & retpack.getFbody() instanceof Message) {
@@ -139,7 +141,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 									+ ",\"eh\":"
 									+ new String(
 											SerializerUtil.toBytes(jsons.serialize(retpack.getExtHead().getVkvs())))
-									+ "" // 
+									+ "" //
 									+ ",\"body\":" + str + "" + "}";
 
 							resp.getOutputStream().write(ret.getBytes("UTF-8"));
@@ -155,19 +157,20 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 							resp.getOutputStream().write(ret.getBytes("UTF-8"));
 							//
 						} else {
-							resp.getOutputStream()
-									.write(PacketHelper.toJsonBytes(PacketHelper.toPBReturn(pack,
-											new ExceptionBody(ExceptionBody.EC_UNKNOW_SERAILTYPE,
-													retpack.getFixHead().toStrHead()))));
+							resp.getOutputStream().write(PacketHelper.toJsonBytes(
+									PacketHelper.toPBReturn(pack, new ExceptionBody(ExceptionBody.EC_UNKNOW_SERAILTYPE,
+											retpack.getFixHead().toStrHead()))));
 						}
 					} catch (Exception e) {
 						log.debug("doweb error:", e);
 						try {
-//							FramePacket fp = PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION,
-//									"UNKNOW_ERROR:" + e.getMessage());
+							// FramePacket fp =
+							// PacketHelper.toPBErrorReturn(pack,
+							// ExceptionBody.EC_SERVICE_EXCEPTION,
+							// "UNKNOW_ERROR:" + e.getMessage());
 							resp.sendError(500, "UNKNOW_ERROR:" + e.getMessage());
 
-//							resp.getOutputStream().write(PacketHelper.toJsonBytes(fp));
+							// resp.getOutputStream().write(PacketHelper.toJsonBytes(fp));
 						} catch (IOException e1) {
 							// e1.printStackTrace();
 							log.debug("error response:", e);
@@ -183,15 +186,22 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 						}
 					}
 				}
+
+				@Override
+				public void onFailed(Exception e) {
+					try {
+						resp.sendError(500, "UNKNOW_ERROR:" + e.getMessage());
+					} catch (IOException e1) {
+						log.error("unknow error:" + e.getMessage(), e1);
+					}
+				}
 			});
 		} catch (Exception e) {
 			log.debug("doweb error:", e);
 			try {
-				resp.getOutputStream().write(PacketHelper.toJsonBytes(
-						PacketHelper.toPBErrorReturn(pack,ExceptionBody.EC_SERVICE_EXCEPTION, "UNKNOW_ERROR:" + e.getMessage())));
+				resp.sendError(500, "UNKNOW_ERROR:" + e.getMessage());
 			} catch (IOException e1) {
-				// e1.printStackTrace();
-				log.debug("error response:", e);
+				log.error("unknow error:" + e.getMessage(), e1);
 			}
 		}
 
@@ -229,28 +239,38 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 	public FilterManager fm = new NoneFilterManager();
 
 	@Override
-	final public void doPacketWithFilter(FramePacket pack,final CompleteHandler handler) {
+	final public void doPacketWithFilter(FramePacket pack, final CompleteHandler handler) {
 		try {
 			if (!fm.preRouteListner(this, pack, handler)) {
 				throw new FilterException("FilterBlock!");
 			}
 			onPacket(pack, new CompleteHandler() {
-				
+
 				@Override
 				public void onFinished(FramePacket endpack) {
-					try{
+					try {
 						handler.onFinished(endpack);
-					}finally{
+					} finally {
 						fm.onCompleteListner(ActWrapper.this, endpack);
 					}
-					
+
+				}
+
+				@Override
+				public void onFailed(Exception e) {
+					try {
+						handler.onFailed(e);
+					} finally {
+						fm.onErrorListner(ActWrapper.this, null);
+					}
 				}
 			});
 		} catch (FilterException e) {
-			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_FILTER_EXCEPTION,"FilterBlocked:" + e.getMessage()));
+			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_FILTER_EXCEPTION,
+					"FilterBlocked:" + e.getMessage()));
 		} catch (Throwable e) {
 			log.debug("doPacketWithFilterError:", e);
-			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION,e.getMessage()));
+			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION, e.getMessage()));
 		} finally {
 			fm.postRouteListner(this, pack, handler);
 		}
@@ -288,6 +308,17 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 								String qid = pack.getExtStrProp(ex + ".QID");
 								if (StringUtils.isNotBlank(qid)) {
 									qService.sendMessage(qid, PacketHelper.toTransBytes(packet));
+								}
+							}
+						}
+
+						@Override
+						public void onFailed(Exception e) {
+							if (pack.isSync()) {
+								String qid = pack.getExtStrProp(ex + ".QID");
+								if (StringUtils.isNotBlank(qid)) {
+									qService.sendMessage(qid, PacketHelper.toTransBytes(PacketHelper
+											.toPBErrorReturn(pack, e.getMessage(), e.getCause().getMessage())));
 								}
 							}
 						}

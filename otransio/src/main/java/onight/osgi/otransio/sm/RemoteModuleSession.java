@@ -48,7 +48,7 @@ public class RemoteModuleSession extends PSession {
 
 	@Override
 	public String toString() {
-		return "RemoteModuleSession("+nodeInfo.getNodeName()+")";
+		return "RemoteModuleSession(" + nodeInfo.getNodeName() + ")";
 	}
 
 	private String genPackID() {
@@ -66,8 +66,8 @@ public class RemoteModuleSession extends PSession {
 		sb.append(",\"dropcc\":").append(dropCounter.get()).append("");
 		sb.append(",\"core\":").append(nodeInfo.getCore()).append("");
 		sb.append(",\"max\":").append(nodeInfo.getMax()).append("");
-		sb.append(",\"uri\":\"").append(nodeInfo.getAddr()+":"+nodeInfo.getPort()).append("\"");
-		
+		sb.append(",\"uri\":\"").append(nodeInfo.getAddr() + ":" + nodeInfo.getPort()).append("\"");
+
 		sb.append(",\"chdetails\":[");
 		Iterator<Connection> it = connsPool.iterator();
 		while (it.hasNext()) {
@@ -114,14 +114,15 @@ public class RemoteModuleSession extends PSession {
 
 	@Override
 	public void onPacket(final FramePacket pack, final CompleteHandler handler) {
+		String packid = null;
 		if (pack.isSync()) {
 			FutureImpl<FramePacket> future = null;
-			String packid = null;
 			// 发送到远程
 			packid = genPackID();
 			future = Futures.createSafeFuture();
 			pack.putHeader(mss.packIDKey, packid);
-//			pack.putHeader(OSocketImpl.PACK_FROM, "" + NodeHelper.getCurrNodeIdx());
+			// pack.putHeader(OSocketImpl.PACK_FROM, "" +
+			// NodeHelper.getCurrNodeIdx());
 			pack.getExtHead().remove(OSocketImpl.PACK_TO);
 			future.addCompletionHandler(new CompletionHandler<FramePacket>() {
 				@Override
@@ -130,7 +131,7 @@ public class RemoteModuleSession extends PSession {
 
 				@Override
 				public void failed(Throwable throwable) {
-					handler.onFinished(PacketHelper.toPBReturn(pack, new SendFailedBody(mss.packIDKey, pack)));
+					handler.onFailed(new RuntimeException(throwable));
 				}
 
 				@Override
@@ -140,7 +141,8 @@ public class RemoteModuleSession extends PSession {
 
 				@Override
 				public void cancelled() {
-					handler.onFinished(PacketHelper.toPBReturn(pack, new SendFailedBody(mss.packIDKey, pack)));
+					
+					handler.onFailed(new RuntimeException("cancelled"));
 				}
 			});
 			mss.packMaps.put(packid, future);
@@ -153,10 +155,17 @@ public class RemoteModuleSession extends PSession {
 			sentCounter.incrementAndGet();
 			mss.sentCounter.incrementAndGet();
 		} catch (MessageException me) {
-
+			if (packid != null && pack.isSync()) {
+				handler.onFailed(me);
+				mss.packMaps.remove(packid);
+			}
 			throw me;
 		} catch (Exception e) {
 			log.error("sendMessageError:" + pack, e);
+			if (packid != null && pack.isSync()) {
+				handler.onFailed(e);
+				mss.packMaps.remove(packid);
+			}
 			throw new MessageException(e);
 		}
 	}
@@ -169,7 +178,7 @@ public class RemoteModuleSession extends PSession {
 		dropp.genHeader();
 		while (it.hasNext()) {
 			try {
-				Connection conn =it.next();
+				Connection conn = it.next();
 				conn.write(dropp);
 				conn.closeSilently();
 			} catch (Exception e) {
