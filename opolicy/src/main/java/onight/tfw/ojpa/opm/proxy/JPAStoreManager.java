@@ -1,5 +1,6 @@
 package onight.tfw.ojpa.opm.proxy;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -129,7 +130,8 @@ public class JPAStoreManager {
 		StoreClientSet clientset = daosByClient.get(System.identityHashCode(storeClient));
 		if (clientset == null) {
 			List<DomainDaoSupport> daos = new ArrayList<DomainDaoSupport>();
-			daosByClient.put(System.identityHashCode(storeClient), new StoreClientSet(storeClient, daos, ref.getBundle()));
+			daosByClient.put(System.identityHashCode(storeClient),
+					new StoreClientSet(storeClient, daos, ref.getBundle()));
 
 			Class clazz = storeClient.getClass();
 
@@ -140,7 +142,8 @@ public class JPAStoreManager {
 					try {
 						Method setmethod = null;
 						try {
-							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()), DomainDaoSupport.class);
+							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()),
+									DomainDaoSupport.class);
 						} catch (Exception e1) {
 							setmethod = clazz.getMethod("set" + StringUtils.capitalize(field.getName()), OJpaDAO.class);
 						}
@@ -157,53 +160,64 @@ public class JPAStoreManager {
 						}
 
 						dao = (DomainDaoSupport) getmethod.invoke(storeClient);
-//						if (dao == null) {
+						// if (dao == null) {
 
-							Class domainClazz = anno.domain();
-							if ((domainClazz == null || domainClazz == Object.class) && field.getGenericType() instanceof ParameterizedType) {
-								for (Type type : ((ParameterizedType) field.getGenericType()).getActualTypeArguments()) {
-									if (type instanceof Class) {
-										domainClazz = (Class) type;
-										log.debug("get JPADAOType==" + domainClazz + ",type=" + type + ",typeclass=" + type.getClass());
+						Class domainClazz = anno.domain();
+						if ((domainClazz == null || domainClazz == Object.class)
+								&& field.getGenericType() instanceof ParameterizedType) {
+							for (Type type : ((ParameterizedType) field.getGenericType()).getActualTypeArguments()) {
+								if (type instanceof Class) {
+									domainClazz = (Class) type;
+									log.debug("get JPADAOType==" + domainClazz + ",type=" + type + ",typeclass="
+											+ type.getClass());
+								}
+							}
+						}
+
+						ServiceSpec ss;
+						String target = getOverrideTarget(clazz, field);
+						if (StringUtils.isBlank(target)) {
+							target = anno.target();
+						}
+						if (StringUtils.isNotBlank(target) && target.indexOf('.') > 0) {
+							// sub class
+							String name = target.substring(1);
+							Method getNameMethod = clazz.getMethod("get" + StringUtils.capitalize(name));
+							if (getNameMethod != null) {
+								target = (String) getNameMethod.invoke(storeClient);
+							}
+						}
+						ss = new ServiceSpec(target);
+						Constructor ct = null;
+
+						try {
+							ct = anno.daoClass().getConstructor(ServiceSpec.class, Class.class, Class.class,
+									Class.class);
+							dao = (DomainDaoSupport) ct.newInstance(ss, domainClazz, anno.example(), anno.keyclass());
+
+						} catch (NoSuchMethodException nsme) {
+							ct = anno.daoClass().getConstructor(ServiceSpec.class);
+							dao = (DomainDaoSupport) ct.newInstance(ss);
+						}
+						setmethod.invoke(storeClient, dao);
+						if (dao instanceof OJpaDAO) {
+							OJpaDAO ojdao = (OJpaDAO) dao;
+
+							ojdao.setKeyField(anno.key());
+							if (!StringUtils.isBlank(anno.key())) {
+								List<Method> keyMethods = new ArrayList<Method>();
+								for (String keyf : anno.key().split(",")) {
+									try {
+										keyMethods.add(
+												domainClazz.getMethod("get" + StringUtils.capitalize(keyf.trim())));
+									} catch (Exception e) {
+										log.warn("key get method not found:" + clazz + ",field=" + field.getName());
 									}
 								}
+								ojdao.setKeyMethods(keyMethods);
 							}
-
-							ServiceSpec ss;
-							String target = getOverrideTarget(clazz, field);
-							if (StringUtils.isBlank(target)) {
-								target = anno.target();
-							}
-							if (StringUtils.isNotBlank(target) && target.indexOf('.') > 0) {
-								// sub class
-								String name = target.substring(1);
-								Method getNameMethod = clazz.getMethod("get" + StringUtils.capitalize(name));
-								if (getNameMethod != null) {
-									target = (String) getNameMethod.invoke(storeClient);
-								}
-							}
-							ss = new ServiceSpec(target);
-
-							dao = (DomainDaoSupport) anno.daoClass().getConstructor(ServiceSpec.class, Class.class, Class.class, Class.class).newInstance(ss, domainClazz,
-									anno.example(), anno.keyclass());
-							setmethod.invoke(storeClient, dao);
-							if (dao instanceof OJpaDAO) {
-								OJpaDAO ojdao = (OJpaDAO) dao;
-
-								ojdao.setKeyField(anno.key());
-								if (!StringUtils.isBlank(anno.key())) {
-									List<Method> keyMethods = new ArrayList<Method>();
-									for (String keyf : anno.key().split(",")) {
-										try {
-											keyMethods.add(domainClazz.getMethod("get" + StringUtils.capitalize(keyf.trim())));
-										} catch (Exception e) {
-											log.warn("key get method not found:" + clazz + ",field=" + field.getName());
-										}
-									}
-									ojdao.setKeyMethods(keyMethods);
-								}
-							}
-//						}
+						}
+						// }
 						daos.add(dao);
 					} catch (Exception e) {
 						log.debug("wair dao error:", e);

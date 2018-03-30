@@ -176,6 +176,11 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 				public void onFinished(FramePacket arg0) {
 
 				}
+
+				@Override
+				public void onFailed(Exception arg0) {
+					
+				}
 			})) {
 				throw new FilterException("FilterCannotMatch");
 			}
@@ -198,6 +203,12 @@ public abstract class RestfulDBStoreProvider extends ORDBProvider implements IAc
 					@Override
 					public void onFinished(FramePacket arg0) {
 
+					}
+
+					@Override
+					public void onFailed(Exception arg0) {
+						// TODO Auto-generated method stub
+						
 					}
 				});
 			}

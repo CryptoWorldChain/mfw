@@ -257,4 +257,19 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 		return future.getResult();
 	}
 
+	@Override
+	public void changeNodeName(String arg0, String arg1) {
+		
+	}
+
+	@Override
+	public void setCurrentNodeName(String arg0) {
+		
+	}
+
+	@Override
+	public void tryDropConnection(String arg0) {
+		
+	}
+
 }
