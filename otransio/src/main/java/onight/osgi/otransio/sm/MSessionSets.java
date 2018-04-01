@@ -119,13 +119,13 @@ public class MSessionSets {
 
 	public FramePacket getLocalModulesPacket() {
 		FramePacket ret = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN, PackHeader.REMOTE_MODULE, rmb);
-		log.debug("getLocalModulePack:" + ret.getFixHead().toStrHead() + ":" + rmb);
+//		log.debug("getLocalModulePack:" + ret.getFixHead().toStrHead() + ":" + rmb);
 		return ret;
 	}
 
 	public FramePacket getLocalModulesPacketBack() {
 		FramePacket ret = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN_RET, PackHeader.REMOTE_MODULE, rmb);
-		log.debug("getLocalModulePack.back:" + ret.getFixHead().toStrHead() + ":" + rmb);
+//		log.debug("getLocalModulePack.back:" + ret.getFixHead().toStrHead() + ":" + rmb);
 		return ret;
 	}
 
