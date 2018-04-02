@@ -74,7 +74,7 @@ public class SessionFilter extends BaseFilter {
 		}
 
 		oimpl.onPacket(pack, handler, ctx.getConnection());
-		log.info("[MSG] " + pack.getCMD() + " " + pack.getModule()//
+		log.debug("[MSG] " + pack.getCMD() + " " + pack.getModule()//
 				+ " , FROM: " + ctx.getConnection().getPeerAddress() //
 				+ " , TO: " + ctx.getConnection().getLocalAddress() //
 				+ " COST " + (System.currentTimeMillis() - start) + " ms");

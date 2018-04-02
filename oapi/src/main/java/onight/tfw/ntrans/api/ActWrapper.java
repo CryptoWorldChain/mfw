@@ -269,6 +269,7 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_FILTER_EXCEPTION,
 					"FilterBlocked:" + e.getMessage()));
 		} catch (Throwable e) {
+			e.printStackTrace();
 			log.debug("doPacketWithFilterError:", e);
 			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION, e.getMessage()));
 		} finally {
