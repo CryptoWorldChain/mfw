@@ -109,10 +109,10 @@ public class CheckHealth {
 					}
 					// exec.remove(this);
 				} else {
-					log.info("check health:" + pool.ip + ",port=" + pool.port);
+					log.debug("check health:" + pool.ip + ",port=" + pool.port);
 					for (int i = pool.size(); i < pool.getCore(); i++) {
 						Connection conn = pool.createOneConnection();
-						log.info("add more conn core size." + conn.getPeerAddress());
+						log.debug("add more conn core size." + conn.getPeerAddress());
 						addCheckHealth(conn);
 					}
 
