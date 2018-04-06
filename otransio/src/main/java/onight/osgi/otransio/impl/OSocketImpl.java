@@ -266,7 +266,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	}
 
 	public void route2Local(final FramePacket pack, final CompleteHandler handler, final PSession ms) {
-		String packid = null;
+//		String packid = null;
 		if (pack.isSync()) {
 			final FutureImpl<String> future = Futures.createSafeFuture();
 			localPool.execute(new Runnable() {

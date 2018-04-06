@@ -8,6 +8,7 @@ import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.ssl.SSLFilter;
+import org.glassfish.grizzly.strategies.LeaderFollowerNIOStrategy;
 import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,9 +53,9 @@ public class OServer {
 		ThreadPoolConfig wtpc=ThreadPoolConfig.defaultConfig();
 		wtpc.setCorePoolSize(params.get("otrans.worker.core", 10)).setMaxPoolSize(params.get("otrans.worker.max", 100));
 		transport.setWorkerThreadPoolConfig(wtpc);
-		
-
+		transport.setIOStrategy(LeaderFollowerNIOStrategy.getInstance());
 		transport.setTcpNoDelay(true);
+		transport.setOptimizedForMultiplexing(true);
 		try {
 			// binding transport to start listen on certain host and port
 			int oport = NodeHelper.getCurrNodeListenInPort();
