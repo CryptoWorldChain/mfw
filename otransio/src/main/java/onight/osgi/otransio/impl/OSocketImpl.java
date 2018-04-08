@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -22,7 +21,6 @@ import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.Unbind;
 import org.apache.felix.ipojo.annotations.Validate;
-import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Futures;
@@ -31,12 +29,12 @@ import org.osgi.framework.BundleContext;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.nio.OServer;
+import onight.osgi.otransio.nio.PacketQueue;
 import onight.osgi.otransio.sm.MSessionSets;
 import onight.osgi.otransio.sm.OutgoingSessionManager;
 import onight.osgi.otransio.sm.RemoteModuleBean;
 import onight.osgi.otransio.sm.RemoteModuleSession;
 import onight.tfw.async.CompleteHandler;
-import onight.tfw.mservice.NodeHelper;
 import onight.tfw.ntrans.api.ActorService;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.PSenderService;
@@ -76,9 +74,12 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	public OSocketImpl(BundleContext context) {
 		this.context = context;
 		params = new PropHelper(context);
-		mss = new MSessionSets();
+		mss = new MSessionSets(params);
 		osm = new OutgoingSessionManager(this, params, mss);
 		mss.setOsm(osm);
+		localPool = new ThreadPoolExecutor(params.get("org.zippo.otransio.localthreadpool.cor", 10),
+				params.get("org.zippo.otransio.localthreadpool.max", 100), 120l, TimeUnit.SECONDS,
+				new LinkedBlockingQueue());
 	}
 
 	MSessionSets mss;
@@ -88,7 +89,9 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	OServer server = new OServer();
 
 	OutgoingSessionManager osm;
-	ThreadPoolExecutor localPool = new ThreadPoolExecutor(10, 100, 120l, TimeUnit.SECONDS, new LinkedBlockingQueue());
+	ThreadPoolExecutor localPool;
+
+	ConcurrentHashMap<String, PacketQueue> queueBybcuid = new ConcurrentHashMap<>();
 
 	public String getHostName() {
 		try {
@@ -101,7 +104,6 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	@Validate
 	public void start() {
 		server.startServer(this, params);
-
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -157,12 +159,6 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 		if (PackHeader.REMOTE_LOGIN.equals(pack.getGlobalCMD())) {// 来自远端的登录
 			RemoteModuleBean rmb = pack.parseBO(RemoteModuleBean.class);
 			String node_from = pack.getExtStrProp(PACK_FROM);
-			// if (StringUtils.equals(rmb.getNodeInfo().nodeName,
-			// NodeHelper.getCurrNodeName())) {
-			// log.debug("loop login from local");
-			// // conn.close();
-			// return;
-			// }
 			if (node_from == null) {
 				node_from = rmb.getNodeInfo().getNodeName();
 			}
@@ -236,15 +232,15 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				}
 				log.debug("using exist session:" + ms);
 			}
-			mss.getSendCounter().incrementAndGet();
+//			mss.getSendCounter().incrementAndGet();
 		} else {// re
 			if (conn != null) {
-				mss.getRecvCounter().incrementAndGet();
+//				mss.getRecvCounter().incrementAndGet();
 				if (StringUtils.isNotBlank(from)) {
 					RemoteModuleSession rms = osm.addIncomming(from, conn);
-					if (rms != null) {
-						rms.getRecvCounter().incrementAndGet();
-					}
+//					if (rms != null) {
+//						rms.getRecvCounter().incrementAndGet();
+//					}
 				}
 			}
 			ms = mss.getLocalsessionByModule().get(pack.getModule());
@@ -266,7 +262,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	}
 
 	public void route2Local(final FramePacket pack, final CompleteHandler handler, final PSession ms) {
-//		String packid = null;
+		// String packid = null;
 		if (pack.isSync()) {
 			final FutureImpl<String> future = Futures.createSafeFuture();
 			localPool.execute(new Runnable() {

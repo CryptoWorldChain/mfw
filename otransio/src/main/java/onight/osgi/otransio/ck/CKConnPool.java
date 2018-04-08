@@ -2,6 +2,7 @@ package onight.osgi.otransio.ck;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import lombok.Data;
@@ -79,8 +80,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				conn = borrow();
 				if (conn != null) {
 					if (conn.isOpen()) {
-						if(conn.write(pack)!=null)
-						{
+						if (conn.write(pack) != null) {
 							writed = true;
 						}
 						break;
@@ -100,7 +100,41 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 			}
 		}
-		if(!writed){
+		if (!writed) {
+			throw new MessageException("No More Connections");
+		}
+	}
+
+	public void sendMessage(final List<FramePacket> packs) throws MessageException {
+		boolean writed = false;
+		for (int i = 0; i < 3; i++) {
+			Connection conn = null;
+			try {
+				conn = borrow();
+				if (conn != null) {
+					if (conn.isOpen()) {
+						for (FramePacket pack : packs) {
+							conn.write(pack);
+						}
+						writed = true;
+						break;
+					} else {
+						removeObject(conn);
+						conn = null;
+					}
+				}
+				createOneConnection(1);
+				Thread.sleep(100);
+			} catch (Exception e) {
+				log.error("sendMessageError:", e);
+				throw new MessageException(e);
+			} finally {
+				if (conn != null && conn.isOpen()) {
+					retobj(conn);
+				}
+			}
+		}
+		if (!writed) {
 			throw new MessageException("No More Connections");
 		}
 	}
@@ -129,8 +163,8 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					return conn;
 				}
 			} catch (TimeoutException te) {
-				log.debug("Timeout:",te);
-				if (StringUtils.isNotBlank(aliasURI))//try alias
+				log.debug("Timeout:", te);
+				if (StringUtils.isNotBlank(aliasURI))// try alias
 					try {
 						NodeInfo newin = NodeInfo.fromURI(aliasURI, this.nameid);
 						if (newin != null) {

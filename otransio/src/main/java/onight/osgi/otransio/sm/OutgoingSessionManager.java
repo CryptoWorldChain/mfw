@@ -20,6 +20,7 @@ import onight.osgi.otransio.exception.NoneServerException;
 import onight.osgi.otransio.impl.NodeInfo;
 import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.nio.OClient;
+import onight.osgi.otransio.nio.PacketQueue;
 import onight.tfw.mservice.NodeHelper;
 import onight.tfw.otransio.api.session.PSession;
 import onight.tfw.outils.conf.PropHelper;

@@ -2,22 +2,21 @@ package onight.osgi.otransio.nio;
 
 import java.io.IOException;
 
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.attributes.AttributeBuilder;
+import org.glassfish.grizzly.filterchain.BaseFilter;
+import org.glassfish.grizzly.filterchain.FilterChainContext;
+import org.glassfish.grizzly.filterchain.NextAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import onight.osgi.otransio.impl.OSocketImpl;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.async.NilCompleteHandler;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.conf.PropHelper;
-
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.Grizzly;
-import org.glassfish.grizzly.attributes.AttributeBuilder;
-import org.glassfish.grizzly.filterchain.BaseFilter;
-import org.glassfish.grizzly.filterchain.FilterChainContext;
-import org.glassfish.grizzly.filterchain.FilterChainContext.State;
-import org.glassfish.grizzly.filterchain.NextAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SessionFilter extends BaseFilter {
 	Logger log = LoggerFactory.getLogger(SessionFilter.class);
@@ -72,7 +71,6 @@ public class SessionFilter extends BaseFilter {
 		} else {
 			handler = nch;
 		}
-
 		oimpl.onPacket(pack, handler, ctx.getConnection());
 		log.debug("[MSG] " + pack.getCMD() + " " + pack.getModule()//
 				+ " , FROM: " + ctx.getConnection().getPeerAddress() //

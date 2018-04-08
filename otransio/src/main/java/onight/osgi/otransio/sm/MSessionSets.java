@@ -19,6 +19,7 @@ import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.session.LocalModuleSession;
 import onight.tfw.otransio.api.session.PSession;
+import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.serialize.UUIDGenerator;
 
 @Data
@@ -26,9 +27,17 @@ import onight.tfw.outils.serialize.UUIDGenerator;
 public class MSessionSets {
 
 	String packIDKey = "";
+	private PropHelper params;
 
-	public MSessionSets() {
+	int packet_buffer_size = 10;
+	int write_thread_count = 10;
+	
+	
+	public MSessionSets(PropHelper params) {
 		packIDKey = UUIDGenerator.generate() + ".SID";
+		this.params = params;
+		packet_buffer_size=params.get("org.zippo.otransio.maxpacketqueue", 10);
+		write_thread_count=params.get("org.zippo.otransio.write_thread_count", 10);
 	}
 
 	OutgoingSessionManager osm;
@@ -54,8 +63,8 @@ public class MSessionSets {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{");
 		sb.append("\"name\":\"").append(rmb.getNodeInfo().getNodeName()).append("\"");
-		sb.append(",\"addr\":\"").append(rmb.getNodeInfo().getAddr()).
-		append(":").append(rmb.getNodeInfo().getPort()).append("\"");
+		sb.append(",\"addr\":\"").append(rmb.getNodeInfo().getAddr()).append(":").append(rmb.getNodeInfo().getPort())
+				.append("\"");
 		sb.append(",\"modules\":[");
 		int i = 0;
 		for (Entry<String, LocalModuleSession> kv : localsessionByModule.entrySet()) {
@@ -87,7 +96,7 @@ public class MSessionSets {
 		sb.append(",\"drop\":").append(dropCounter.get());
 		sb.append(",\"dupl\":").append(duplCounter.get());
 		sb.append("}");
-//		sb.append(",\"osm\":").append(osm.getJsonInfo());
+		// sb.append(",\"osm\":").append(osm.getJsonInfo());
 		sb.append("}");
 		return sb.toString();
 	}
@@ -107,10 +116,10 @@ public class MSessionSets {
 		PSession psession = sessionByNodeName.get(node.getNodeName());
 		RemoteModuleSession session = null;
 		if (psession == null) {
-			session = new RemoteModuleSession(node, this);
+			session = new RemoteModuleSession(node, this, ckpool);
 			psession = session;
 			sessionByNodeName.put(node.getNodeName(), psession);
-			session.setConnsPool(ckpool);
+			// session.setConnsPool(ckpool);
 			// osm.ck.addCheckHealth(ckpool);
 		} //
 		return session;
@@ -119,13 +128,15 @@ public class MSessionSets {
 
 	public FramePacket getLocalModulesPacket() {
 		FramePacket ret = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN, PackHeader.REMOTE_MODULE, rmb);
-//		log.debug("getLocalModulePack:" + ret.getFixHead().toStrHead() + ":" + rmb);
+		// log.debug("getLocalModulePack:" + ret.getFixHead().toStrHead() + ":"
+		// + rmb);
 		return ret;
 	}
 
 	public FramePacket getLocalModulesPacketBack() {
 		FramePacket ret = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN_RET, PackHeader.REMOTE_MODULE, rmb);
-//		log.debug("getLocalModulePack.back:" + ret.getFixHead().toStrHead() + ":" + rmb);
+		// log.debug("getLocalModulePack.back:" + ret.getFixHead().toStrHead() +
+		// ":" + rmb);
 		return ret;
 	}
 

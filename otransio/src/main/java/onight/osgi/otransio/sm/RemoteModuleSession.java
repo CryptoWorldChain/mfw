@@ -19,13 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.impl.NodeInfo;
 import onight.osgi.otransio.impl.OSocketImpl;
+import onight.osgi.otransio.nio.PacketQueue;
 import onight.tfw.async.CompleteHandler;
-import onight.tfw.mservice.NodeHelper;
 import onight.tfw.otransio.api.MessageException;
-import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
-import onight.tfw.otransio.api.beans.SendFailedBody;
 import onight.tfw.otransio.api.session.PSession;
 
 @Slf4j
@@ -44,6 +42,7 @@ public class RemoteModuleSession extends PSession {
 
 	AtomicLong counter = new AtomicLong(0);
 
+	PacketQueue writerQ;
 	final String rand = "r_" + String.format("%05d", (int) (Math.random() * 100000)) + "_";
 
 	@Override
@@ -83,9 +82,12 @@ public class RemoteModuleSession extends PSession {
 		return sb.toString();
 	}
 
-	public RemoteModuleSession(NodeInfo nodeInfo, MSessionSets mss) {
+	public RemoteModuleSession(NodeInfo nodeInfo, MSessionSets mss,CKConnPool ckpool) {
 		this.mss = mss;
 		this.nodeInfo = nodeInfo;
+		this.connsPool = ckpool;
+		
+		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size,mss.write_thread_count);
 	}
 
 	public RemoteModuleSession addConnection(Connection<?> conn) {
@@ -141,7 +143,7 @@ public class RemoteModuleSession extends PSession {
 
 				@Override
 				public void cancelled() {
-					
+
 					handler.onFailed(new RuntimeException("cancelled"));
 				}
 			});
@@ -150,10 +152,11 @@ public class RemoteModuleSession extends PSession {
 
 		}
 		try {
-			sendCounter.incrementAndGet();
-			connsPool.sendMessage(pack);
-			sentCounter.incrementAndGet();
-			mss.sentCounter.incrementAndGet();
+//			sendCounter.incrementAndGet();
+			writerQ.offer(pack);
+//			connsPool.sendMessage(pack);
+//			sentCounter.incrementAndGet();
+//			mss.sentCounter.incrementAndGet();
 		} catch (MessageException me) {
 			if (packid != null && pack.isSync()) {
 				handler.onFailed(me);

@@ -63,7 +63,6 @@ public class OServer {
 			transport.bind(NodeHelper.getCurrNodeListenInAddr(), oport);
 			log.info("socket服务开启成功:" + oport);
 			transport.start();
-			
 		} catch (IOException e) {
 			log.error("socket服务开启失败:", e);
 
