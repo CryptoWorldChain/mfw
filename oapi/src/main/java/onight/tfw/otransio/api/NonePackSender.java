@@ -45,4 +45,9 @@ public class NonePackSender implements IPacketSender {
 		
 	}
 
+	@Override
+	public void setDestURI(String dest, String uri) {
+		
+	}
+
 }

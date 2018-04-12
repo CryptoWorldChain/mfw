@@ -1,9 +1,16 @@
 package onight.osgi.otransio.ck;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+
+import org.apache.commons.lang3.StringUtils;
+import org.glassfish.grizzly.CloseListener;
+import org.glassfish.grizzly.Closeable;
+import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.ICloseType;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -11,18 +18,8 @@ import onight.osgi.otransio.impl.NodeInfo;
 import onight.osgi.otransio.nio.OClient;
 import onight.osgi.otransio.sm.MSessionSets;
 import onight.tfw.otransio.api.MessageException;
-import onight.tfw.otransio.api.PackHeader;
-import onight.tfw.otransio.api.beans.ExtHeader;
-import onight.tfw.otransio.api.beans.FixHeader;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.pool.ReusefulLoopPool;
-
-import org.apache.commons.lang3.StringUtils;
-import org.glassfish.grizzly.CloseListener;
-import org.glassfish.grizzly.Closeable;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.ICloseType;
-import org.glassfish.grizzly.nio.transport.TCPNIOConnection;
 
 @Data
 @Slf4j
@@ -33,8 +30,11 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	int core;
 	int max;
 	boolean stop = false;
-	String aliasURI = "";
+	 String subnodeURI = "";
 
+	ArrayList<NodeInfo> subNodes = new ArrayList<>();
+	
+	
 	MSessionSets mss;
 
 	public void setStop(boolean isstop) {
@@ -70,6 +70,19 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 
 	public synchronized Connection createOneConnection() {
 		return createOneConnection(1);
+	}
+
+	public void parseURI(String uri) {
+		subNodes.clear();
+		for (String str : uri.split(",")) {
+			if (!StringUtils.isBlank(str.trim())) {
+				try {
+					NodeInfo newin = NodeInfo.fromURI(str, this.nameid);
+					subNodes.add(newin);
+				} catch (Exception e) {
+				}
+			}
+		}
 	}
 
 	public void sendMessage(final FramePacket pack) throws MessageException {
@@ -139,6 +152,37 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		}
 	}
 
+	public synchronized Connection createOneConnectionBySubNode(int maxtries) {
+		for (NodeInfo node : subNodes) {
+			try {
+				final Connection conn = client.getConnection(node.getAddr(), node.getPort());
+				if (conn != null) {
+					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
+						@Override
+						public void onClosed(Closeable closeable, ICloseType type) throws IOException {
+							log.info("CheckHealth remove Connection!:" + closeable);
+							if (closeable instanceof Connection) {
+								removeObject((Connection) closeable);
+							}
+						}
+					});
+					final FramePacket pack = mss.getLocalModulesPacket();
+					log.debug("write localmodulepack:" + pack + ",writable==" + conn.canWrite());
+					log.trace("!!WriteLocalModulesPacket TO:" + conn.getPeerAddress() + ",From="
+							+ conn.getLocalAddress() + ",pack=" + pack.getFixHead());
+					//
+					conn.write(pack);
+					this.addObject(conn);
+					return conn;
+				}
+			} catch (Exception e) {
+				// creating new Connection
+				log.warn("error in create out conn:" + ip + ",port=" + port, e);
+			}
+		}
+		return null;
+	}
+
 	public synchronized Connection createOneConnection(int maxtries) {
 		for (int i = 0; i < maxtries && size() < max; i++) {
 			try {
@@ -164,18 +208,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 			} catch (TimeoutException te) {
 				log.debug("Timeout:", te);
-				if (StringUtils.isNotBlank(aliasURI))// try alias
-					try {
-						NodeInfo newin = NodeInfo.fromURI(aliasURI, this.nameid);
-						if (newin != null) {
-							this.ip = newin.getAddr();
-							this.port = newin.getPort();
-						}
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
+				return createOneConnectionBySubNode(maxtries);
 			} catch (Exception e) {
 				// creating new Connection
 				log.warn("error in create out conn:" + ip + ",port=" + port, e);

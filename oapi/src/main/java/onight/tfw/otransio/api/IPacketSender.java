@@ -24,6 +24,8 @@ public interface IPacketSender {
 	
 	//!释放连接
 	public void tryDropConnection(String dest);
+	
+	public void setDestURI(String dest,String uri);
 
 	public void setCurrentNodeName(String name);
 	

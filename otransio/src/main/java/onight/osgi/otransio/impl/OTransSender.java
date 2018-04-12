@@ -4,16 +4,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.glassfish.grizzly.impl.FutureImpl;
+import org.glassfish.grizzly.utils.Futures;
+
 import lombok.extern.slf4j.Slf4j;
+import onight.osgi.otransio.sm.RemoteModuleSession;
 import onight.tfw.async.CallBack;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.async.FutureSender;
 import onight.tfw.async.NilCompleteHandler;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.beans.FramePacket;
-
-import org.glassfish.grizzly.impl.FutureImpl;
-import org.glassfish.grizzly.utils.Futures;
+import onight.tfw.otransio.api.session.PSession;
 
 @Slf4j
 public class OTransSender extends FutureSender {
@@ -95,6 +97,15 @@ public class OTransSender extends FutureSender {
 	@Override
 	public void setCurrentNodeName(String name) {
 		osock.mss.getRmb().getNodeInfo().setNodeName(name);
+	}
+
+	@Override
+	public void setDestURI(String dest, String uri) {
+		PSession session = osock.mss.byNodeName(dest);
+		if (session != null && session instanceof RemoteModuleSession) {
+			RemoteModuleSession rms = (RemoteModuleSession) session;
+			rms.getConnsPool().parseURI(uri);
+		}
 	}
 
 }

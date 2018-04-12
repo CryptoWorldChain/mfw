@@ -31,7 +31,7 @@ public class NodeInfo {
 
 	public static NodeInfo fromURI(String uri, String nodeuid) {
 		try {
-			URL url = new URL(uri);
+			URL url = new URL(uri.split(",")[0]);
 			if (StringUtils.isBlank(nodeuid)) {
 				nodeuid = url.getHost() + "." + url.getPort();
 				if (url.getQuery() != null) {

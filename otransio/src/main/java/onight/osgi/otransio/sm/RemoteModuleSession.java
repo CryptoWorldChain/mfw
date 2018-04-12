@@ -57,7 +57,7 @@ public class RemoteModuleSession extends PSession {
 	public String getJsonStr() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{\"remoteid\":\"").append(nodeInfo.getNodeName()).append("\"");
-		sb.append(",\"alias\":\"").append(connsPool.getAliasURI()).append("\"");
+		sb.append(",\"alias\":\"").append(connsPool.getSubnodeURI()).append("\"");
 		sb.append(",\"channels\":").append(connsPool.size()).append("");
 		sb.append(",\"recvcc\":").append(recvCounter.get()).append("");
 		sb.append(",\"sentcc\":").append(sendCounter.get()).append("");

@@ -224,13 +224,13 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 						throw new MessageException(e);
 					}
 				}
-			} else {
-				String uri = pack.getExtStrProp(PACK_URI);
-				if (StringUtils.isNotBlank(uri) && ms instanceof RemoteModuleSession) {
-					RemoteModuleSession rms = (RemoteModuleSession) ms;
-					rms.getConnsPool().setAliasURI(uri);
-				}
-				log.debug("using exist session:" + ms);
+//			} else {
+//				String uri = pack.getExtStrProp(PACK_URI);
+//				if (StringUtils.isNotBlank(uri) && ms instanceof RemoteModuleSession) {
+//					RemoteModuleSession rms = (RemoteModuleSession) ms;
+//					rms.getConnsPool().setAliasURI(uri);
+//				}
+//				log.debug("using exist session:" + ms);
 			}
 //			mss.getSendCounter().incrementAndGet();
 		} else {// re

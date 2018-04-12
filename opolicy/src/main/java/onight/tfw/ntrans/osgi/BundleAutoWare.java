@@ -60,6 +60,9 @@ public class BundleAutoWare {
 			log.debug("Register ActorService:" + name + "," + service + ",clazz=" + clazz);
 		}
 		if (name == null) {
+			name = (String) ref.getProperty("instance.name");
+		}
+		if (name == null) {
 			name = clazz.getName();
 		}
 		log.debug("Register ActorService:" + name + "," + service + ",clazz=" + clazz);
