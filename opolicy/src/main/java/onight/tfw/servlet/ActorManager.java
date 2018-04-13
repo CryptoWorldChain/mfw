@@ -159,12 +159,16 @@ public class ActorManager {
 		if (actor == null)
 			return;
 		String[] ctxpaths = actor.getWebPaths();
+		String rootpath = prop.get("ofw.actor.rootpath", "");
+		if (rootpath.endsWith("/")) {
+			rootpath = rootpath.substring(0, rootpath.length() - 1);
+		}
 		if (ctxpaths != null) {
 			for (String ctxpath : ctxpaths) {
-				servlets.remove(ctxpath);
+				servlets.remove(rootpath+ctxpath);
 				for (HttpService s : services) {
 					try {
-						s.unregister(ctxpath);
+						s.unregister(rootpath+ctxpath);
 					} catch (Exception e) {
 					}
 					log.info("注销servlet成功" + ctxpath);
