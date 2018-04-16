@@ -15,12 +15,11 @@ import onight.tfw.outils.conf.PropHelper
 
 abstract class SessionModules[T <: Message] extends AsyncPBActor[T] with OLog{
 
-  implicit val ctx =
-    classOf[BundleReference].cast(classOf[PBUtils].getClassLoader())
-      .getBundle()
-      .getBundleContext();
-
-  implicit val props:PropHelper=new PropHelper(ctx);
+//  implicit val ctx =
+//    classOf[BundleReference].cast(classOf[PBUtils].getClassLoader())
+//      .getBundle()
+//      .getBundleContext();
+  implicit val props:PropHelper=new PropHelper(null);
   
   def service: LService[T] = null
 

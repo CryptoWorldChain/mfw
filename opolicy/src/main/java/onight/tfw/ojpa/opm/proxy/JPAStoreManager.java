@@ -64,17 +64,17 @@ public class JPAStoreManager {
 
 	@Validate
 	public void start() {
-		log.info("JPA管理端启动");
+		log.debug("JPA Store Manager Started");
 	}
 
 	@Invalidate
 	public void destory() {
-		log.info("JPA管理端退出");
+		log.debug("JPA Store Manager ... End");
 	}
 
 	@Unbind(aggregate = true, optional = true)
 	public void destroyStoreService(StoreServiceProvider dsp, ServiceReference ref) {
-		log.info("StoreService.quit " + dsp.getProviderid() + "@" + dsp);
+		log.debug("StoreService.quit " + dsp.getProviderid() + "@" + dsp);
 		String prodid = getBundleProviderId(dsp, ref);
 		storeServices.remove(prodid);
 		unwireDaos(dsp, ref);
@@ -90,7 +90,7 @@ public class JPAStoreManager {
 
 	@Bind(aggregate = true, optional = true)
 	public void bindStoreService(StoreServiceProvider dsp, ServiceReference ref) {
-		log.info("StoreService.bind:" + dsp);
+		log.debug("StoreService.bind:" + dsp);
 		String prodid = getBundleProviderId(dsp, ref);
 		StoreServiceProvider olddsp = storeServices.get(prodid);
 		if (olddsp != null) {
@@ -98,9 +98,9 @@ public class JPAStoreManager {
 				return;
 			}
 			destroyStoreService(olddsp, null);
-			log.warn("绑定已经存在的存储服务,即将被覆盖:" + prodid + "@old:" + olddsp + "==>new:" + dsp);
+			log.debug("Overrided StoreService:" + prodid + "@old:" + olddsp + "==>new:" + dsp);
 		} else {
-			log.info("绑定存储服务:" + prodid + "@" + dsp);
+			log.debug("Bind New StoreService:" + prodid + "@" + dsp);
 		}
 		storeServices.put(prodid, dsp);
 
@@ -109,7 +109,7 @@ public class JPAStoreManager {
 
 	@Unbind(aggregate = true, optional = true)
 	public void destroyClientDao(IJPAClient storeClient) {
-		log.info("ClientDao.quit:" + storeClient + "@");
+		log.debug("ClientDao.quit:" + storeClient + "@");
 		daosByClient.remove(System.identityHashCode(storeClient));
 	}
 
@@ -126,7 +126,7 @@ public class JPAStoreManager {
 
 	@Bind(aggregate = true, optional = true)
 	public void bindClientDao(IJPAClient storeClient, ServiceReference ref) {
-		log.info("ClientDao.bind:" + storeClient + "@" + System.identityHashCode(storeClient));
+		log.debug("ClientDao.bind:" + storeClient + "@" + System.identityHashCode(storeClient));
 		StoreClientSet clientset = daosByClient.get(System.identityHashCode(storeClient));
 		if (clientset == null) {
 			List<DomainDaoSupport> daos = new ArrayList<DomainDaoSupport>();
@@ -150,10 +150,10 @@ public class JPAStoreManager {
 
 						Method getmethod = clazz.getMethod("get" + StringUtils.capitalize(field.getName()));
 						if (getmethod == null) {
-							log.warn("DAO没有get方法:" + clazz.getName() + ",field=" + field.getName());
+							log.warn("DAO has not get Method:" + clazz.getName() + ",field=" + field.getName());
 						}
 						if (setmethod == null) {
-							log.warn("DAO没有set方法:" + clazz.getName() + ",field=" + field.getName());
+							log.warn("DAO has not set Method" + clazz.getName() + ",field=" + field.getName());
 						}
 						if (getmethod == null || setmethod == null) {
 							continue;
@@ -284,14 +284,14 @@ public class JPAStoreManager {
 	}
 
 	public void wireDaos() {
-		log.info("组织DAO：" + daosByClient.size());
+		log.debug("wired DAO：" + daosByClient.size());
 		for (Integer storeClient : daosByClient.keySet()) {
 			wireDaosForClient(storeClient);
 		}
 	}
 
 	public void unwireDaos(StoreServiceProvider unssp, ServiceReference<?> sf) {
-		log.info("卸载DAOs：" + daosByClient.size());
+		log.debug("unwried DAOs：" + daosByClient.size());
 		for (Integer storeClient : daosByClient.keySet()) {
 			StoreClientSet clientset = daosByClient.get(storeClient);
 			if (clientset == null)

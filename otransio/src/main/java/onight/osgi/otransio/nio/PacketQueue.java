@@ -1,18 +1,20 @@
 package onight.osgi.otransio.nio;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ThreadPoolExecutor;
+
+import org.glassfish.grizzly.impl.FutureImpl;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
+import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.beans.FramePacket;
 
 @Slf4j
 @Data
 public class PacketQueue {
 
-	ConcurrentLinkedQueue<FramePacket> queue = new ConcurrentLinkedQueue<>();
+	ConcurrentLinkedQueue<PacketWriteTask> queue = new ConcurrentLinkedQueue<>();
 	long lastUpdatedMS = System.currentTimeMillis();
 
 	PacketWriteWorker writer;
@@ -29,8 +31,8 @@ public class PacketQueue {
 		}
 	}
 
-	public void offer(FramePacket fp) {
-		queue.offer(fp);
+	public void offer(FramePacket fp,final CompleteHandler handler,FutureImpl<FramePacket> future) {
+		queue.offer(new PacketWriteTask(fp,handler,false,future));
 		try {
 			synchronized (writer) {
 				writer.notifyAll();
@@ -40,7 +42,7 @@ public class PacketQueue {
 		}
 	}
 
-	public FramePacket poll() {
+	public PacketWriteTask poll() {
 		return queue.poll();
 	}
 }

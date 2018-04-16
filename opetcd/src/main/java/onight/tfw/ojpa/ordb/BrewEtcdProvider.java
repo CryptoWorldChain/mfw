@@ -59,7 +59,6 @@ public class BrewEtcdProvider implements StoreServiceProvider {
 
 	@Validate
 	public synchronized void startup() {
-		log.info("启动中...@" + bundleContext);
 		log.debug("create:EtcdImpl:");
 		String username = params.get("org.zippo.etcd.username", null);
 		String passwd = params.get("org.zippo.etcd.passwd", null);
@@ -89,12 +88,11 @@ public class BrewEtcdProvider implements StoreServiceProvider {
 			} catch (Exception e) {
 				log.warn("consensus start error", e);
 			}
-		log.info("启动完成...");
 	}
 
 	@Invalidate
 	public void shutdown() {
-		log.info("退出中...");
+		log.debug("Brew Etcd End...");
 		if (etcdImpl instanceof EtcdBrewImpl) {
 			EtcdBrewImpl _etcdImpl = (EtcdBrewImpl) etcdImpl;
 			if (_etcdImpl.getReq() != null) {
@@ -105,7 +103,6 @@ public class BrewEtcdProvider implements StoreServiceProvider {
 				}
 			}
 		}
-		log.info("退出完成...");
 	}
 
 	@Override

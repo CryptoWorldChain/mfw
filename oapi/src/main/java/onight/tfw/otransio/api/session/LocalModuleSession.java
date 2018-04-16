@@ -19,6 +19,8 @@ public class LocalModuleSession extends PSession {
 		CMDService service = serviceByCMD.get(pack.getCMD());
 		if (service != null) {
 			service.doPacketWithFilter(pack,handler);
+		}else{
+			log.debug("unknow gcmd for module:"+pack.getModuleAndCMD());
 		}
 	}
 

@@ -61,10 +61,10 @@ public class OServer {
 			int oport = NodeHelper.getCurrNodeListenInPort();
 			log.debug("port=" + oport);
 			transport.bind(NodeHelper.getCurrNodeListenInAddr(), oport);
-			log.info("socket服务开启成功:" + oport);
+			log.info("socket server started:port = " + oport);
 			transport.start();
 		} catch (IOException e) {
-			log.error("socket服务开启失败:", e);
+			log.error("socket server failed to start:", e);
 
 			e.printStackTrace();
 		} finally {
@@ -77,11 +77,8 @@ public class OServer {
 		try {
 			transport.shutdownNow();
 		} catch (IOException e) {
-			e.printStackTrace();
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} finally {
-			log.info("socket服务关闭");
+			log.info("socket server shutdown ");
 		}
 
 	}

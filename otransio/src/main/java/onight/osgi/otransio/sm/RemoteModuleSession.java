@@ -95,7 +95,7 @@ public class RemoteModuleSession extends PSession {
 			conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 				@Override
 				public void onClosed(Closeable closeable, ICloseType type) throws IOException {
-					log.info("RemoteModuleSession remove Connection!:" + closeable);
+					log.debug("RemoteModuleSession remove Connection!:" + closeable);
 					if (closeable instanceof Connection) {
 						removeConnection((Connection) closeable);
 					}
@@ -108,7 +108,7 @@ public class RemoteModuleSession extends PSession {
 	public RemoteModuleSession removeConnection(Connection<?> conn) {
 		connsPool.removeObject(conn);
 		if (connsPool.size() <= 0) {
-			log.info("Remove RemoteModule Session:@" + this);
+			log.debug("Remove RemoteModule Session:@" + this);
 		}
 		dropCounter.incrementAndGet();
 		return this;
@@ -117,8 +117,9 @@ public class RemoteModuleSession extends PSession {
 	@Override
 	public void onPacket(final FramePacket pack, final CompleteHandler handler) {
 		String packid = null;
+		FutureImpl<FramePacket> future = null;
+
 		if (pack.isSync()) {
-			FutureImpl<FramePacket> future = null;
 			// 发送到远程
 			packid = genPackID();
 			future = Futures.createSafeFuture();
@@ -153,7 +154,7 @@ public class RemoteModuleSession extends PSession {
 		}
 		try {
 //			sendCounter.incrementAndGet();
-			writerQ.offer(pack);
+			writerQ.offer(pack,handler,future);
 //			connsPool.sendMessage(pack);
 //			sentCounter.incrementAndGet();
 //			mss.sentCounter.incrementAndGet();

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import onight.tfw.otransio.api.beans.FramePacket;
 
 @AllArgsConstructor
 @Slf4j
@@ -14,11 +13,11 @@ public class PacketWriteWorker implements Runnable {
 	int max_packet_buffer = 10;
 
 	public void run() {
-		ArrayList<FramePacket> arrays = new ArrayList<>(10);
-		log.debug("PacketWriteWorker         [Start]");
+		ArrayList<PacketWriteTask> arrays = new ArrayList<>(10);
+		log.debug("PacketWriteWorker    .... [Start]");
 		Thread.currentThread().setName("PacketWriteWorker.");
 		while (!queue.isStop) {
-			FramePacket fp = null;
+			PacketWriteTask fp = null;
 			try {
 				do {
 					fp = queue.poll();
@@ -36,8 +35,24 @@ public class PacketWriteWorker implements Runnable {
 						log.debug("wait up.");
 					}
 				} else {
-					queue.getCkpool().sendMessage(arrays);
-					arrays.clear();
+					try {
+						queue.getCkpool().sendMessage(arrays);
+						
+					} catch (Exception e) {
+						log.debug("getSend Message Error:",e);
+						for(PacketWriteTask pw:arrays){
+							if(!pw.isWrited())
+							{
+								if(pw.getFuture()!=null){
+									pw.getFuture().failure(e);
+								}else{
+									pw.handler.onFailed(e);
+								}
+							}
+						}
+					}finally{
+						arrays.clear();
+					}
 				}
 			} catch (Throwable t) {
 
@@ -46,8 +61,7 @@ public class PacketWriteWorker implements Runnable {
 			}
 
 		}
-		
-		
+
 		log.debug("PacketWriteWorker   ......  [STOP]");
 
 	}

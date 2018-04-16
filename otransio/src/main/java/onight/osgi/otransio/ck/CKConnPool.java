@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -16,6 +17,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.impl.NodeInfo;
 import onight.osgi.otransio.nio.OClient;
+import onight.osgi.otransio.nio.PacketWriteTask;
 import onight.osgi.otransio.sm.MSessionSets;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.beans.FramePacket;
@@ -30,11 +32,10 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	int core;
 	int max;
 	boolean stop = false;
-	 String subnodeURI = "";
+	String subnodeURI = "";
 
 	ArrayList<NodeInfo> subNodes = new ArrayList<>();
-	
-	
+
 	MSessionSets mss;
 
 	public void setStop(boolean isstop) {
@@ -87,7 +88,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 
 	public void sendMessage(final FramePacket pack) throws MessageException {
 		boolean writed = false;
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 1; i++) {
 			Connection conn = null;
 			try {
 				conn = borrow();
@@ -102,7 +103,9 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 						conn = null;
 					}
 				}
-				createOneConnection(1);
+				if (createOneConnection(1) == null) {
+					throw new MessageException("cannot connect");
+				}
 				Thread.sleep(100);
 			} catch (Exception e) {
 				log.error("sendMessageError:" + pack, e);
@@ -118,7 +121,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		}
 	}
 
-	public void sendMessage(final List<FramePacket> packs) throws MessageException {
+	public void sendMessage(final List<PacketWriteTask> packs) throws MessageException {
 		boolean writed = false;
 		for (int i = 0; i < 3; i++) {
 			Connection conn = null;
@@ -126,18 +129,23 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				conn = borrow();
 				if (conn != null) {
 					if (conn.isOpen()) {
-						for (FramePacket pack : packs) {
-							conn.write(pack);
+						for (PacketWriteTask pack : packs) {
+							conn.write(pack.getPack());
+							pack.setWrited(true);
 						}
 						writed = true;
-						break;
+						return;
 					} else {
 						removeObject(conn);
 						conn = null;
 					}
 				}
-				createOneConnection(1);
-				Thread.sleep(100);
+				if (createOneConnection(1) == null) {
+					Thread.sleep(100);
+					throw new MessageException("cannot create connections");
+				} else {
+//					i--;
+				}
 			} catch (Exception e) {
 				log.error("sendMessageError:", e);
 				throw new MessageException(e);
@@ -160,16 +168,18 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 						@Override
 						public void onClosed(Closeable closeable, ICloseType type) throws IOException {
-							log.info("CheckHealth remove Connection!:" + closeable);
+							log.debug("CheckHealth remove Connection!:" + closeable);
 							if (closeable instanceof Connection) {
 								removeObject((Connection) closeable);
 							}
 						}
 					});
 					final FramePacket pack = mss.getLocalModulesPacket();
-					log.debug("write localmodulepack:" + pack + ",writable==" + conn.canWrite());
-					log.trace("!!WriteLocalModulesPacket TO:" + conn.getPeerAddress() + ",From="
-							+ conn.getLocalAddress() + ",pack=" + pack.getFixHead());
+					// log.debug("write localmodulepack:" + pack + ",writable=="
+					// + conn.canWrite());
+					// log.trace("!!WriteLocalModulesPacket TO:" +
+					// conn.getPeerAddress() + ",From="
+					// + conn.getLocalAddress() + ",pack=" + pack.getFixHead());
 					//
 					conn.write(pack);
 					this.addObject(conn);
@@ -177,7 +187,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 			} catch (Exception e) {
 				// creating new Connection
-				log.warn("error in create out conn:" + ip + ",port=" + port, e);
+				log.warn("error in create out sub conn:" + ip + ",port=" + port, e);
 			}
 		}
 		return null;
@@ -191,16 +201,18 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 						@Override
 						public void onClosed(Closeable closeable, ICloseType type) throws IOException {
-							log.info("CheckHealth remove Connection!:" + closeable);
+							log.debug("CheckHealth remove Connection!:" + closeable);
 							if (closeable instanceof Connection) {
 								removeObject((Connection) closeable);
 							}
 						}
 					});
 					final FramePacket pack = mss.getLocalModulesPacket();
-					log.debug("write localmodulepack:" + pack + ",writable==" + conn.canWrite());
-					log.trace("!!WriteLocalModulesPacket TO:" + conn.getPeerAddress() + ",From="
-							+ conn.getLocalAddress() + ",pack=" + pack.getFixHead());
+					// log.debug("write localmodulepack:" + pack + ",writable=="
+					// + conn.canWrite());
+					// log.trace("!!WriteLocalModulesPacket TO:" +
+					// conn.getPeerAddress() + ",From="
+					// + conn.getLocalAddress() + ",pack=" + pack.getFixHead());
 					//
 					conn.write(pack);
 					this.addObject(conn);
@@ -208,6 +220,8 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 			} catch (TimeoutException te) {
 				log.debug("Timeout:", te);
+				return createOneConnectionBySubNode(maxtries);
+			} catch (ExecutionException ce) {
 				return createOneConnectionBySubNode(maxtries);
 			} catch (Exception e) {
 				// creating new Connection

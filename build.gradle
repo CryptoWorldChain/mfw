@@ -4,7 +4,7 @@ buildscript {
 		} }
 
 	dependencies { 
-	classpath "onight.osgi:zpp-gradle:3.0.0"
+	classpath "onight.osgi:zpp-gradle:3.2.0"
 			if(project.name!='oapi') {
 
 			classpath ("org.fc.zippo:org.fc.zippo.oapi:3.2.0")

@@ -31,7 +31,7 @@ public class ActorAutoWare {
 
 	@Bind(optional=true,aggregate=true)
 	public void bindActor(ActorService service, ServiceReference ref) {
-		log.info("bindActorService:"+service+",ref="+ref);
+		log.debug("bindActorService:"+service+",ref="+ref);
 		BundleAutoWare baw = bundleAutoByBundleID.get(ref.getBundle().getBundleId());
 		if (baw == null) {
 			baw = new BundleAutoWare();
@@ -48,7 +48,7 @@ public class ActorAutoWare {
 
 	@Unbind(optional=true,aggregate=true)
 	public void unbindActor(ActorService service, ServiceReference ref) {
-		log.info("unbindActorService:"+service+",ref="+ref);
+		log.debug("unbindActorService:"+service+",ref="+ref);
 		
 		BundleAutoWare baw = bundleAutoByBundleID.get(ref.getBundle().getBundleId());
 		if (baw != null&&service!=null) {

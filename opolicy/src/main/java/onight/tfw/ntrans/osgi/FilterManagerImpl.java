@@ -57,7 +57,7 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 						}
 
 					});
-					log.info("Register Global PacketListern::" + pl);
+					log.debug("Register Global PacketListern::" + pl);
 				}
 			}
 		} else {
@@ -83,7 +83,7 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 						}
 
 					});
-					log.info("Register PacketListern::" + pl + ": module:" + module);
+					log.debug("Register PacketListern::" + pl + ": module:" + module);
 				}
 			}
 		}
@@ -95,7 +95,7 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 			for (String module : pl.modules()) {
 				ArrayList<PacketFilter> list = filterByModule.get(module);
 				if (list != null && list.remove(pl)) {
-					log.info("Remove PacketListern::" + pl + ": module:" + module);
+					log.debug("Remove PacketListern::" + pl + ": module:" + module);
 				}
 			}
 		} else {

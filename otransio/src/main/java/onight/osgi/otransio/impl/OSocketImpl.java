@@ -115,34 +115,32 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				} catch (InterruptedException e) {
 				}
 				// 建立外联服务
-				log.info("trying to init remote session.");
 				osm.init();
-				log.info("init remote session.[success] ");
 			}
 		}).start();
 	}
 
 	@Invalidate
 	public void stop() {
-		log.info("nio stoping");
+		log.debug("nio stoping");
 		server.stop();
-		log.info("nio stopped ... OK");
+		log.debug("nio stopped ... OK");
 	}
 
 	@Bind(aggregate = true, optional = true)
 	public void bindPSender(PSenderService pl) {
-		log.info("Register PSender::" + pl + ",sender=" + sender);
+		log.debug("Register PSender::" + pl + ",sender=" + sender);
 		SenderPolicy.bindPSender(pl, sender);
 	}
 
 	@Unbind(aggregate = true, optional = true)
 	public void unbindPSender(PSenderService pl) {
-		log.info("Remove PSender::" + pl);
+		log.debug("Remove PSender::" + pl);
 	}
 
 	@Bind(aggregate = true, optional = true)
 	public void bindCMDService(CMDService service) {
-		log.info("Register CMDService::" + service);
+		log.debug("Register CMDService::" + service.getModule());
 		LocalModuleSession ms = mss.addLocalMoudle(service.getModule());
 		for (String cmd : service.getCmds()) {
 			ms.registerService(cmd, service);
@@ -152,7 +150,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	@Unbind(aggregate = true, optional = true)
 	public void unbindCMDService(CMDService service) {
-		log.info("Remove ModuleSession::" + service);
+		log.debug("Remove ModuleSession::" + service);
 	}
 
 	public void onPacket(FramePacket pack, final CompleteHandler handler, Connection<?> conn) {
@@ -201,7 +199,8 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				future.result(pack);
 			} else {
 				log.warn("unknow ack:" + expackid + ",packid=" + pack.getExtProp(mss.getPackIDKey()));
-				handler.onFinished(PacketHelper.toPBReturn(pack, new LoopPackBody(mss.getPackIDKey(), pack)));
+				// handler.onFinished(PacketHelper.toPBReturn(pack, new
+				// LoopPackBody(mss.getPackIDKey(), pack)));
 			}
 			return;
 		}
@@ -224,23 +223,24 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 						throw new MessageException(e);
 					}
 				}
-//			} else {
-//				String uri = pack.getExtStrProp(PACK_URI);
-//				if (StringUtils.isNotBlank(uri) && ms instanceof RemoteModuleSession) {
-//					RemoteModuleSession rms = (RemoteModuleSession) ms;
-//					rms.getConnsPool().setAliasURI(uri);
-//				}
-//				log.debug("using exist session:" + ms);
+				// } else {
+				// String uri = pack.getExtStrProp(PACK_URI);
+				// if (StringUtils.isNotBlank(uri) && ms instanceof
+				// RemoteModuleSession) {
+				// RemoteModuleSession rms = (RemoteModuleSession) ms;
+				// rms.getConnsPool().setAliasURI(uri);
+				// }
+				// log.debug("using exist session:" + ms);
 			}
-//			mss.getSendCounter().incrementAndGet();
+			// mss.getSendCounter().incrementAndGet();
 		} else {// re
 			if (conn != null) {
-//				mss.getRecvCounter().incrementAndGet();
+				// mss.getRecvCounter().incrementAndGet();
 				if (StringUtils.isNotBlank(from)) {
 					RemoteModuleSession rms = osm.addIncomming(from, conn);
-//					if (rms != null) {
-//						rms.getRecvCounter().incrementAndGet();
-//					}
+					// if (rms != null) {
+					// rms.getRecvCounter().incrementAndGet();
+					// }
 				}
 			}
 			ms = mss.getLocalsessionByModule().get(pack.getModule());
@@ -253,6 +253,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			}
 		} else {
 			// 没有找到对应的消息
+			log.debug("UnknowModule:" + pack.getModule());
 			if (pack.isSync()) {
 				handler.onFinished(
 						PacketHelper.toPBReturn(pack, new UnknowModuleBody(pack.getModule() + ",to=" + destTO, pack)));
@@ -291,12 +292,20 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 		}
 	}
 
-	public void tryDropConnection(String packNameOrId) {
+	public synchronized void tryDropConnection(String packNameOrId) {
 		mss.dropSession(packNameOrId);
+		PacketQueue queue = queueBybcuid.remove(packNameOrId);
+		if(queue!=null){
+			queue.setStop(true);
+		}
 	}
 
-	public void renameSession(String oldname, String newname) {
+	public synchronized void renameSession(String oldname, String newname) {
 		mss.renameSession(oldname, newname);
+		PacketQueue queue = queueBybcuid.remove(oldname);
+		if(queue!=null){
+			queueBybcuid.put(newname, queue);
+		}
 	}
 
 	@Override

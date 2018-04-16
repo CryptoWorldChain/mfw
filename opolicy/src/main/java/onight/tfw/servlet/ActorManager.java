@@ -40,7 +40,6 @@ public class ActorManager {
 	public ActorManager(BundleContext bundleContext) {
 		super();
 		prop = new PropHelper(bundleContext);
-		log.debug("create:ActorManager:");
 		this.bundleContext = bundleContext;
 	}
 
@@ -49,7 +48,7 @@ public class ActorManager {
 
 	@Bind(aggregate = true)
 	public void bindHttp(HttpService service) {
-		log.info("bindHttp::" + service);
+		log.debug("bindHttp::" + service);
 		services.add(service);
 	}
 
@@ -57,7 +56,7 @@ public class ActorManager {
 	public void unbindHttp(HttpService http) {
 		for (String ctx : servlets.keySet()) {
 			http.unregister(ctx);
-			log.info("Method unbindHttp  execute  ctx[" + ctx + "]...");
+			log.debug("Method unbindHttp  execute  ctx[" + ctx + "]...");
 		}
 		services.remove(http);
 	}
@@ -125,7 +124,7 @@ public class ActorManager {
 		}
 	}
 
-	@Bind(aggregate = true, optional = true)
+	@Bind(aggregate = true, optional=true)
 	public void bindActor(IActor actor) {
 		log.info("bindActor:" + actor);
 		if (actor == null)
@@ -143,9 +142,9 @@ public class ActorManager {
 					for (HttpService s : services) {
 						try {
 							s.registerServlet(rootpath+spath, servlet, null, null);
-							log.info("注册servlet成功:" + rootpath+spath);
+							log.info("register servlet:" + rootpath+spath);
 						} catch (Exception e) {
-							log.warn("注册servlet失败", e);
+							log.warn("Failed in register servlet:", e);
 						}
 					}
 				}
@@ -153,9 +152,9 @@ public class ActorManager {
 		}
 	}
 
-	@Unbind(aggregate = true, optional = true)
+	@Unbind(aggregate = true, optional=true)
 	public void unbindActor(IActor actor) {
-		log.info("注销actor" + actor);
+		log.debug("unbind actor" + actor);
 		if (actor == null)
 			return;
 		String[] ctxpaths = actor.getWebPaths();
@@ -171,7 +170,7 @@ public class ActorManager {
 						s.unregister(rootpath+ctxpath);
 					} catch (Exception e) {
 					}
-					log.info("注销servlet成功" + ctxpath);
+					log.info("unbind servlet :" + ctxpath);
 				}
 			}
 		}
