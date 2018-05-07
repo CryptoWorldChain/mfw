@@ -178,5 +178,17 @@ public class PropHelper {
 		}
 		return defaultv;
 	}
+	
+	public float get(String key, float defaultv) {
+		Object v = local_props.get(key);
+		if (v == null) {
+			return defaultv;
+		}
+		try {
+			return Float.parseFloat(v.toString());
+		} catch (NumberFormatException e) {
+		}
+		return defaultv;
+	}
 
 }

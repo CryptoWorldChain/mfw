@@ -142,7 +142,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 				if (createOneConnection(1) == null) {
 					Thread.sleep(100);
-					throw new MessageException("cannot create connections");
+					throw new MessageException("cannot create connections to "+ip+":"+port);
 				} else {
 //					i--;
 				}
