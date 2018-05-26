@@ -142,9 +142,10 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 				if (createOneConnection(1) == null) {
 					Thread.sleep(100);
-					throw new MessageException("cannot create connections to "+ip+":"+port);
+					// throw new MessageException("cannot create connections to
+					// "+ip+":"+port);
 				} else {
-//					i--;
+					// i--;
 				}
 			} catch (Exception e) {
 				log.error("sendMessageError:", e);
@@ -217,6 +218,8 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					conn.write(pack);
 					this.addObject(conn);
 					return conn;
+				} else {
+					log.debug("cannot create Connection to " + ip + ":" + port);
 				}
 			} catch (TimeoutException te) {
 				log.debug("Timeout:", te);
@@ -228,6 +231,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				log.warn("error in create out conn:" + ip + ",port=" + port, e);
 			}
 		}
+		log.debug("cannot get more Connection:cursize="+size() +",max="+max);
 		return null;
 	}
 
