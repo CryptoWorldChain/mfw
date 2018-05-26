@@ -127,28 +127,28 @@ public class RemoteModuleSession extends PSession {
 			// pack.putHeader(OSocketImpl.PACK_FROM, "" +
 			// NodeHelper.getCurrNodeIdx());
 			pack.getExtHead().remove(OSocketImpl.PACK_TO);
-			future.addCompletionHandler(new CompletionHandler<FramePacket>() {
-				@Override
-				public void updated(FramePacket result) {
-				}
-
-				@Override
-				public void failed(Throwable throwable) {
-					handler.onFailed(new RuntimeException(throwable));
-				}
-
-				@Override
-				public void completed(FramePacket result) {
-					handler.onFinished(result);
-				}
-
-				@Override
-				public void cancelled() {
-
-					handler.onFailed(new RuntimeException("cancelled"));
-				}
-			});
-			mss.packMaps.put(packid, future);
+//			future.addCompletionHandler(new CompletionHandler<FramePacket>() {
+//				@Override
+//				public void updated(FramePacket result) {
+//				}
+//
+//				@Override
+//				public void failed(Throwable throwable) {
+//					handler.onFailed(new RuntimeException(throwable));
+//				}
+//
+//				@Override
+//				public void completed(FramePacket result) {
+//					handler.onFinished(result);
+//				}
+//
+//				@Override
+//				public void cancelled() {
+//
+//					handler.onFailed(new RuntimeException("cancelled"));
+//				}
+//			});
+			mss.packMaps.put(packid, handler);
 			log.debug("sendPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
 
 		}

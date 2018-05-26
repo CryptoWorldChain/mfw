@@ -73,7 +73,6 @@ public class OTransSender extends FutureSender {
 				rfp.genBodyBytes();
 				cb.onSuccess(rfp);
 			}
-
 		});
 	}
 

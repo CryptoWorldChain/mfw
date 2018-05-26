@@ -190,13 +190,13 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 		if (pack.isResp() && pack.getExtHead().isExist(mss.getPackIDKey())) {
 			// 检查是否为响应包
 			String expackid = pack.getExtStrProp(mss.getPackIDKey());
-			FutureImpl<FramePacket> future = mss.getPackMaps().remove(expackid);
-			if (future != null) {
+			CompleteHandler future_handler = mss.getPackMaps().remove(expackid);
+			if (future_handler != null) {
 				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
 				Object ofrom = pack.getExtHead().remove(OSocketImpl.PACK_FROM);
 				Object oto = pack.getExtHead().remove(OSocketImpl.PACK_TO);
 				log.debug("oldfrom = " + ofrom + ",oto=" + oto + ",opackid=" + opackid);
-				future.result(pack);
+				future_handler.onFinished(pack);
 			} else {
 				log.warn("unknow ack:" + expackid + ",packid=" + pack.getExtProp(mss.getPackIDKey()));
 				// handler.onFinished(PacketHelper.toPBReturn(pack, new

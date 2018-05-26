@@ -39,11 +39,12 @@ public class SessionFilter extends BaseFilter {
 			return ctx.getInvokeAction();
 		}
 		long start = System.currentTimeMillis();
-//		log.trace("[Message]: " + pack.getGlobalCMD() + ", FROM: " + ctx.getConnection().getPeerAddress() + " HEAD: "
-//				+ pack.getFixHead() + ",oimpl=" + oimpl);
+		// log.trace("[Message]: " + pack.getGlobalCMD() + ", FROM: " +
+		// ctx.getConnection().getPeerAddress() + " HEAD: "
+		// + pack.getFixHead() + ",oimpl=" + oimpl);
 
 		CompleteHandler handler = null;
-		if (pack.isSync()) {// 需要等待回应的
+		if (pack.isSync() && !pack.isResp()) {// 需要等待回应的
 			final Connection conn = ctx.getConnection();
 			handler = new CompleteHandler() {
 				@Override
@@ -51,7 +52,7 @@ public class SessionFilter extends BaseFilter {
 					if (conn.isOpen()) {
 						try {
 							String packfrom = vpacket.getExtStrProp(OSocketImpl.PACK_FROM);
-					//		log.debug("get Pack callback from :" + packfrom);
+							// log.debug("get Pack callback from :" + packfrom);
 							// vpacket.putHeader(OSocketImpl.PACK_TO, packfrom);
 							vpacket.getExtHead().reset();
 							vpacket.getExtHead().genBytes();
@@ -72,11 +73,12 @@ public class SessionFilter extends BaseFilter {
 			handler = nch;
 		}
 		oimpl.onPacket(pack, handler, ctx.getConnection());
-		/*log.debug("[MSG] " + pack.getCMD() + " " + pack.getModule()//
-				+ " , FROM: " + ctx.getConnection().getPeerAddress() //
-				+ " , TO: " + ctx.getConnection().getLocalAddress() //
-				+ " COST " + (System.currentTimeMillis() - start) + " ms");
-				*/
+		/*
+		 * log.debug("[MSG] " + pack.getCMD() + " " + pack.getModule()// +
+		 * " , FROM: " + ctx.getConnection().getPeerAddress() // + " , TO: " +
+		 * ctx.getConnection().getLocalAddress() // + " COST " +
+		 * (System.currentTimeMillis() - start) + " ms");
+		 */
 		return ctx.getStopAction();
 	}
 

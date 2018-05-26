@@ -6,14 +6,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.impl.FutureImpl;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.impl.NodeInfo;
-import onight.tfw.mservice.NodeHelper;
+import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
@@ -46,7 +44,7 @@ public class MSessionSets {
 
 	HashMap<String, LocalModuleSession> localsessionByModule = new HashMap<>();
 
-	ConcurrentHashMap<String, FutureImpl<FramePacket>> packMaps = new ConcurrentHashMap<>();
+	ConcurrentHashMap<String, CompleteHandler> packMaps = new ConcurrentHashMap<>();
 	AtomicLong recvCounter = new AtomicLong(0);
 	AtomicLong sendCounter = new AtomicLong(0);
 	AtomicLong duplCounter = new AtomicLong(0);
