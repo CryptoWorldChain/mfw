@@ -1,5 +1,6 @@
 package onight.osgi.otransio.impl;
 
+import java.beans.Transient;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -22,10 +23,14 @@ public class NodeInfo {
 	int core = 3;
 	int max = 10;
 	String nodeName = NodeHelper.getCurrNodeName();
+
+	String uname = nodeName + "://" + addr + ":" + port;
+
 	// int nodeIdx = NodeHelper.getCurrNodeIdx();
 	public static NodeInfo fromName(String nodeuid, Connection<?> conn) {
 		InetSocketAddress addr = (InetSocketAddress) conn.getPeerAddress();
-		NodeInfo info = new NodeInfo(addr.getHostString(), addr.getPort(), -1, -1, nodeuid);
+		NodeInfo info = new NodeInfo(addr.getHostString(), addr.getPort(), -1, -1, nodeuid,
+				nodeuid + "://" + addr.getHostString() + ":" + addr.getPort());
 		return info;
 	}
 
@@ -46,7 +51,8 @@ public class NodeInfo {
 				}
 			}
 
-			NodeInfo info = new NodeInfo(url.getHost(), url.getPort(), 3, 10, nodeuid);
+			NodeInfo info = new NodeInfo(url.getHost(), url.getPort(), 3, 10, nodeuid,
+					nodeuid + "://" + url.getHost() + ":" + url.getPort());
 			return info;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();

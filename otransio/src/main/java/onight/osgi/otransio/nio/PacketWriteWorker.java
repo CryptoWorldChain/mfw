@@ -14,7 +14,7 @@ public class PacketWriteWorker implements Runnable {
 
 	public void run() {
 		ArrayList<PacketWriteTask> arrays = new ArrayList<>(10);
-		log.debug("PacketWriteWorker    .... [Start]");
+		log.debug("PacketWriteWorker    .... [Start]")	;
 		Thread.currentThread().setName("PacketWriteWorker.");
 		while (!queue.isStop) {
 			PacketWriteTask fp = null;

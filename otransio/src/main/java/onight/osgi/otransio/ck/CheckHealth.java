@@ -11,12 +11,14 @@ import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.attributes.Attribute;
 import org.glassfish.grizzly.attributes.AttributeBuilder;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.beans.FixHeader;
 import onight.tfw.otransio.api.beans.FramePacket;
 
 @Slf4j
+@Data
 public class CheckHealth {
 
 	ScheduledThreadPoolExecutor exec;
@@ -56,7 +58,7 @@ public class CheckHealth {
 		}
 		lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
 
-		exec.scheduleAtFixedRate(new Runnable() {
+		exec.scheduleWithFixedDelay(new Runnable() {
 			@Override
 			public void run() {
 				try {
@@ -83,16 +85,17 @@ public class CheckHealth {
 		CKConnPool pool;
 		ScheduledFuture future;
 		NodeConnectionPool nkp;
-		Runner(NodeConnectionPool nkp,CKConnPool pool) {
+
+		Runner(NodeConnectionPool nkp, CKConnPool pool) {
 			this.pool = pool;
-			this.nkp=nkp;
+			this.nkp = nkp;
 		}
 
 		@Override
 		public void run() {
 			try {
 				if (pool.isStop()) {
-					log.debug("stop Pool:" + pool);
+					log.debug("stop Pool:" + pool.getIp() + ":" + pool.getPort() + "," + pool.getNameid());
 					try {
 						Iterator<Connection> conn = pool.iterator();
 						while (conn.hasNext()) {
@@ -109,20 +112,23 @@ public class CheckHealth {
 					}
 					// exec.remove(this);
 				} else {
-					log.debug("check health:" + pool.ip + ",port=" + pool.port);
-					for (int i = pool.size(); i < pool.getCore(); i++) {
+					log.debug("check health:" + pool.ip + ",port=" + pool.port + ",name=" + pool.getNameid());
+					for (int i = pool.size(); i < pool.getCore() && !pool.isStop(); i++) {
 						Connection conn = pool.createOneConnection();
-						log.debug("add more conn core size." + conn.getPeerAddress());
-						addCheckHealth(conn);
+						if (conn != null) {
+							log.debug("add more conn core size." + conn.getPeerAddress());
+							addCheckHealth(conn);
+						}
 					}
-
-					Enumeration<Connection> it = pool.getAllObjs().elements();
-					while (it.hasMoreElements()) {
-						addCheckHealth(it.nextElement());
+					if (!pool.isStop()) {
+						Enumeration<Connection> it = pool.getAllObjs().elements();
+						while (it.hasMoreElements()) {
+							addCheckHealth(it.nextElement());
+						}
 					}
 					if (pool.size() <= 0 && pool.getCore() < pool.size()) {
-						//pool is stop
-						log.debug("pool is stop. no more connection,size="+pool.size()+",core="+pool.core);
+						// pool is stop
+						log.debug("pool is stop. no more connection,size=" + pool.size() + ",core=" + pool.core);
 						pool.setStop(true);
 						nkp.removeByPool(pool);
 						future.cancel(true);
@@ -136,9 +142,9 @@ public class CheckHealth {
 
 	}
 
-	public void addCheckHealth(NodeConnectionPool nkp,final CKConnPool pool) {
-		Runner runner = new Runner(nkp,pool);
-		ScheduledFuture future = exec.scheduleAtFixedRate(runner, 1, delay * 2, TimeUnit.SECONDS);
+	public void addCheckHealth(NodeConnectionPool nkp, final CKConnPool pool) {
+		Runner runner = new Runner(nkp, pool);
+		ScheduledFuture future = exec.scheduleWithFixedDelay(runner, 10, delay * 2, TimeUnit.SECONDS);
 		runner.future = future;
 	}
 

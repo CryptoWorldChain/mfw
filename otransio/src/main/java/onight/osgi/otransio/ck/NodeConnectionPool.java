@@ -12,60 +12,67 @@ public class NodeConnectionPool {
 
 	public ConcurrentHashMap<String, CKConnPool> ckPoolByNodeName = new ConcurrentHashMap<String, CKConnPool>();
 
-	public CKConnPool addPool(OClient client,String nodeName, String ip, int port, int core, int max, MSessionSets mss) {
+	public CKConnPool addPool(OClient client, String nodeName, String ip, int port, int core, int max,
+			MSessionSets mss) {
 		CKConnPool pool = ckPoolByNodeName.get(nodeName);
 		if (pool == null) {
-			pool = new CKConnPool(client, ip, port, core, max, mss,nodeName);
-			log.debug("create new Pool :" + pool); 
+			pool = new CKConnPool(client, ip, port, core, max, mss, nodeName);
+			log.debug("create new Pool :" + nodeName + ", " + ip + ":" + port);
 			ckPoolByNodeName.put(nodeName, pool);
 		}
 		return pool;
 	}
-	
-	public String getJsonStr(){
-		StringBuffer sb=new StringBuffer();
+
+	public String getJsonStr() {
+		StringBuffer sb = new StringBuffer();
 		sb.append("[");
-		int i=0;
-		for(Entry<String,CKConnPool> sets:ckPoolByNodeName.entrySet()){
-			if(i>0)sb.append(",");
+		int i = 0;
+		for (Entry<String, CKConnPool> sets : ckPoolByNodeName.entrySet()) {
+			if (i > 0)
+				sb.append(",");
 			i++;
-			sb.append("{\"nodename\":\""+sets.getKey()+"\"");
-			sb.append(",\"conns\":"+sets.getValue().getJsonStr()+"");
+			sb.append("{\"nodename\":\"" + sets.getKey() + "\"");
+			sb.append(",\"conns\":" + sets.getValue().getJsonStr() + "");
 			sb.append("}");
 		}
 		sb.append("]");
 		return sb.toString();
 	}
-	
-	public synchronized CKConnPool getPool(String nodeName){
+
+	public synchronized CKConnPool getPool(String nodeName) {
 		return ckPoolByNodeName.get(nodeName);
 	}
-	
-	public synchronized void changePoolName(String oldname,String newname){
-		CKConnPool pool =  ckPoolByNodeName.get(oldname);
-		if(pool!=null){
-			ckPoolByNodeName.put(newname, pool);
+
+	public synchronized void changePoolName(String oldname, String newname) {
+		CKConnPool pool = ckPoolByNodeName.get(oldname);
+		if (pool != null) {
+			CKConnPool existpool = ckPoolByNodeName.put(newname, pool);
+			if(existpool!=null){
+				log.debug("stop exist pool for:"+existpool.getNameid()+":"+existpool.getIp()+":"+existpool.getPort());
+				existpool.setStop(true);
+			}
 		}
 		ckPoolByNodeName.remove(oldname);
 	}
-	public synchronized CKConnPool destroyPool(String nodeName){
-		return  ckPoolByNodeName.remove(nodeName);
+
+	public synchronized CKConnPool destroyPool(String nodeName) {
+		return ckPoolByNodeName.remove(nodeName);
 	}
-	
-	public synchronized void removeByPool(CKConnPool pool){
-		CKConnPool localPool=ckPoolByNodeName.get(pool.nameid);
-		if(localPool==pool){
+
+	public synchronized void removeByPool(CKConnPool pool) {
+		CKConnPool localPool = ckPoolByNodeName.get(pool.nameid);
+		if (localPool == pool) {
 			ckPoolByNodeName.remove(pool.nameid);
 		}
 	}
-	
-	public void broadcastLocalModule(MSessionSets mss){
-		for(CKConnPool pool:ckPoolByNodeName.values()){
-			try {
-				pool.broadcastMessage(mss.getLocalModulesPacket());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
+
+//	public void broadcastLocalModule(MSessionSets mss) {
+//		for (CKConnPool pool : ckPoolByNodeName.values()) {
+//			try {
+//				pool.broadcastMessage(mss.getLocalModulesPacket());
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+//		}
+//	}
 }

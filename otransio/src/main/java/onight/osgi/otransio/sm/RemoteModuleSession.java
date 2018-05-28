@@ -9,6 +9,7 @@ import org.glassfish.grizzly.Closeable;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.ICloseType;
+import org.glassfish.grizzly.WriteResult;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Futures;
 
@@ -22,6 +23,7 @@ import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.nio.PacketQueue;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.MessageException;
+import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.session.PSession;
@@ -82,12 +84,12 @@ public class RemoteModuleSession extends PSession {
 		return sb.toString();
 	}
 
-	public RemoteModuleSession(NodeInfo nodeInfo, MSessionSets mss,CKConnPool ckpool) {
+	public RemoteModuleSession(NodeInfo nodeInfo, MSessionSets mss, CKConnPool ckpool) {
 		this.mss = mss;
 		this.nodeInfo = nodeInfo;
 		this.connsPool = ckpool;
-		
-		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size,mss.write_thread_count);
+
+		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size, mss.write_thread_count);
 	}
 
 	public RemoteModuleSession addConnection(Connection<?> conn) {
@@ -124,40 +126,13 @@ public class RemoteModuleSession extends PSession {
 			packid = genPackID();
 			future = Futures.createSafeFuture();
 			pack.putHeader(mss.packIDKey, packid);
-			// pack.putHeader(OSocketImpl.PACK_FROM, "" +
-			// NodeHelper.getCurrNodeIdx());
 			pack.getExtHead().remove(OSocketImpl.PACK_TO);
-//			future.addCompletionHandler(new CompletionHandler<FramePacket>() {
-//				@Override
-//				public void updated(FramePacket result) {
-//				}
-//
-//				@Override
-//				public void failed(Throwable throwable) {
-//					handler.onFailed(new RuntimeException(throwable));
-//				}
-//
-//				@Override
-//				public void completed(FramePacket result) {
-//					handler.onFinished(result);
-//				}
-//
-//				@Override
-//				public void cancelled() {
-//
-//					handler.onFailed(new RuntimeException("cancelled"));
-//				}
-//			});
 			mss.packMaps.put(packid, handler);
-			log.debug("sendPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
+			log.debug("sendSyncPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
 
 		}
 		try {
-//			sendCounter.incrementAndGet();
-			writerQ.offer(pack,handler,future);
-//			connsPool.sendMessage(pack);
-//			sentCounter.incrementAndGet();
-//			mss.sentCounter.incrementAndGet();
+			writerQ.offer(pack, handler, future);
 		} catch (MessageException me) {
 			if (packid != null && pack.isSync()) {
 				handler.onFailed(me);
@@ -174,17 +149,51 @@ public class RemoteModuleSession extends PSession {
 		}
 	}
 
-	public void destroy() {
+	public void destroy(boolean sendDDNode) {
 		connsPool.setStop(true);
 		Iterator<Connection> it = connsPool.iterator();
-		FramePacket dropp = PacketHelper.buildFromBody(null, OSocketImpl.DROP_CONN);
+		FramePacket dropp = PacketHelper.genSyncPack("DRO","P**",connsPool.getNameid());
 		dropp.genBodyBytes();
 		dropp.genHeader();
+		int cc = 0;
 		while (it.hasNext()) {
 			try {
-				Connection conn = it.next();
-				conn.write(dropp);
-				conn.closeSilently();
+				final Connection conn = it.next();
+				if (cc == 0 && sendDDNode) {
+					conn.write(dropp, new CompletionHandler() {
+						@Override
+						public void cancelled() {
+							try {
+								conn.close();
+							} catch (Exception e) {
+							}
+						}
+
+						@Override
+						public void failed(Throwable throwable) {
+							try {
+								conn.close();
+							} catch (Exception e) {
+							}
+						}
+
+						@Override
+						public void completed(Object result) {
+							try {
+								conn.close();
+							} catch (Exception e) {
+							}
+						}
+
+						@Override
+						public void updated(Object result) {
+						}
+
+					});
+				} else {
+					conn.close();
+				}
+				cc++;
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -16,10 +16,14 @@ import org.glassfish.grizzly.ICloseType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.impl.NodeInfo;
+import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.nio.OClient;
 import onight.osgi.otransio.nio.PacketWriteTask;
 import onight.osgi.otransio.sm.MSessionSets;
+import onight.osgi.otransio.sm.RemoteModuleBean;
 import onight.tfw.otransio.api.MessageException;
+import onight.tfw.otransio.api.PackHeader;
+import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.outils.pool.ReusefulLoopPool;
 
@@ -33,6 +37,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	int max;
 	boolean stop = false;
 	String subnodeURI = "";
+	String from_bcuid = "";
 
 	ArrayList<NodeInfo> subNodes = new ArrayList<>();
 
@@ -41,7 +46,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	public void setStop(boolean isstop) {
 		this.stop = true;
 		if (core <= 0) {
-			mss.dropSession(nameid);
+			mss.dropSession(nameid, false);
 		}
 	}
 
@@ -175,7 +180,11 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 							}
 						}
 					});
-					final FramePacket pack = mss.getLocalModulesPacket();
+//					final FramePacket pack = mss.getLocalModulesPacket();
+					RemoteModuleBean rmb = new RemoteModuleBean();
+					FramePacket pack = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN, PackHeader.REMOTE_MODULE, 
+							
+							rmb);
 					// log.debug("write localmodulepack:" + pack + ",writable=="
 					// + conn.canWrite());
 					// log.trace("!!WriteLocalModulesPacket TO:" +
@@ -209,8 +218,8 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 						}
 					});
 					final FramePacket pack = mss.getLocalModulesPacket();
-					// log.debug("write localmodulepack:" + pack + ",writable=="
-					// + conn.canWrite());
+					pack.putHeader(OSocketImpl.PACK_FROM, from_bcuid);
+					log.debug("write LoginModulePack from " + mss.getRmb().getNodeInfo().getUname());
 					// log.trace("!!WriteLocalModulesPacket TO:" +
 					// conn.getPeerAddress() + ",From="
 					// + conn.getLocalAddress() + ",pack=" + pack.getFixHead());
@@ -231,7 +240,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				log.warn("error in create out conn:" + ip + ",port=" + port, e);
 			}
 		}
-		log.debug("cannot get more Connection:cursize="+size() +",max="+max);
+		log.debug("cannot get more Connection:cursize=" + size() + ",max=" + max);
 		return null;
 	}
 

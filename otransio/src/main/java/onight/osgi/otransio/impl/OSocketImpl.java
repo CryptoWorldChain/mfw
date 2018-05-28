@@ -28,6 +28,11 @@ import org.osgi.framework.BundleContext;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import onight.osgi.otransio.ck.CKConnPool;
+import onight.osgi.otransio.ck.NewConnCheckHealth;
+import onight.osgi.otransio.exception.NoneServerException;
+import onight.osgi.otransio.exception.TransIOException;
+import onight.osgi.otransio.exception.UnAuthorizedConnectionException;
 import onight.osgi.otransio.nio.OServer;
 import onight.osgi.otransio.nio.PacketQueue;
 import onight.osgi.otransio.sm.MSessionSets;
@@ -41,7 +46,6 @@ import onight.tfw.otransio.api.PSenderService;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
-import onight.tfw.otransio.api.beans.LoopPackBody;
 import onight.tfw.otransio.api.beans.UnknowModuleBody;
 import onight.tfw.otransio.api.session.CMDService;
 import onight.tfw.otransio.api.session.LocalModuleSession;
@@ -88,6 +92,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	OServer server = new OServer();
 
+	@Getter
 	OutgoingSessionManager osm;
 	ThreadPoolExecutor localPool;
 
@@ -129,18 +134,18 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	@Bind(aggregate = true, optional = true)
 	public void bindPSender(PSenderService pl) {
-		log.debug("Register PSender::" + pl + ",sender=" + sender);
+		// log.debug("Register PSender::" + pl + ",sender=" + sender);
 		SenderPolicy.bindPSender(pl, sender);
 	}
 
 	@Unbind(aggregate = true, optional = true)
 	public void unbindPSender(PSenderService pl) {
-		log.debug("Remove PSender::" + pl);
+		// log.debug("Remove PSender::" + pl);
 	}
 
 	@Bind(aggregate = true, optional = true)
 	public void bindCMDService(CMDService service) {
-		log.debug("Register CMDService::" + service.getModule());
+		// log.debug("Register CMDService::" + service.getModule());
 		LocalModuleSession ms = mss.addLocalMoudle(service.getModule());
 		for (String cmd : service.getCmds()) {
 			ms.registerService(cmd, service);
@@ -150,29 +155,40 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	@Unbind(aggregate = true, optional = true)
 	public void unbindCMDService(CMDService service) {
-		log.debug("Remove ModuleSession::" + service);
+		// log.debug("Remove ModuleSession::" + service);
 	}
 
-	public void onPacket(FramePacket pack, final CompleteHandler handler, Connection<?> conn) {
+	public void onPacket(FramePacket pack, final CompleteHandler handler, Connection<?> conn) throws TransIOException {
 		if (PackHeader.REMOTE_LOGIN.equals(pack.getGlobalCMD())) {// 来自远端的登录
 			RemoteModuleBean rmb = pack.parseBO(RemoteModuleBean.class);
 			String node_from = pack.getExtStrProp(PACK_FROM);
-			if (node_from == null) {
+			if (StringUtils.isBlank(node_from)) {
 				node_from = rmb.getNodeInfo().getNodeName();
+			} else {
+				rmb.getNodeInfo().setNodeName(node_from);
 			}
+			log.debug("get New Login Connection From:" + rmb.getNodeInfo().getUname() + ",nodeid=" + node_from);
 			if (node_from != null) {
 				PSession session = mss.byNodeName(node_from);
 				if (session != null && session instanceof RemoteModuleSession) {
 					RemoteModuleSession rms = (RemoteModuleSession) session;
 					rms.addConnection(conn);
+					CKConnPool ckpool = rms.getConnsPool();
+					ckpool.setIp(rmb.getNodeInfo().getAddr());
+					ckpool.setPort(rmb.getNodeInfo().getPort());
+				} else {
+					try {
+						osm.createOutgoingSSByURI(rmb.getNodeInfo(),node_from);
+					} catch (NoneServerException e) {
+					}
 				}
-				rmb.getNodeInfo().setNodeName(node_from);
-				// mss.addRemoteSession(rmb.getNodeInfo(), conn);
+				conn.getAttributes().setAttribute(NewConnCheckHealth.CONN_AUTH_INFO, rmb);
 			} else {
 				log.debug("unknow node id_from:" + node_from);
 			}
 			// conn.write(mss.getLocalModulesPacketBack());
 		} else if (DROP_CONN.equals(pack.getGlobalCMD())) {// 来自远端的模块信息返回
+			osm.dropSessionByRemote(conn);
 			conn.closeSilently();
 		} else if (PackHeader.CMD_HB.equals(pack.getGlobalCMD())) {// 来自远端的心跳线
 			log.trace("[HB] From " + conn.getPeerAddress() + " , to " + conn.getLocalAddress());
@@ -181,12 +197,13 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 		}
 	}
 
-	public void routePacket(FramePacket pack, final CompleteHandler handler) {
+	public void routePacket(FramePacket pack, final CompleteHandler handler) throws TransIOException {
 		// from local
 		routePacket(pack, handler, null);
 	}
 
-	public void routePacket(FramePacket pack, final CompleteHandler handler, Connection<?> conn) {
+	public void routePacket(FramePacket pack, final CompleteHandler handler, Connection<?> conn)
+			throws TransIOException {
 		if (pack.isResp() && pack.getExtHead().isExist(mss.getPackIDKey())) {
 			// 检查是否为响应包
 			String expackid = pack.getExtStrProp(mss.getPackIDKey());
@@ -195,7 +212,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
 				Object ofrom = pack.getExtHead().remove(OSocketImpl.PACK_FROM);
 				Object oto = pack.getExtHead().remove(OSocketImpl.PACK_TO);
-				log.debug("oldfrom = " + ofrom + ",oto=" + oto + ",opackid=" + opackid);
+				log.debug("response from = " + ofrom + ",oto=" + oto + ",opackid=" + opackid);
 				future_handler.onFinished(pack);
 			} else {
 				log.warn("unknow ack:" + expackid + ",packid=" + pack.getExtProp(mss.getPackIDKey()));
@@ -213,34 +230,25 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			ms = mss.byNodeName(destTO);
 			if (ms == null) {// not found
 				String uri = pack.getExtStrProp(PACK_URI);
-				log.debug("creating new Connection:" + uri + ":name=" + destTO);
+				log.debug("creating new Connection:" + uri + ":name=" + destTO+",from="+from);
 				if (StringUtils.isNotBlank(uri)) {
 					NodeInfo node = NodeInfo.fromURI(uri, destTO);
 					try {
-						ms = osm.createOutgoingSSByURI(node);
+						ms = osm.createOutgoingSSByURI(node,from);
 					} catch (Exception e) {
 						log.error("route ERROR:" + e.getMessage(), e);
 						throw new MessageException(e);
 					}
 				}
-				// } else {
-				// String uri = pack.getExtStrProp(PACK_URI);
-				// if (StringUtils.isNotBlank(uri) && ms instanceof
-				// RemoteModuleSession) {
-				// RemoteModuleSession rms = (RemoteModuleSession) ms;
-				// rms.getConnsPool().setAliasURI(uri);
-				// }
-				// log.debug("using exist session:" + ms);
 			}
-			// mss.getSendCounter().incrementAndGet();
 		} else {// re
 			if (conn != null) {
-				// mss.getRecvCounter().incrementAndGet();
 				if (StringUtils.isNotBlank(from)) {
-					RemoteModuleSession rms = osm.addIncomming(from, conn);
-					// if (rms != null) {
-					// rms.getRecvCounter().incrementAndGet();
-					// }
+					try {
+						osm.addIncomming(from, conn);
+					} catch (UnAuthorizedConnectionException e) {
+						conn.close();
+					}
 				}
 			}
 			ms = mss.getLocalsessionByModule().get(pack.getModule());
@@ -293,9 +301,9 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	}
 
 	public synchronized void tryDropConnection(String packNameOrId) {
-		mss.dropSession(packNameOrId);
+		mss.dropSession(packNameOrId, true);
 		PacketQueue queue = queueBybcuid.remove(packNameOrId);
-		if(queue!=null){
+		if (queue != null) {
 			queue.setStop(true);
 		}
 	}
@@ -303,7 +311,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	public synchronized void renameSession(String oldname, String newname) {
 		mss.renameSession(oldname, newname);
 		PacketQueue queue = queueBybcuid.remove(oldname);
-		if(queue!=null){
+		if (queue != null) {
 			queueBybcuid.put(newname, queue);
 		}
 	}

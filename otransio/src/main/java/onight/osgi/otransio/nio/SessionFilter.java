@@ -1,6 +1,7 @@
 package onight.osgi.otransio.nio;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
@@ -38,11 +39,10 @@ public class SessionFilter extends BaseFilter {
 		if (pack == null) {
 			return ctx.getInvokeAction();
 		}
-		long start = System.currentTimeMillis();
-		// log.trace("[Message]: " + pack.getGlobalCMD() + ", FROM: " +
-		// ctx.getConnection().getPeerAddress() + " HEAD: "
-		// + pack.getFixHead() + ",oimpl=" + oimpl);
-
+//		long start = System.currentTimeMillis();
+//		// log.trace("[Message]: " + pack.getGlobalCMD() + ", FROM: " +
+//		// ctx.getConnection().getPeerAddress() + " HEAD: "
+//		// + pack.getFixHead() + ",oimpl=" + oimpl);
 		CompleteHandler handler = null;
 		if (pack.isSync() && !pack.isResp()) {// 需要等待回应的
 			final Connection conn = ctx.getConnection();
@@ -51,7 +51,7 @@ public class SessionFilter extends BaseFilter {
 				public void onFinished(FramePacket vpacket) {
 					if (conn.isOpen()) {
 						try {
-							String packfrom = vpacket.getExtStrProp(OSocketImpl.PACK_FROM);
+//							String packfrom = vpacket.getExtStrProp(OSocketImpl.PACK_FROM);
 							// log.debug("get Pack callback from :" + packfrom);
 							// vpacket.putHeader(OSocketImpl.PACK_TO, packfrom);
 							vpacket.getExtHead().reset();
@@ -90,6 +90,7 @@ public class SessionFilter extends BaseFilter {
 	@Override
 	public NextAction handleAccept(FilterChainContext ctx) throws IOException {
 		log.debug("new connection:" + ctx.getConnection().getPeerAddress());
+		oimpl.getOsm().getNck().addCheckHealth(ctx.getConnection());
 		return ctx.getInvokeAction();
 	}
 

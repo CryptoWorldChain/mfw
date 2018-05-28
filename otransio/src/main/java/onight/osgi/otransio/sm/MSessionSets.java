@@ -148,14 +148,17 @@ public class MSessionSets {
 		return lms;
 	}
 
-	public void dropSession(String name) {
+	public synchronized void dropSession(String name,boolean sendDDNode) {
 		if (StringUtils.isNotBlank(name)) {
+			log.debug("dropSession:"+name+",sendDD="+sendDDNode);			
 			PSession session = sessionByNodeName.remove(name);
 			osm.rmNetPool(name);
 			if (session != null) {
 				dropCounter.incrementAndGet();
 				if (session instanceof RemoteModuleSession)
-					((RemoteModuleSession) session).destroy();
+				{
+					((RemoteModuleSession) session).destroy(sendDDNode);
+				}
 			}
 
 		}
