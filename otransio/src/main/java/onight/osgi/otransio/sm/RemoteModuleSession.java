@@ -119,20 +119,36 @@ public class RemoteModuleSession extends PSession {
 	@Override
 	public void onPacket(final FramePacket pack, final CompleteHandler handler) {
 		String packid = null;
-		FutureImpl<FramePacket> future = null;
+//		FutureImpl<FramePacket> future = null;
 
 		if (pack.isSync()) {
 			// 发送到远程
 			packid = genPackID();
-			future = Futures.createSafeFuture();
+//			future = Futures.createSafeFuture();
 			pack.putHeader(mss.packIDKey, packid);
 			pack.getExtHead().remove(OSocketImpl.PACK_TO);
-			mss.packMaps.put(packid, handler);
+			final String fpackid = packid;
+			mss.packMaps.put(packid, new CompleteHandler() {
+				
+				@Override
+				public void onFinished(FramePacket arg0) {
+					mss.packMaps.remove(fpackid);
+					handler.onFinished(arg0);
+					
+				}
+				
+				@Override
+				public void onFailed(Exception arg0) {
+					mss.packMaps.remove(fpackid);
+					handler.onFailed(arg0);	
+					
+				}
+			});
 			log.debug("sendSyncPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
 
 		}
 		try {
-			writerQ.offer(pack, handler, future);
+			writerQ.offer(pack, handler);
 		} catch (MessageException me) {
 			if (packid != null && pack.isSync()) {
 				handler.onFailed(me);

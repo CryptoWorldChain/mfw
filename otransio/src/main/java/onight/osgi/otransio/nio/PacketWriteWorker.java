@@ -39,15 +39,16 @@ public class PacketWriteWorker implements Runnable {
 						queue.getCkpool().sendMessage(arrays);
 						
 					} catch (Exception e) {
-						log.debug("getSend Message Error:",e);
+						log.debug("getSend Message Error:"+e.getMessage(),e);
 						for(PacketWriteTask pw:arrays){
 							if(!pw.isWrited())
 							{
-								if(pw.getFuture()!=null){
-									pw.getFuture().failure(e);
-								}else{
-									pw.handler.onFailed(e);
-								}
+//								if(pw.getFuture()!=null){
+//									pw.getFuture().failure(e);
+//								}
+								pw.handler.onFailed(e);
+							}else{
+								queue.offer(pw.getPack(),pw.getHandler());
 							}
 						}
 					}finally{

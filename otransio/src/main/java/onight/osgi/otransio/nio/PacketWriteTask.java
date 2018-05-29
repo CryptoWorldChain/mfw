@@ -13,5 +13,5 @@ public class PacketWriteTask{
 	FramePacket pack;
 	CompleteHandler handler;
 	boolean writed = false;
-	FutureImpl<FramePacket> future;
+//	FutureImpl<FramePacket> future;
 }

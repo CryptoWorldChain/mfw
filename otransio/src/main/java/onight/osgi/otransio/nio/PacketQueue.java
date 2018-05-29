@@ -31,8 +31,8 @@ public class PacketQueue {
 		}
 	}
 
-	public void offer(FramePacket fp,final CompleteHandler handler,FutureImpl<FramePacket> future) {
-		queue.offer(new PacketWriteTask(fp,handler,false,future));
+	public void offer(FramePacket fp,final CompleteHandler handler) {
+		queue.offer(new PacketWriteTask(fp,handler,false));
 		try {
 			synchronized (writer) {
 				writer.notifyAll();
