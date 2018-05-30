@@ -43,12 +43,7 @@ public class PacketWriteWorker implements Runnable {
 						for(PacketWriteTask pw:arrays){
 							if(!pw.isWrited())
 							{
-//								if(pw.getFuture()!=null){
-//									pw.getFuture().failure(e);
-//								}
 								pw.handler.onFailed(e);
-							}else{
-								queue.offer(pw.getPack(),pw.getHandler());
 							}
 						}
 					}finally{

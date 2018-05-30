@@ -119,31 +119,29 @@ public class RemoteModuleSession extends PSession {
 	@Override
 	public void onPacket(final FramePacket pack, final CompleteHandler handler) {
 		String packid = null;
-//		FutureImpl<FramePacket> future = null;
-
+		// FutureImpl<FramePacket> future = null;
+		CompleteHandler rehandler = handler;
 		if (pack.isSync()) {
 			// 发送到远程
 			packid = genPackID();
-//			future = Futures.createSafeFuture();
+			// future = Futures.createSafeFuture();
 			pack.putHeader(mss.packIDKey, packid);
 			pack.getExtHead().remove(OSocketImpl.PACK_TO);
 			final String fpackid = packid;
-			mss.packMaps.put(packid, new CompleteHandler() {
-				
+			rehandler = new CompleteHandler() {
 				@Override
 				public void onFinished(FramePacket arg0) {
 					mss.packMaps.remove(fpackid);
 					handler.onFinished(arg0);
-					
 				}
-				
+
 				@Override
 				public void onFailed(Exception arg0) {
 					mss.packMaps.remove(fpackid);
-					handler.onFailed(arg0);	
-					
+					handler.onFailed(arg0);
 				}
-			});
+			};
+			mss.packMaps.put(packid, handler);
 			log.debug("sendSyncPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
 
 		}
@@ -168,7 +166,7 @@ public class RemoteModuleSession extends PSession {
 	public void destroy(boolean sendDDNode) {
 		connsPool.setStop(true);
 		Iterator<Connection> it = connsPool.iterator();
-		FramePacket dropp = PacketHelper.genSyncPack("DRO","P**",connsPool.getNameid());
+		FramePacket dropp = PacketHelper.genSyncPack("DRO", "P**", connsPool.getNameid());
 		dropp.genBodyBytes();
 		dropp.genHeader();
 		int cc = 0;

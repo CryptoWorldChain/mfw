@@ -128,7 +128,8 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 
 	public void sendMessage(final List<PacketWriteTask> packs) throws MessageException {
 		boolean writed = false;
-		for (int i = 0; i < 3; i++) {
+		int retry_Connect = 0;
+		for (int i = 0; i < 3000; i++) {
 			Connection conn = null;
 			try {
 				conn = borrow();
@@ -145,12 +146,17 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 						conn = null;
 					}
 				}
-				Thread.sleep(100);
-				if (createOneConnection(1) == null) {
-					// throw new MessageException("cannot create connections to
-					// "+ip+":"+port);
-				} else {
-					// i--;
+				if (size() < max) {
+					createOneConnection(1);
+				}
+				if (size() == 0) {// has no more connection but only connect 3 times
+					if (retry_Connect++ <= 3) {
+						// cannot get connection
+						break;
+					}
+					Thread.sleep(1000);// try connect next time
+				} else {// try 10*6000=60 seconds
+					Thread.sleep(10);
 				}
 			} catch (Exception e) {
 				log.error("sendMessageError:", e);
@@ -180,10 +186,10 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 							}
 						}
 					});
-//					final FramePacket pack = mss.getLocalModulesPacket();
+					// final FramePacket pack = mss.getLocalModulesPacket();
 					RemoteModuleBean rmb = new RemoteModuleBean();
-					FramePacket pack = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN, PackHeader.REMOTE_MODULE, 
-							
+					FramePacket pack = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN, PackHeader.REMOTE_MODULE,
+
 							rmb);
 					// log.debug("write localmodulepack:" + pack + ",writable=="
 					// + conn.canWrite());
