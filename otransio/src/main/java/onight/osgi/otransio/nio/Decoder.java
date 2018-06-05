@@ -2,6 +2,7 @@ package onight.osgi.otransio.nio;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.lang3.StringUtils;
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
 import org.glassfish.grizzly.TransformationException;
@@ -22,7 +23,7 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 	protected final Attribute<Long> lastCheckHealthMS;
 
 	public static final int MAX_BLANK_COUNT = 128;
-	
+
 	public Decoder() {
 		headerStore = attributeBuilder.createAttribute("Decoder.FixHeader");
 		lastCheckHealthMS = attributeBuilder.createAttribute("Decoder.CheckHealth");
@@ -48,8 +49,8 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 				blankcount++;
 			}
 			AtomicLong ll = blankHeaderCount.get(storage);
-			if(ll==null){
-				ll=new AtomicLong(0);
+			if (ll == null) {
+				ll = new AtomicLong(0);
 				blankHeaderCount.set(storage, ll);
 			}
 			if (blankcount > 0) {
@@ -85,6 +86,12 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 			byte extbytes[] = new byte[header.getExtsize()];
 			input.get(extbytes);
 			ext = ExtHeader.buildFrom(extbytes);
+			String sendtime = (String) ext.get(Encoder.LOG_TIME_SENT);
+			if (StringUtils.isNumeric(sendtime)) {
+				log.debug("transio recv " + header.getCmd() + "" + header.getModule() + " bodysize [" + header.getBodysize()
+						+ "]b cost[" + (System.currentTimeMillis() - Long.parseLong(sendtime)) + "]ms sent@="+sendtime+" resp="+
+						header.isResp()+",sync="+header.isSync());
+			}
 		}
 		byte body[] = new byte[header.getBodysize()];
 		input.get(body);

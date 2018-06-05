@@ -85,7 +85,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				params.get("org.zippo.otransio.localthreadpool.max", 100), 120l, TimeUnit.SECONDS,
 				new LinkedBlockingQueue());
 	}
-
+	@Getter
 	MSessionSets mss;
 
 	OTransSender sender = new OTransSender(this);
@@ -188,6 +188,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			}
 			// conn.write(mss.getLocalModulesPacketBack());
 		} else if (DROP_CONN.equals(pack.getGlobalCMD())) {// 来自远端的模块信息返回
+			log.debug("get drop connection message");
 			osm.dropSessionByRemote(conn);
 			conn.closeSilently();
 		} else if (PackHeader.CMD_HB.equals(pack.getGlobalCMD())) {// 来自远端的心跳线
@@ -247,11 +248,13 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					try {
 						osm.addIncomming(from, conn);
 					} catch (UnAuthorizedConnectionException e) {
-						conn.close();
+//						conn.close();
 					}
 				}
+				ms = mss.getLocalsessionByModule().get(pack.getModule());
+			}else{
+				ms = mss.getLocalsessionByModule().get(pack.getModule());
 			}
-			ms = mss.getLocalsessionByModule().get(pack.getModule());
 		}
 		if (ms != null) {
 			if (ms instanceof LocalModuleSession) {

@@ -47,8 +47,9 @@ public class NodeConnectionPool {
 		CKConnPool pool = ckPoolByNodeName.get(oldname);
 		if (pool != null) {
 			CKConnPool existpool = ckPoolByNodeName.put(newname, pool);
-			if(existpool!=null){
-				log.debug("stop exist pool for:"+existpool.getNameid()+":"+existpool.getIp()+":"+existpool.getPort());
+			if (existpool != null && pool != existpool) {
+				log.debug("stop exist pool for:" + existpool.getNameid() + ":" + existpool.getIp() + ":"
+						+ existpool.getPort());
 				existpool.setStop(true);
 			}
 		}
@@ -66,13 +67,13 @@ public class NodeConnectionPool {
 		}
 	}
 
-//	public void broadcastLocalModule(MSessionSets mss) {
-//		for (CKConnPool pool : ckPoolByNodeName.values()) {
-//			try {
-//				pool.broadcastMessage(mss.getLocalModulesPacket());
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//		}
-//	}
+	// public void broadcastLocalModule(MSessionSets mss) {
+	// for (CKConnPool pool : ckPoolByNodeName.values()) {
+	// try {
+	// pool.broadcastMessage(mss.getLocalModulesPacket());
+	// } catch (Exception e) {
+	// e.printStackTrace();
+	// }
+	// }
+	// }
 }

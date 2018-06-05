@@ -16,9 +16,11 @@ import onight.tfw.otransio.api.beans.FramePacket;
 public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 
 	Logger log = LoggerFactory.getLogger(Encoder.class);
-	
-	protected final Attribute<Long> lastCheckHealthMS= Grizzly.DEFAULT_ATTRIBUTE_BUILDER.createAttribute("Decoder.CheckHealth");
 
+	protected final Attribute<Long> lastCheckHealthMS = Grizzly.DEFAULT_ATTRIBUTE_BUILDER
+			.createAttribute("Decoder.CheckHealth");
+
+	public static String LOG_TIME_SENT = "T__LOG_SENT";
 
 	@Override
 	public String getName() {
@@ -34,11 +36,15 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 	// '\n' });
 
 	@Override
-	protected TransformationResult<FramePacket, Buffer> transformImpl(AttributeStorage storage, FramePacket input) throws TransformationException {
+	protected TransformationResult<FramePacket, Buffer> transformImpl(AttributeStorage storage, FramePacket input)
+			throws TransformationException {
 		byte[] bodyb = input.genBodyBytes();
-		byte[] extb = input.genExtBytes(); 
+		long senttime=System.currentTimeMillis();
+		input.putHeader(LOG_TIME_SENT, "" + senttime);
+		byte[] extb = input.genExtBytes();
 		input.getFixHead().setExtsize(extb.length);
 		input.getFixHead().setBodysize(bodyb.length);
+
 		Buffer output = obtainMemoryManager(storage).allocate(16 + input.getFixHead().getTotalSize());
 		output.put(input.getFixHead().genBytes());
 		if (extb.length > 0) {
@@ -49,12 +55,16 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 		}
 		output.flip();
 		output.allowBufferDispose(true);
-		log.trace("encode:"+input.getFixHead().toStrHead()+",extsize="+extb.length+",bodysize="+bodyb.length);
-		if(bodyb.length>0&&input.getFixHead().toStrHead().endsWith("400000T00")){
+//		log.trace("encode:" + input.getFixHead().toStrHead() + ",extsize=" + extb.length + ",bodysize=" + bodyb.length);
+		log.debug("transio send " + input.getFixHead().getCmd() + "" + input.getFixHead().getModule() + " bodysize [" + input.getFixHead().getBodysize()
+		+ "]b sent@="+senttime+" resp="+
+		input.getFixHead().isResp()+",sync="+input.getFixHead().isSync());
+		
+		if (bodyb.length > 0 && input.getFixHead().toStrHead().endsWith("400000T00")) {
 			log.error("unknow input::");
 			return TransformationResult.createCompletedResult(null, null);
 		}
-		lastCheckHealthMS.set(storage.getAttributes(),System.currentTimeMillis());
+		lastCheckHealthMS.set(storage.getAttributes(), System.currentTimeMillis());
 		return TransformationResult.createCompletedResult(output, null);
 	}
 }

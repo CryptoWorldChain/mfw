@@ -29,9 +29,7 @@ public class OServer {
 		FilterChainBuilder filterChainBuilder = FilterChainBuilder.stateless();
 		// Add TransportFilter, which is responsible
 		// for reading and writing data to the connection
-		
 		filterChainBuilder.add(new TransportFilter());
-
 		
 		// StringFilter is responsible for Buffer <-> String conversion
 		filterChainBuilder.add(new OTransFilter());

@@ -31,6 +31,7 @@ public class OTransSender extends FutureSender {
 	@Override
 	public FramePacket send(FramePacket fp, long timeoutMS) throws MessageException {
 		final FutureImpl<FramePacket> future = Futures.createSafeFuture();
+		long starttime=System.currentTimeMillis();
 		try {
 			osock.routePacket(fp, new CompleteHandler() {
 				@Override
@@ -44,17 +45,19 @@ public class OTransSender extends FutureSender {
 				}
 			});
 			FramePacket ret = future.get(timeoutMS, TimeUnit.MILLISECONDS);
+			log.debug("send "+fp.getGlobalCMD()+" bodysize["+fp.getFixHead().getBodysize()+"]b cost["+(System.currentTimeMillis()-starttime)+"]ms resp="+fp.isResp()+",sync="+fp.isSync());
 			return ret;
 		} catch (InterruptedException e) {
-			log.warn("send InterruptedException:" + fp, e);
+			log.warn("send InterruptedException:cost:" + (System.currentTimeMillis()-starttime)+":"+fp, e);
 			throw new MessageException(e);
 		} catch (ExecutionException e) {
-			log.warn("send ExecutionException:" + fp, e);
+			log.warn("send ExecutionException:cost:"+ (System.currentTimeMillis()-starttime)+":" + fp, e);
 			throw new MessageException(e);
 		} catch (TimeoutException e) {
-			log.warn("send TimeoutException:" + fp, e);
+			log.warn("send TimeoutException:cost:"+ (System.currentTimeMillis()-starttime)+":" + fp, e);
 			throw new MessageException(e);
 		} catch (Exception e) {
+			log.warn("send Exception"+ (System.currentTimeMillis()-starttime)+":" + fp, e);
 			throw new MessageException(e);
 		}
 	}

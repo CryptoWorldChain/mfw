@@ -67,10 +67,10 @@ public class CheckHealth {
 						exec.remove(this);
 					} else {
 						if (lastCheckHealthMS.get(conn.getAttributes()) - System.currentTimeMillis() > delay * 1000) {
-							// !!conn.write(hbpack);
+//							conn.write(hbpack);
 							lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
-							log.trace("!!CheckHealth TO:" + conn.getPeerAddress() + ",From=" + conn.getLocalAddress()
-									+ ",pack=" + hbpack.getFixHead());
+//							log.trace("!!CheckHealth TO:" + conn.getPeerAddress() + ",From=" + conn.getLocalAddress()
+//									+ ",pack=" + hbpack.getFixHead());
 						}
 					}
 

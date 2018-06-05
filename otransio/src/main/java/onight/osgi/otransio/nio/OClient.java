@@ -48,7 +48,7 @@ public class OClient {
 
 		transport = TCPNIOTransportBuilder.newInstance().build();
 		transport.setProcessor(filterChainBuilder.build());
-
+		transport.setTcpNoDelay(true);
 		try {
 			transport.start();
 		} catch (IOException e) {

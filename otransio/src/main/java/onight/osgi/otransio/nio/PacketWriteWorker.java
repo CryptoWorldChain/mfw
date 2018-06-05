@@ -20,7 +20,10 @@ public class PacketWriteWorker implements Runnable {
 			PacketWriteTask fp = null;
 			try {
 				do {
-					fp = queue.poll();
+					try {
+						fp = queue.poll();
+					} catch (Exception e) {
+					}
 					if (fp != null) {
 						arrays.add(fp);
 					}
@@ -29,7 +32,7 @@ public class PacketWriteWorker implements Runnable {
 				if (fp == null && arrays.size() <= 0) {
 					try {
 						synchronized (this) {
-							this.wait();
+							this.wait(10000);
 						}
 					} catch (InterruptedException e) {
 						log.debug("wait up.");
@@ -37,7 +40,6 @@ public class PacketWriteWorker implements Runnable {
 				} else {
 					try {
 						queue.getCkpool().sendMessage(arrays);
-						
 					} catch (Exception e) {
 						log.debug("getSend Message Error:"+e.getMessage(),e);
 						for(PacketWriteTask pw:arrays){

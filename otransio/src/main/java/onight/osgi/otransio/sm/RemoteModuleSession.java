@@ -146,7 +146,7 @@ public class RemoteModuleSession extends PSession {
 
 		}
 		try {
-			writerQ.offer(pack, handler);
+			writerQ.offer(pack, rehandler);
 		} catch (MessageException me) {
 			if (packid != null && pack.isSync()) {
 				handler.onFailed(me);
@@ -165,6 +165,7 @@ public class RemoteModuleSession extends PSession {
 
 	public void destroy(boolean sendDDNode) {
 		connsPool.setStop(true);
+		writerQ.setStop(true);
 		Iterator<Connection> it = connsPool.iterator();
 		FramePacket dropp = PacketHelper.genSyncPack("DRO", "P**", connsPool.getNameid());
 		dropp.genBodyBytes();
@@ -179,10 +180,10 @@ public class RemoteModuleSession extends PSession {
 						public void cancelled() {
 							try {
 								conn.close();
+								
 							} catch (Exception e) {
 							}
 						}
-
 						@Override
 						public void failed(Throwable throwable) {
 							try {

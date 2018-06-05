@@ -10,6 +10,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.grizzly.CloseListener;
 import org.glassfish.grizzly.Closeable;
+import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.ICloseType;
 
@@ -122,7 +123,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 			}
 		}
 		if (!writed) {
-			throw new MessageException("No More Connections");
+			throw new MessageException("No More Connections for ["+ip+":"+port+"]");
 		}
 	}
 
@@ -149,7 +150,8 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				if (size() < max) {
 					createOneConnection(1);
 				}
-				if (size() == 0) {// has no more connection but only connect 3 times
+				if (size() == 0) {// has no more connection but only connect 3
+									// times
 					if (retry_Connect++ <= 3) {
 						// cannot get connection
 						break;
@@ -198,7 +200,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					// + conn.getLocalAddress() + ",pack=" + pack.getFixHead());
 					//
 					conn.write(pack);
-					this.addObject(conn);
+					addObject(conn);
 					return conn;
 				}
 			} catch (Exception e) {
@@ -214,6 +216,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 			try {
 				final Connection conn = client.getConnection(ip, port);
 				if (conn != null) {
+					
 					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 						@Override
 						public void onClosed(Closeable closeable, ICloseType type) throws IOException {
@@ -229,9 +232,8 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					// log.trace("!!WriteLocalModulesPacket TO:" +
 					// conn.getPeerAddress() + ",From="
 					// + conn.getLocalAddress() + ",pack=" + pack.getFixHead());
-					//
 					conn.write(pack);
-					this.addObject(conn);
+					addObject(conn);
 					return conn;
 				} else {
 					log.debug("cannot create Connection to " + ip + ":" + port);

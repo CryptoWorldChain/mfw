@@ -1,6 +1,8 @@
 package onight.osgi.otransio.nio;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.glassfish.grizzly.impl.FutureImpl;
 
@@ -14,7 +16,7 @@ import onight.tfw.otransio.api.beans.FramePacket;
 @Data
 public class PacketQueue {
 
-	ConcurrentLinkedQueue<PacketWriteTask> queue = new ConcurrentLinkedQueue<>();
+	LinkedBlockingQueue<PacketWriteTask> queue = new LinkedBlockingQueue<>();
 	long lastUpdatedMS = System.currentTimeMillis();
 
 	PacketWriteWorker writer;
@@ -42,7 +44,7 @@ public class PacketQueue {
 		}
 	}
 
-	public PacketWriteTask poll() {
-		return queue.poll();
+	public PacketWriteTask poll() throws InterruptedException {
+		return queue.poll(60,TimeUnit.SECONDS);
 	}
 }
