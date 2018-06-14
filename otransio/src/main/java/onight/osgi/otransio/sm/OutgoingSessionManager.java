@@ -2,6 +2,7 @@ package onight.osgi.otransio.sm;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.glassfish.grizzly.CloseListener;
 import org.glassfish.grizzly.Closeable;
@@ -17,6 +18,7 @@ import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.ck.CheckHealth;
 import onight.osgi.otransio.ck.NewConnCheckHealth;
 import onight.osgi.otransio.ck.NodeConnectionPool;
+import onight.osgi.otransio.ck.PackMapsCheckHealth;
 import onight.osgi.otransio.exception.NoneServerException;
 import onight.osgi.otransio.exception.UnAuthorizedConnectionException;
 import onight.osgi.otransio.impl.NodeInfo;
@@ -48,6 +50,7 @@ public class OutgoingSessionManager {
 		sb.append(nodePool.getJsonStr());
 		return sb.toString();
 	}
+	PackMapsCheckHealth pmch ;
 
 	public OutgoingSessionManager(OSocketImpl oimpl, PropHelper params, MSessionSets mss) {
 		this.params = params;
@@ -57,7 +60,9 @@ public class OutgoingSessionManager {
 		ck = new CheckHealth(params.get("otrans.checkhealth.size", 2), params.get("otrans.checkhealth.delay", 30));
 		nck = new NewConnCheckHealth(params.get("otrans.max.conn.each.ip", 100),
 				params.get("otrans.max.conn.timeout.sec", 30), ck.getExec());
-
+		pmch = new PackMapsCheckHealth(mss);
+		
+		ck.getExec().scheduleWithFixedDelay(pmch, 60, 60, TimeUnit.SECONDS);
 	}
 
 	public synchronized void rmNetPool(String nodeName) {

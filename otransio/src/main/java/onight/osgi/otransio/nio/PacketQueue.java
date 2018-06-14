@@ -27,14 +27,14 @@ public class PacketQueue {
 
 	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, int writer_thread_count) {
 		this.ckpool = ckpool;
-		writer = new PacketWriteWorker(this, max_packet_buffer);
+		writer = new PacketWriteWorker(ckpool.getNameid()+"/"+ckpool.getIp()+":"+ckpool.getPort(),this, max_packet_buffer);
 		for (int i = 0; i < writer_thread_count; i++) {
 			new Thread(writer).start();
 		}
 	}
 
 	public void offer(FramePacket fp,final CompleteHandler handler) {
-		queue.offer(new PacketWriteTask(fp,handler,false));
+		while(!queue.offer(new PacketWriteTask(fp,handler,false)));
 		try {
 			synchronized (writer) {
 				writer.notifyAll();
@@ -44,7 +44,7 @@ public class PacketQueue {
 		}
 	}
 
-	public PacketWriteTask poll() throws InterruptedException {
-		return queue.poll(60,TimeUnit.SECONDS);
+	public PacketWriteTask poll(long waitms) throws InterruptedException {
+		return queue.poll(waitms,TimeUnit.MILLISECONDS);
 	}
 }

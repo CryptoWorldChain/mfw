@@ -272,4 +272,9 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 		
 	}
 
+	@Override
+	public void setDestURI(String arg0, String arg1) {
+		
+	}
+
 }

@@ -108,7 +108,7 @@ public class SessionIDGenerator {
 
 	private static AtomicInteger counter = new AtomicInteger(8888);
 
-	private static final String JVMStr = int2Str(UUIDGenerator.JVM);
+	private static final String JVMStr = UUIDGenerator.JVM;
 
 	public static String timeTick = int2Str((int) (System.currentTimeMillis()), 100);
 	

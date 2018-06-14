@@ -9,19 +9,24 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PacketWriteWorker implements Runnable {
 
+	String name = "PacketWriteWorker";
 	PacketQueue queue;
 	int max_packet_buffer = 10;
 
 	public void run() {
 		ArrayList<PacketWriteTask> arrays = new ArrayList<>(10);
-		log.debug("PacketWriteWorker    .... [Start]")	;
-		Thread.currentThread().setName("PacketWriteWorker.");
+		log.debug("PacketWriteWorker " + name + "  .... [Start]");
+		Thread.currentThread().setName(name);
 		while (!queue.isStop) {
 			PacketWriteTask fp = null;
 			try {
 				do {
 					try {
-						fp = queue.poll();
+						if (arrays.size() == 0) {
+							fp = queue.poll(10000);
+						} else {
+							fp = queue.poll(1);
+						}
 					} catch (Exception e) {
 					}
 					if (fp != null) {
@@ -31,8 +36,8 @@ public class PacketWriteWorker implements Runnable {
 
 				if (fp == null && arrays.size() <= 0) {
 					try {
-						synchronized (this) {
-							this.wait(10000);
+						synchronized (PacketWriteWorker.this) {
+							PacketWriteWorker.this.wait(10);
 						}
 					} catch (InterruptedException e) {
 						log.debug("wait up.");
@@ -41,14 +46,13 @@ public class PacketWriteWorker implements Runnable {
 					try {
 						queue.getCkpool().sendMessage(arrays);
 					} catch (Exception e) {
-						log.debug("getSend Message Error:"+e.getMessage(),e);
-						for(PacketWriteTask pw:arrays){
-							if(!pw.isWrited())
-							{
+						log.debug("getSend Message Error:" + e.getMessage(), e);
+						for (PacketWriteTask pw : arrays) {
+							if (!pw.isWrited()) {
 								pw.handler.onFailed(e);
 							}
 						}
-					}finally{
+					} finally {
 						arrays.clear();
 					}
 				}
@@ -60,7 +64,7 @@ public class PacketWriteWorker implements Runnable {
 
 		}
 
-		log.debug("PacketWriteWorker   ......  [STOP]");
+		log.debug("PacketWriteWorker " + name + "  ......  [STOP]");
 
 	}
 }

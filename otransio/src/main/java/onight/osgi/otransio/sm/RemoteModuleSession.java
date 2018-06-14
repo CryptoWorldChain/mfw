@@ -14,6 +14,7 @@ import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Futures;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ import onight.tfw.otransio.api.session.PSession;
 
 @Slf4j
 @Data
+@EqualsAndHashCode
 public class RemoteModuleSession extends PSession {
 
 	@Setter
@@ -53,7 +55,7 @@ public class RemoteModuleSession extends PSession {
 	}
 
 	private String genPackID() {
-		return rand + System.currentTimeMillis() + "_" + counter.incrementAndGet();
+		return rand + "_" + System.currentTimeMillis() + "_" + counter.incrementAndGet();
 	}
 
 	public String getJsonStr() {
@@ -124,40 +126,41 @@ public class RemoteModuleSession extends PSession {
 		if (pack.isSync()) {
 			// 发送到远程
 			packid = genPackID();
-			// future = Futures.createSafeFuture();
 			pack.putHeader(mss.packIDKey, packid);
 			pack.getExtHead().remove(OSocketImpl.PACK_TO);
-			final String fpackid = packid;
-			rehandler = new CompleteHandler() {
-				@Override
-				public void onFinished(FramePacket arg0) {
-					mss.packMaps.remove(fpackid);
-					handler.onFinished(arg0);
-				}
-
-				@Override
-				public void onFailed(Exception arg0) {
-					mss.packMaps.remove(fpackid);
-					handler.onFailed(arg0);
-				}
-			};
+			// final String fpackid = packid;
+			// rehandler = new CompleteHandler() {
+			// @Override
+			// public void onFinished(FramePacket arg0) {
+			// mss.packMaps.remove(fpackid);
+			// handler.onFinished(arg0);
+			// }
+			//
+			// @Override
+			// public void onFailed(Exception arg0) {
+			// mss.packMaps.remove(fpackid);
+			// handler.onFailed(arg0);
+			// }
+			// };
 			mss.packMaps.put(packid, handler);
 			log.debug("sendSyncPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
-
+		} else {
+			rehandler = handler;
 		}
+
 		try {
-			writerQ.offer(pack, rehandler);
+			writerQ.offer(pack, handler);
 		} catch (MessageException me) {
 			if (packid != null && pack.isSync()) {
-				handler.onFailed(me);
-				mss.packMaps.remove(packid);
+				rehandler.onFailed(me);
+				// mss.packMaps.remove(packid);
 			}
 			throw me;
 		} catch (Exception e) {
 			log.error("sendMessageError:" + pack, e);
 			if (packid != null && pack.isSync()) {
-				handler.onFailed(e);
-				mss.packMaps.remove(packid);
+				rehandler.onFailed(e);
+				// mss.packMaps.remove(packid);
 			}
 			throw new MessageException(e);
 		}
@@ -180,10 +183,11 @@ public class RemoteModuleSession extends PSession {
 						public void cancelled() {
 							try {
 								conn.close();
-								
+
 							} catch (Exception e) {
 							}
 						}
+
 						@Override
 						public void failed(Throwable throwable) {
 							try {

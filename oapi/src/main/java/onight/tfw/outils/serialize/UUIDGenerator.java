@@ -1,10 +1,10 @@
 package onight.tfw.outils.serialize;
 
-
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class UUIDGenerator {
 
@@ -14,10 +14,9 @@ public class UUIDGenerator {
 	 * @return
 	 */
 	public static String generate() {
-		return new StringBuilder(32).append(format(getIP())).append(
-				format(getJVM())).append(format(getHiTime())).append(
-				format(getLoTime())).append(format(getCount())).toString();
-		
+		return new StringBuilder(32).append(format(getIP())).append(getJVM()).append(format(getHiTime()))
+				.append(format(getLoTime())).append(format(getCount())).toString();
+
 	}
 
 	private static final int IP;
@@ -25,7 +24,7 @@ public class UUIDGenerator {
 		int ipadd;
 		try {
 			ipadd = toInt(InetAddress.getLocalHost().getAddress());
-			
+
 		} catch (Exception e) {
 			ipadd = 0;
 		}
@@ -35,26 +34,31 @@ public class UUIDGenerator {
 	private static short counter = (short) 0;
 
 	private static int getProcessId(final int fallback) {
-	    // Note: may fail in some JVM implementations
-	    // therefore fallback has to be provided
+		// Note: may fail in some JVM implementations
+		// therefore fallback has to be provided
 
-	    // something like '<pid>@<hostname>', at least in SUN / Oracle JVMs
-	    final String jvmName = ManagementFactory.getRuntimeMXBean().getName();
-	    final int index = jvmName.indexOf('@');
+		// something like '<pid>@<hostname>', at least in SUN / Oracle JVMs
+		final String jvmName = ManagementFactory.getRuntimeMXBean().getName();
+		final int index = jvmName.indexOf('@');
 
-	    if (index < 1) {
-	        // part before '@' empty (index = 0) / '@' not found (index = -1)
-	        return fallback;
-	    }
+		if (index < 1) {
+			// part before '@' empty (index = 0) / '@' not found (index = -1)
+			return fallback;
+		}
 
-	    try {
-	        return Integer.parseInt(jvmName.substring(0, index));
-	    } catch (NumberFormatException e) {
-	        // ignore
-	    }
-	    return fallback;
+		try {
+			return Integer.parseInt(jvmName.substring(0, index));
+		} catch (NumberFormatException e) {
+			// ignore
+		}
+		return fallback;
 	}
-	static final int JVM = (int) (getProcessId(RandomUtils.nextInt()));
+
+	static String JVM = format(getProcessId(RandomUtils.nextInt()));
+
+	public static void setJVM(String jjvm) {
+		JVM = (jjvm+JVM).substring(0,8);
+	};
 
 	private final static String format(int intval) {
 		String formatted = Integer.toHexString(intval);
@@ -70,7 +74,7 @@ public class UUIDGenerator {
 		return buf.toString();
 	}
 
-	private final static int getJVM() {
+	private final static String getJVM() {
 		return JVM;
 	}
 
@@ -111,13 +115,8 @@ public class UUIDGenerator {
 	public static void main(String[] args) {
 		System.out.println(JVM);
 		System.out.println(IP);
-		for(int i=0;i<10;i++)
-		{
+		for (int i = 0; i < 10; i++) {
 			System.out.println(UUIDGenerator.generate());
 		}
 	}
 }
-
-
-
-
