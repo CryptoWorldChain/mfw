@@ -85,6 +85,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				params.get("org.zippo.otransio.localthreadpool.max", 100), 120l, TimeUnit.SECONDS,
 				new LinkedBlockingQueue());
 	}
+
 	@Getter
 	MSessionSets mss;
 
@@ -178,7 +179,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					ckpool.setPort(rmb.getNodeInfo().getPort());
 				} else {
 					try {
-						osm.createOutgoingSSByURI(rmb.getNodeInfo(),node_from);
+						osm.createOutgoingSSByURI(rmb.getNodeInfo(), node_from);
 					} catch (NoneServerException e) {
 					}
 				}
@@ -231,11 +232,11 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			ms = mss.byNodeName(destTO);
 			if (ms == null) {// not found
 				String uri = pack.getExtStrProp(PACK_URI);
-				log.debug("creating new Connection:" + uri + ":name=" + destTO+",from="+from);
+				log.debug("creating new Connection:" + uri + ":name=" + destTO + ",from=" + from);
 				if (StringUtils.isNotBlank(uri)) {
 					NodeInfo node = NodeInfo.fromURI(uri, destTO);
 					try {
-						ms = osm.createOutgoingSSByURI(node,from);
+						ms = osm.createOutgoingSSByURI(node, from);
 					} catch (Exception e) {
 						log.error("route ERROR:" + e.getMessage(), e);
 						throw new MessageException(e);
@@ -248,11 +249,11 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					try {
 						osm.addIncomming(from, conn);
 					} catch (UnAuthorizedConnectionException e) {
-//						conn.close();
+						// conn.close();
 					}
 				}
 				ms = mss.getLocalsessionByModule().get(pack.getModule());
-			}else{
+			} else {
 				ms = mss.getLocalsessionByModule().get(pack.getModule());
 			}
 		}
@@ -264,7 +265,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			}
 		} else {
 			// 没有找到对应的消息
-			log.debug("UnknowModule:" + pack.getModule());
+			log.debug("UnknowModule:" + pack.getModule()+",CMD="+pack.getCMD()+",from="+from+",conn="+conn+",destTO="+destTO);
 			if (pack.isSync()) {
 				handler.onFinished(
 						PacketHelper.toPBReturn(pack, new UnknowModuleBody(pack.getModule() + ",to=" + destTO, pack)));
@@ -275,31 +276,38 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	public void route2Local(final FramePacket pack, final CompleteHandler handler, final PSession ms) {
 		// String packid = null;
-		if (pack.isSync()) {
-			final FutureImpl<String> future = Futures.createSafeFuture();
-			localPool.execute(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						ms.onPacket(pack, handler);
-					} finally {
-						future.result("F");
+		String name = Thread.currentThread().getName();
+		try {
+			Thread.currentThread().setName("R2L:" + pack.getFixHead().getCmd() + pack.getFixHead().getModule());
+
+			if (pack.isSync()) {
+				final FutureImpl<String> future = Futures.createSafeFuture();
+				localPool.execute(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							ms.onPacket(pack, handler);
+						} finally {
+							future.result("F");
+						}
 					}
+				});
+				try {
+					future.get(60, TimeUnit.SECONDS);
+				} catch (Throwable e) {
+					log.error("route Failed:" + e.getMessage(), e);
+					handler.onFailed(new RuntimeException(e));
 				}
-			});
-			try {
-				future.get(60, TimeUnit.SECONDS);
-			} catch (Throwable e) {
-				log.error("route Failed:" + e.getMessage(), e);
-				handler.onFailed(new RuntimeException(e));
+			} else {
+				localPool.execute(new Runnable() {
+					@Override
+					public void run() {
+						ms.onPacket(pack, handler);
+					}
+				});
 			}
-		} else {
-			localPool.execute(new Runnable() {
-				@Override
-				public void run() {
-					ms.onPacket(pack, handler);
-				}
-			});
+		} finally {
+			Thread.currentThread().setName(name);
 		}
 	}
 
