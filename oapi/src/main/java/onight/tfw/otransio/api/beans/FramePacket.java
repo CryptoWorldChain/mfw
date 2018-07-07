@@ -30,7 +30,6 @@ public class FramePacket {
 		return new ExtHeader();
 	}
 
-
 	ExtHeader extHead = genExtHeader();
 
 	@JsonIgnore
@@ -143,8 +142,10 @@ public class FramePacket {
 		return globalCMD;
 	}
 
+	boolean bodySigned = false;
+
 	public byte[] genBodyBytes() {
-		if (fbody != null) {
+		if (fbody != null && (body == null || !bodySigned)) {
 			if (sio == null) {
 				sio = SerializerFactory.getSerializer(fixHead.getEnctype());
 			}
@@ -184,15 +185,15 @@ public class FramePacket {
 		}
 	}
 
-	public FixHeader genHeader() {
-		if (fixHead == null) {
-			fixHead = new FixHeader();
-		}
-		fixHead.setBodysize(genBodyBytes().length);
-		fixHead.setExtsize(genExtBytes().length);
-		return fixHead;
-
-	}
+	// public FixHeader genHeader() {
+	// if (fixHead == null) {
+	// fixHead = new FixHeader();
+	// }
+	// fixHead.setBodysize(genBodyBytes().length);
+	// fixHead.setExtsize(genExtBytes().length);
+	// return fixHead;
+	//
+	// }
 
 	public FramePacket(FixHeader fixHead, ExtHeader extHead, byte[] body, String globalCMD) {
 		super();

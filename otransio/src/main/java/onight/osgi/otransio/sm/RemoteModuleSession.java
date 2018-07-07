@@ -172,7 +172,8 @@ public class RemoteModuleSession extends PSession {
 		Iterator<Connection> it = connsPool.iterator();
 		FramePacket dropp = PacketHelper.genSyncPack("DRO", "P**", connsPool.getNameid());
 		dropp.genBodyBytes();
-		dropp.genHeader();
+		dropp.genExtBytes();
+		dropp.getFixHead().genBytes();
 		int cc = 0;
 		while (it.hasNext()) {
 			try {
