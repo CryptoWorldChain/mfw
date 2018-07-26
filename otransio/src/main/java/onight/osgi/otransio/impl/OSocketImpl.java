@@ -81,7 +81,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 		mss = new MSessionSets(params);
 		osm = new OutgoingSessionManager(this, params, mss);
 		mss.setOsm(osm);
-		localPool = new ThreadPoolExecutor(params.get("org.zippo.otransio.localthreadpool.cor", 10),
+		localPool = new ThreadPoolExecutor(params.get("org.zippo.otransio.localthreadpool.core", 10),
 				params.get("org.zippo.otransio.localthreadpool.max", 100), 120l, TimeUnit.SECONDS,
 				new LinkedBlockingQueue());
 	}

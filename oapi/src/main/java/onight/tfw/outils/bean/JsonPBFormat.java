@@ -163,7 +163,7 @@ public class JsonPBFormat extends JsonFormat {
 			if (field.getOptions().hasJstype() && field.getOptions().getJstype() == JSType.JS_NORMAL) {
 				if (value != null && value instanceof String) {
 					String v = ((String) value).trim();
-					if (v.startsWith("{") && v.endsWith("}")) {
+					if (v.startsWith("{") && v.endsWith("}")||v.startsWith("[")&&v.endsWith("]")) {
 						generator.print((String) value);
 					}else{
 						generator.print("\"");

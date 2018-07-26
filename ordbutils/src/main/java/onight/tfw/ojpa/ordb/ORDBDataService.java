@@ -423,7 +423,7 @@ public class ORDBDataService extends SerializedDomainDao {
 	@Override
 	public Object increAnGetInt(CASCriteria<?> counterCri) throws JPAException {
 		String tablename = counterCri.getTable();
-		String colname = transNames(counterCri.getColumn());
+		String colname = counterCri.getColumn();
 		String sql = "UPDATE " + tablename + " SET " + colname + "=" + colname + "+" + counterCri.getIncrements() + " WHERE " + counterCri.getWhereCause();
 		return doBySQL(sql);
 	}
@@ -441,8 +441,8 @@ public class ORDBDataService extends SerializedDomainDao {
 
 	@Override
 	public Object checkAndIncr(CASCriteria<?> counterCri) throws JPAException {
-		String tablename = "T_" + transNames(counterCri.getTable());
-		String colname = transNames(counterCri.getColumn());
+		String tablename = counterCri.getTable();
+		String colname = counterCri.getColumn();
 		String sql = "UPDATE " + tablename + " SET " + colname + "=" + colname + "+" + counterCri.getIncrements() + " WHERE " + counterCri.getWhereCause();
 		return doBySQL(sql);
 	}
@@ -520,8 +520,8 @@ public class ORDBDataService extends SerializedDomainDao {
 
 	@Override
 	public Object checkAndSet(CASCriteria<?> counterCri) throws JPAException {
-		String tablename = "T_" + transNames(counterCri.getTable());
-		String colname = transNames(counterCri.getColumn());
+		String tablename = counterCri.getTable();
+		String colname = counterCri.getColumn();
 		String sql = "SELECT " + colname + " FROM " + tablename + " WHERE " + counterCri.getWhereCause() + " FOR UPDATE;";
 		sql += "UPDATE " + tablename + " SET " + colname + "=" + counterCri.getIncrements() + " WHERE " + counterCri.getWhereCause();
 		return doBySQL(sql);

@@ -3,9 +3,15 @@ package onight.osgi.otransio.sm;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +35,12 @@ public class MSessionSets {
 
 	int packet_buffer_size = 10;
 	int write_thread_count = 10;
-	
-	
+
 	public MSessionSets(PropHelper params) {
 		packIDKey = UUIDGenerator.generate() + ".SID";
 		this.params = params;
-		packet_buffer_size=params.get("org.zippo.otransio.maxpacketqueue", 10);
-		write_thread_count=params.get("org.zippo.otransio.write_thread_count", 10);
+		packet_buffer_size = params.get("org.zippo.otransio.maxpacketqueue", 10);
+		write_thread_count = params.get("org.zippo.otransio.write_thread_count", 10);
 	}
 
 	OutgoingSessionManager osm;
@@ -45,6 +50,16 @@ public class MSessionSets {
 	HashMap<String, LocalModuleSession> localsessionByModule = new HashMap<>();
 
 	ConcurrentHashMap<String, CompleteHandler> packMaps = new ConcurrentHashMap<>();
+
+//	Cache<String, CompleteHandler> packMapsCache = CacheBuilder.newBuilder().expireAfterWrite(120, TimeUnit.SECONDS)
+//			.removalListener(new RemovalListener<String, CompleteHandler>() {
+//				@Override
+//				public void onRemoval(RemovalNotification<String, CompleteHandler> notification) {
+//					if (notification != null && notification.getValue() != null) {
+//						notification.getValue().onFailed(new RuntimeException("Timeout"));
+//					}
+//				}
+//			}).build();
 	AtomicLong recvCounter = new AtomicLong(0);
 	AtomicLong sendCounter = new AtomicLong(0);
 	AtomicLong duplCounter = new AtomicLong(0);
@@ -148,15 +163,14 @@ public class MSessionSets {
 		return lms;
 	}
 
-	public synchronized void dropSession(String name,boolean sendDDNode) {
+	public synchronized void dropSession(String name, boolean sendDDNode) {
 		if (StringUtils.isNotBlank(name)) {
-			log.debug("dropSession:"+name+",sendDD="+sendDDNode);			
+			log.debug("dropSession:" + name + ",sendDD=" + sendDDNode);
 			PSession session = sessionByNodeName.remove(name);
 			osm.rmNetPool(name);
 			if (session != null) {
 				dropCounter.incrementAndGet();
-				if (session instanceof RemoteModuleSession)
-				{
+				if (session instanceof RemoteModuleSession) {
 					((RemoteModuleSession) session).destroy(sendDDNode);
 				}
 			}
