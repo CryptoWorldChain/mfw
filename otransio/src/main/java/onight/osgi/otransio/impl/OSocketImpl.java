@@ -295,7 +295,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				try {
 					future.get(60, TimeUnit.SECONDS);
 				} catch (Throwable e) {
-					log.error("route Failed:" + e.getMessage(), e);
+					log.error("route Failed:" + e.getMessage()+",GCMD="+pack.getFixHead().getCmd() + pack.getFixHead().getModule(), e);
 					handler.onFailed(new RuntimeException(e));
 				}
 			} else {

@@ -204,7 +204,7 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 				@Override
 				public FramePacket onCompleted(com.ning.http.client.Response response) throws Exception {
 					ret.setBody(response.getResponseBodyAsBytes());
-					log.debug("ret:" + new String(ret.getBody(), "UTF-8"));
+					log.debug("ret:" + new String(ret.getBody(), "UTF-8").trim());
 					cb.onSuccess(ret);
 					return ret;
 				}
@@ -239,7 +239,7 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 
 			@Override
 			public void onFailed(Exception arg0, FramePacket arg1) {
-				future.result(arg1);
+				future.failed(arg0, arg1);
 				ll.countDown();
 			}
 

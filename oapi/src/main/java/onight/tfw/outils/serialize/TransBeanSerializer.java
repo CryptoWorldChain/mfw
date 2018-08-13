@@ -179,8 +179,23 @@ public class TransBeanSerializer implements ISerializer {
 							} else if (bp.fieldType == java.sql.Timestamp.class) {
 								v = java.sql.Timestamp.valueOf((String) v);
 							}
-						} else if (v != null && bp.fieldType == BigDecimal.class && (v instanceof Double || v instanceof Integer || v instanceof Float)) {
+						} else if (v != null && bp.fieldType == BigDecimal.class && (v instanceof Double || v instanceof Integer || v instanceof Float|| v instanceof Long)) {
 							v = BigDecimal.valueOf((double)v);
+						} else if(v instanceof BigDecimal){
+							if(bp.fieldType==Long.class){
+								v = ((BigDecimal)v).longValue();
+							}else if(bp.fieldType==Integer.class){
+								v = ((BigDecimal)v).intValue();
+							}else if(bp.fieldType==Float.class){
+								v = ((BigDecimal)v).floatValue();
+							}
+							else if(bp.fieldType==Double.class){
+								v = ((BigDecimal)v).doubleValue();
+							}else if(bp.fieldType==Short.class){
+								v = ((BigDecimal)v).shortValue();
+							}else if(bp.fieldType==Byte.class){
+								v = ((BigDecimal)v).byteValue();
+							}
 						}
 						bp.setM.invoke(t, v);
 					} else if (v instanceof List) {
