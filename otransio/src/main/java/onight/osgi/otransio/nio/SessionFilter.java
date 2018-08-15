@@ -46,7 +46,7 @@ public class SessionFilter extends BaseFilter {
 			return ctx.getInvokeAction();
 		}
 		// long start = System.currentTimeMillis();
-		// // log.trace("[Message]: " + pack.getGlobalCMD() + ", FROM: " +
+		// // log.trace("[Actor]: " + pack.getGlobalCMD() + ", FROM: " +
 		// // ctx.getConnection().getPeerAddress() + " HEAD: "
 		// // + pack.getFixHead() + ",oimpl=" + oimpl);String sendtime =
 		// (String) ext.get(Encoder.LOG_TIME_SENT);

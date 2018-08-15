@@ -67,10 +67,12 @@ public class CheckHealth {
 						exec.remove(this);
 					} else {
 						if (lastCheckHealthMS.get(conn.getAttributes()) - System.currentTimeMillis() > delay * 1000) {
-//							conn.write(hbpack);
+							// conn.write(hbpack);
 							lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
-//							log.trace("!!CheckHealth TO:" + conn.getPeerAddress() + ",From=" + conn.getLocalAddress()
-//									+ ",pack=" + hbpack.getFixHead());
+							// log.trace("!!CheckHealth TO:" +
+							// conn.getPeerAddress() + ",From=" +
+							// conn.getLocalAddress()
+							// + ",pack=" + hbpack.getFixHead());
 						}
 					}
 
@@ -96,16 +98,15 @@ public class CheckHealth {
 			try {
 				if (pool.isStop()) {
 					log.debug("stop Pool:" + pool.getIp() + ":" + pool.getPort() + "," + pool.getNameid());
-					try {
-						Iterator<Connection> conn = pool.iterator();
-						while (conn.hasNext()) {
-							try {
-								conn.next().close();
-							} catch (Exception e) {
+					Iterator<Connection> it = pool.iterator();
+					while (it.hasNext()) {
+						try {
+							Connection conn = it.next();
+							if (conn.isOpen()) {
+								conn.close();
 							}
+						} catch (Exception e) {
 						}
-					} catch (Throwable t) {
-
 					}
 					if (future != null) {
 						future.cancel(true);
@@ -113,26 +114,29 @@ public class CheckHealth {
 					// exec.remove(this);
 				} else {
 					log.debug("check health:" + pool.ip + ",port=" + pool.port + ",name=" + pool.getNameid());
-					for (int i = pool.size(); i < pool.getCore() && !pool.isStop(); i++) {
-						Connection conn = pool.createOneConnection();
-						if (conn != null) {
-							log.debug("add more conn core size." + conn.getPeerAddress());
-							addCheckHealth(conn);
-						}
+					for (int i = pool.size(); i < pool.getCore() / 2 && !pool.isStop(); i++) {
+						Connection conn = pool.createOneConnection(0);
+						// if (conn != null) {
+						// log.debug("add more conn core size." +
+						// conn.getPeerAddress());
+						// addCheckHealth(conn);
+						// }
 					}
-					if (!pool.isStop()) {
-						Enumeration<Connection> it = pool.getAllObjs().elements();
-						while (it.hasMoreElements()) {
-							addCheckHealth(it.nextElement());
-						}
-					}
-					if (pool.size() <= 0 && pool.getCore() < pool.size()) {
-						// pool is stop
-						log.debug("pool is stop. no more connection,size=" + pool.size() + ",core=" + pool.core);
-						pool.setStop(true);
-						nkp.removeByPool(pool);
-						future.cancel(true);
-					}
+					// if (!pool.isStop()) {
+					// Enumeration<Connection> it =
+					// pool.getAllObjs().elements();
+					//// while (it.hasMoreElements()) {
+					//// addCheckHealth(it.nextElement());
+					//// }
+					// }
+					// if (pool.size() <= 0) {
+					// // pool is stop
+					// log.debug("pool is stop. no more connection,size=" +
+					// pool.size() + ",core=" + pool.core);
+					// pool.setStop(true);
+					// nkp.removeByPool(pool);
+					// future.cancel(true);
+					// }
 				}
 
 			} catch (Exception e) {
@@ -144,7 +148,7 @@ public class CheckHealth {
 
 	public void addCheckHealth(NodeConnectionPool nkp, final CKConnPool pool) {
 		Runner runner = new Runner(nkp, pool);
-		ScheduledFuture future = exec.scheduleWithFixedDelay(runner, 10, delay * 2, TimeUnit.SECONDS);
+		ScheduledFuture<?> future = exec.scheduleWithFixedDelay(runner, delay, delay * 2, TimeUnit.SECONDS);
 		runner.future = future;
 	}
 

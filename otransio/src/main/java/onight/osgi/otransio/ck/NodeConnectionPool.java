@@ -1,7 +1,7 @@
 package onight.osgi.otransio.ck;
 
+import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.nio.OClient;
@@ -10,9 +10,9 @@ import onight.osgi.otransio.sm.MSessionSets;
 @Slf4j
 public class NodeConnectionPool {
 
-	public ConcurrentHashMap<String, CKConnPool> ckPoolByNodeName = new ConcurrentHashMap<String, CKConnPool>();
+	public HashMap<String, CKConnPool> ckPoolByNodeName = new HashMap<String, CKConnPool>();
 
-	public CKConnPool addPool(OClient client, String nodeName, String ip, int port, int core, int max,
+	public synchronized CKConnPool addPool(OClient client, String nodeName, String ip, int port, int core, int max,
 			MSessionSets mss) {
 		CKConnPool pool = ckPoolByNodeName.get(nodeName);
 		if (pool == null) {

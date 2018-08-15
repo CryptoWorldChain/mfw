@@ -2,7 +2,6 @@ package onight.osgi.otransio.ck;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -10,7 +9,6 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.grizzly.CloseListener;
 import org.glassfish.grizzly.Closeable;
-import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.ICloseType;
 
@@ -19,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.impl.NodeInfo;
 import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.nio.OClient;
-import onight.osgi.otransio.nio.PacketWriteTask;
+import onight.osgi.otransio.nio.PacketTuple;
 import onight.osgi.otransio.sm.MSessionSets;
 import onight.osgi.otransio.sm.RemoteModuleBean;
 import onight.tfw.otransio.api.MessageException;
@@ -30,6 +28,7 @@ import onight.tfw.outils.pool.ReusefulLoopPool;
 
 @Data
 @Slf4j
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class CKConnPool extends ReusefulLoopPool<Connection> {
 	OClient client;
 	String ip;
@@ -75,8 +74,8 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		return sb.toString();
 	}
 
-	public synchronized Connection createOneConnection() {
-		return createOneConnection(1);
+	public synchronized Connection createOneConnection(int waitms) {
+		return createOneConnection(1,waitms);
 	}
 
 	public void parseURI(String uri) {
@@ -92,87 +91,102 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		}
 	}
 
-	public void sendMessage(final FramePacket pack) throws MessageException {
-		boolean writed = false;
-		for (int i = 0; i < 1; i++) {
-			Connection conn = null;
-			try {
-				conn = borrow();
-				if (conn != null) {
-					if (conn.isOpen()) {
-						if (conn.write(pack) != null) {
-							writed = true;
-						}
-						break;
-					} else {
-						removeObject(conn);
-						conn = null;
-					}
-				}
-				if (createOneConnection(1) == null) {
-					throw new MessageException("cannot connect");
-				}
-				Thread.sleep(100);
-			} catch (Exception e) {
-				log.error("sendMessageError:" + pack, e);
-				throw new MessageException(e);
-			} finally {
-				if (conn != null && conn.isOpen()) {
-					retobj(conn);
-				}
+	public Connection<?> ensureConnection() throws MessageException {
+		Connection<?> conn = borrow();
+		if (conn != null) {
+			if (conn.isOpen()) {
+				return conn;
+			} else {
+				removeObject(conn);
+				conn = null;
 			}
 		}
-		if (!writed) {
-			throw new MessageException("No More Connections for ["+ip+":"+port+"]");
-		}
+		conn = createOneConnection(1,100);
+
+		return conn;
 	}
 
-	public void sendMessage(final List<PacketWriteTask> packs) throws MessageException {
-		boolean writed = false;
-		int retry_Connect = 0;
-		for (int i = 0; i < 3000; i++) {
-			Connection conn = null;
-			try {
-				conn = borrow();
-				if (conn != null) {
-					if (conn.isOpen()) {
-						for (PacketWriteTask pack : packs) {
-							conn.write(pack.getPack());
-							pack.setWrited(true);
-						}
-						writed = true;
-						return;
-					} else {
-						removeObject(conn);
-						conn = null;
-					}
-				}
-				if (size() < max) {
-					createOneConnection(1);
-				}
-				if (size() == 0) {// has no more connection but only connect 3
-									// times
-					if (retry_Connect++ <= 3) {
-						// cannot get connection
-						break;
-					}
-					Thread.sleep(1000);// try connect next time
-				} else {// try 10*6000=60 seconds
-					Thread.sleep(10);
-				}
-			} catch (Exception e) {
-				log.error("sendMessageError:", e);
-				throw new MessageException(e);
-			} finally {
-				if (conn != null && conn.isOpen()) {
-					retobj(conn);
-				}
-			}
-		}
-		if (!writed) {
-			throw new MessageException("No More Connections");
-		}
-	}
+//	public void sendMessage(final FramePacket pack) throws MessageException {
+//		boolean writed = false;
+//		for (int i = 0; i < 1; i++) {
+//			Connection conn = null;
+//			try {
+//				conn = borrow();
+//				if (conn != null) {
+//					if (conn.isOpen()) {
+//						if (conn.write(pack) != null) {
+//							writed = true;
+//						}
+//						break;
+//					} else {
+//						removeObject(conn);
+//						conn = null;
+//					}
+//				}
+//				if (createOneConnection(1) == null) {
+//					throw new MessageException("cannot connect");
+//				}
+//				Thread.sleep(100);
+//			} catch (Exception e) {
+//				log.error("sendMessageError:" + pack, e);
+//				throw new MessageException(e);
+//			} finally {
+//				if (conn != null && conn.isOpen()) {
+//					retobj(conn);
+//				}
+//			}
+//		}
+//		if (!writed) {
+//			throw new MessageException("No More Connections for [" + ip + ":" + port + "]");
+//		}
+//	}
+
+//	public void sendMessage(final List<PacketTuple> packs) throws MessageException {
+//		boolean writed = false;
+//		int retry_Connect = 0;
+//		for (int i = 0; i < 30; i++) {
+//			Connection<?> conn = null;
+//			try {
+//				conn = borrow();
+//				if (conn != null) {
+//					if (conn.isOpen()) {
+//						for (PacketTuple pack : packs) {
+//							conn.write(pack.getPack());
+//							pack.setWrited(true);
+//						}
+//						writed = true;
+//						return;
+//					} else {
+//						removeObject(conn);
+//						conn = null;
+//					}
+//				}
+//				if (size() < max) {
+//					createOneConnection(1);
+//				}
+//				if (size() == 0) {// has no more connection but only connect 3
+//									// times
+//					if (retry_Connect++ <= 3) {
+//						// cannot get connection
+//						break;
+//					}
+//					Thread.sleep(1000);// try connect next time
+//				} else {// try 10*6000=60 seconds
+//					Thread.sleep(10);
+//				}
+//			} catch (Exception e) {
+//				log.error("sendMessageError:", e);
+//				throw new MessageException(e);
+//			} finally {
+//				if (conn != null && conn.isOpen()) {
+//					retobj(conn);
+//				}
+//			}
+//		}
+//		if (!writed) {
+//			throw new MessageException("No More Connections");
+//		}
+//	}
 
 	public synchronized Connection createOneConnectionBySubNode(int maxtries) {
 		for (NodeInfo node : subNodes) {
@@ -193,12 +207,6 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					FramePacket pack = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN, PackHeader.REMOTE_MODULE,
 
 							rmb);
-					// log.debug("write localmodulepack:" + pack + ",writable=="
-					// + conn.canWrite());
-					// log.trace("!!WriteLocalModulesPacket TO:" +
-					// conn.getPeerAddress() + ",From="
-					// + conn.getLocalAddress() + ",pack=" + pack.getFixHead());
-					//
 					conn.write(pack);
 					addObject(conn);
 					return conn;
@@ -211,12 +219,11 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		return null;
 	}
 
-	public synchronized Connection createOneConnection(int maxtries) {
+	public synchronized Connection createOneConnection(int maxtries, int waitms) {
 		for (int i = 0; i < maxtries && size() < max; i++) {
 			try {
 				final Connection conn = client.getConnection(ip, port);
 				if (conn != null) {
-					
 					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 						@Override
 						public void onClosed(Closeable closeable, ICloseType type) throws IOException {
@@ -228,11 +235,17 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					});
 					final FramePacket pack = mss.getLocalModulesPacket();
 					pack.putHeader(OSocketImpl.PACK_FROM, from_bcuid);
-					log.debug("write LoginModulePack from " + mss.getRmb().getNodeInfo().getUname());
+					log.debug("write LoginModulePack from {}", mss.getRmb().getNodeInfo().getUname());
 					// log.trace("!!WriteLocalModulesPacket TO:" +
 					// conn.getPeerAddress() + ",From="
 					// + conn.getLocalAddress() + ",pack=" + pack.getFixHead());
 					conn.write(pack);
+					if (waitms > 0) {
+						try {
+							this.wait(waitms);
+						} catch (InterruptedException e) {
+						}
+					}
 					addObject(conn);
 					return conn;
 				} else {
@@ -252,10 +265,4 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		return null;
 	}
 
-	public void broadcastMessage(Object msg) {
-		Iterator<Connection> it = this.iterator();
-		while (it.hasNext()) {
-			it.next().write(msg);
-		}
-	}
 }

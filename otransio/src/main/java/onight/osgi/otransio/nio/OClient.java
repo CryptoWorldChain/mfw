@@ -56,7 +56,7 @@ public class OClient {
 		}
 	}
 
-	public Connection getConnection(String address, int port) throws InterruptedException, ExecutionException, TimeoutException {
+	public Connection<?> getConnection(String address, int port) throws InterruptedException, ExecutionException, TimeoutException {
 		return transport.connect(address, port).get(10,TimeUnit.SECONDS);
 	}
 

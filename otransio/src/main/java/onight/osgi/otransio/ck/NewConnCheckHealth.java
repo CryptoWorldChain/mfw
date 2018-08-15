@@ -3,8 +3,8 @@ package onight.osgi.otransio.ck;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -18,9 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Data
+@SuppressWarnings({ "rawtypes" })
 public class NewConnCheckHealth {
 
-	public ConcurrentHashMap<String, List<Connection<?>>> connsByIP = new ConcurrentHashMap<>();
+	public HashMap<String, List<Connection<?>>> connByIP = new HashMap<>();
 
 	public static String CONN_AUTH_INFO = "org.zippo.conn.auth.info";
 
@@ -39,11 +40,11 @@ public class NewConnCheckHealth {
 	public synchronized void addCheckHealth(final Connection conn) {
 		InetSocketAddress addr = (InetSocketAddress) conn.getPeerAddress();
 		final String ip = addr.getAddress().toString();
-		List<Connection<?>> conns = connsByIP.get(ip);
+		List<Connection<?>> conns = connByIP.get(ip);
 
 		if (conns == null) {
 			conns = new ArrayList<Connection<?>>();
-			connsByIP.put(ip, conns);
+			connByIP.put(ip, conns);
 		}
 		if (conns.size() > maxConnPreIP) {
 			conn.close();
@@ -63,9 +64,9 @@ public class NewConnCheckHealth {
 	}
 
 	public synchronized void removeConnection(Connection<?> conn, String ip) {
-		List<Connection<?>> conns = connsByIP.get(ip);
+		List<Connection<?>> conns = connByIP.get(ip);
 		if (conns != null && conns.size() == 0) {
-			connsByIP.remove(ip);
+			connByIP.remove(ip);
 		}
 	}
 

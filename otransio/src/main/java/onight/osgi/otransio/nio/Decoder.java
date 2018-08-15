@@ -75,7 +75,7 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 			headerStore.set(storage, header);
 		}
 
-		log.trace("Decoder.getHeader.step2::remain=" + input.remaining() + ",head=" + header);
+		log.trace("Decoder.getHeader.step2::remain={},header={}" , input.remaining() , header);
 		// readsize
 		if (input.remaining() < header.getTotalSize()) {
 			return TransformationResult.createIncompletedResult(input);
@@ -88,15 +88,16 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 			ext = ExtHeader.buildFrom(extbytes);
 			String sendtime = (String) ext.get(Encoder.LOG_TIME_SENT);
 			if (StringUtils.isNumeric(sendtime)) {
-				log.debug("transio recv " + header.getCmd() + "" + header.getModule() + " bodysize [" + header.getBodysize()
-						+ "]b cost[" + (System.currentTimeMillis() - Long.parseLong(sendtime)) + "]ms sent@="+sendtime+" resp="+
-						header.isResp()+",sync="+header.isSync());
+				log.debug("transio recv {}{},bodysize:{},cost:{} ms,sent={},resp={},sync={}" ,
+						header.getCmd() , header.getModule() , header.getBodysize()
+						, (System.currentTimeMillis() - Long.parseLong(sendtime)) , sendtime,
+						header.isResp(),header.isSync());
 			}
 		}
 		byte body[] = new byte[header.getBodysize()];
 		input.get(body);
 		FramePacket pack = new FramePacket(header, ext, body, header.getCmd() + header.getModule());
-		log.trace("Decoder.OKOK::remain=" + input.remaining() + ":totalsize=" + header.getTotalSize() + ".");
+		log.trace("Decoder.OKOK::remain={},totalsize={}" , input.remaining() , header.getTotalSize());
 		return TransformationResult.createCompletedResult(pack, input);
 	}
 

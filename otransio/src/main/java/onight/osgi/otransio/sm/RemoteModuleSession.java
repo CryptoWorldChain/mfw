@@ -9,12 +9,8 @@ import org.glassfish.grizzly.Closeable;
 import org.glassfish.grizzly.CompletionHandler;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.ICloseType;
-import org.glassfish.grizzly.WriteResult;
-import org.glassfish.grizzly.impl.FutureImpl;
-import org.glassfish.grizzly.utils.Futures;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,14 +20,13 @@ import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.nio.PacketQueue;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.MessageException;
-import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.session.PSession;
 
 @Slf4j
 @Data
-@EqualsAndHashCode
+@SuppressWarnings("rawtypes")
 public class RemoteModuleSession extends PSession {
 
 	@Setter
@@ -39,10 +34,10 @@ public class RemoteModuleSession extends PSession {
 	CKConnPool connsPool = null;
 	MSessionSets mss;
 	NodeInfo nodeInfo;
-	AtomicLong sendCounter = new AtomicLong(0);
-	AtomicLong dropCounter = new AtomicLong(0);
-	AtomicLong sentCounter = new AtomicLong(0);
-	AtomicLong recvCounter = new AtomicLong(0);
+//	AtomicLong sendCounter = new AtomicLong(0);
+//	AtomicLong dropCounter = new AtomicLong(0);
+//	AtomicLong sentCounter = new AtomicLong(0);
+//	AtomicLong recvCounter = new AtomicLong(0);
 
 	AtomicLong counter = new AtomicLong(0);
 
@@ -63,10 +58,10 @@ public class RemoteModuleSession extends PSession {
 		sb.append("{\"remoteid\":\"").append(nodeInfo.getNodeName()).append("\"");
 		sb.append(",\"alias\":\"").append(connsPool.getSubnodeURI()).append("\"");
 		sb.append(",\"channels\":").append(connsPool.size()).append("");
-		sb.append(",\"recvcc\":").append(recvCounter.get()).append("");
-		sb.append(",\"sentcc\":").append(sendCounter.get()).append("");
-		sb.append(",\"sendcc\":").append(sentCounter.get()).append("");
-		sb.append(",\"dropcc\":").append(dropCounter.get()).append("");
+//		sb.append(",\"recvcc\":").append(recvCounter.get()).append("");
+//		sb.append(",\"sentcc\":").append(sendCounter.get()).append("");
+//		sb.append(",\"sendcc\":").append(sentCounter.get()).append("");
+//		sb.append(",\"dropcc\":").append(dropCounter.get()).append("");
 		sb.append(",\"core\":").append(nodeInfo.getCore()).append("");
 		sb.append(",\"max\":").append(nodeInfo.getMax()).append("");
 		sb.append(",\"uri\":\"").append(nodeInfo.getAddr() + ":" + nodeInfo.getPort()).append("\"");
@@ -90,8 +85,8 @@ public class RemoteModuleSession extends PSession {
 		this.mss = mss;
 		this.nodeInfo = nodeInfo;
 		this.connsPool = ckpool;
-
-		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size, mss.write_thread_count);
+		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size, mss.write_thread_count, mss.exec, mss.writerexec,
+				mss.packPool, mss.writerPool);
 	}
 
 	public RemoteModuleSession addConnection(Connection<?> conn) {
@@ -114,7 +109,7 @@ public class RemoteModuleSession extends PSession {
 		if (connsPool.size() <= 0) {
 			log.debug("Remove RemoteModule Session:@" + this);
 		}
-		dropCounter.incrementAndGet();
+//		dropCounter.incrementAndGet();
 		return this;
 	}
 
@@ -128,20 +123,6 @@ public class RemoteModuleSession extends PSession {
 			packid = genPackID();
 			pack.putHeader(mss.packIDKey, packid);
 			pack.getExtHead().remove(OSocketImpl.PACK_TO);
-			// final String fpackid = packid;
-			// rehandler = new CompleteHandler() {
-			// @Override
-			// public void onFinished(FramePacket arg0) {
-			// mss.packMaps.remove(fpackid);
-			// handler.onFinished(arg0);
-			// }
-			//
-			// @Override
-			// public void onFailed(Exception arg0) {
-			// mss.packMaps.remove(fpackid);
-			// handler.onFailed(arg0);
-			// }
-			// };
 			mss.packMaps.put(packid, handler);
 			log.debug("sendSyncPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
 		} else {
@@ -166,6 +147,7 @@ public class RemoteModuleSession extends PSession {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public void destroy(boolean sendDDNode) {
 		connsPool.setStop(true);
 		writerQ.setStop(true);
@@ -179,12 +161,11 @@ public class RemoteModuleSession extends PSession {
 			try {
 				final Connection conn = it.next();
 				if (cc == 0 && sendDDNode) {
-					conn.write(dropp, new CompletionHandler() {
+					conn.write(dropp, new CompletionHandler<Object>() {
 						@Override
 						public void cancelled() {
 							try {
 								conn.close();
-
 							} catch (Exception e) {
 							}
 						}
@@ -208,7 +189,6 @@ public class RemoteModuleSession extends PSession {
 						@Override
 						public void updated(Object result) {
 						}
-
 					});
 				} else {
 					conn.close();

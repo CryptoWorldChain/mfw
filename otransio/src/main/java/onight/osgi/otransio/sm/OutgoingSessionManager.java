@@ -142,7 +142,7 @@ public class OutgoingSessionManager {
 				PSession ms = mss.byNodeName(nodename);
 				if (ms != null) {
 					rms = (RemoteModuleSession) ms;
-					log.debug("add exist connection:uid=" + nodename + ",peer=" + conn.getPeerAddress());
+					log.debug("add exist connection:uid={},peer={}" , nodename , conn.getPeerAddress());
 					rms.addConnection(conn);
 					osmStore.set(conn, rms);
 					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {

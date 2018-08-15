@@ -1,5 +1,6 @@
 package onight.osgi.otransio.impl;
 
+import java.beans.Transient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -65,7 +66,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	private static final long serialVersionUID = -6301364196672462354L;
 
 	@Getter
-	private PropHelper params;
+	private transient PropHelper params;
 
 	public static String PACK_FROM = PackHeader.PACK_FROM;
 	public static String PACK_TO = PackHeader.PACK_TO;
@@ -81,23 +82,23 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 		mss = new MSessionSets(params);
 		osm = new OutgoingSessionManager(this, params, mss);
 		mss.setOsm(osm);
-		localPool = new ThreadPoolExecutor(params.get("org.zippo.otransio.localthreadpool.core", 10),
-				params.get("org.zippo.otransio.localthreadpool.max", 100), 120l, TimeUnit.SECONDS,
-				new LinkedBlockingQueue());
+		localProcessor.exec = mss.getReaderexec();
+		localProcessor.poolSize = params.get("org.zippo.otransio.maxrunnerbuffer", 1000);
 	}
 
 	@Getter
-	MSessionSets mss;
+	transient MSessionSets mss;
 
-	OTransSender sender = new OTransSender(this);
+	transient OTransSender sender = new OTransSender(this);
 
-	OServer server = new OServer();
+	transient OServer server = new OServer();
 
 	@Getter
-	OutgoingSessionManager osm;
-	ThreadPoolExecutor localPool;
+	transient OutgoingSessionManager osm;
+	// transient ThreadPoolExecutor localPool;
 
-	ConcurrentHashMap<String, PacketQueue> queueBybcuid = new ConcurrentHashMap<>();
+	transient ConcurrentHashMap<String, PacketQueue> queueBybcuid = new ConcurrentHashMap<>();
+	transient LocalMessageProcessor localProcessor = new LocalMessageProcessor();
 
 	public String getHostName() {
 		try {
@@ -168,7 +169,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			} else {
 				rmb.getNodeInfo().setNodeName(node_from);
 			}
-			log.debug("get New Login Connection From:" + rmb.getNodeInfo().getUname() + ",nodeid=" + node_from);
+			log.debug("Get New Login Connection From:" + rmb.getNodeInfo().getUname() + ",nodeid=" + node_from);
 			if (node_from != null) {
 				PSession session = mss.byNodeName(node_from);
 				if (session != null && session instanceof RemoteModuleSession) {
@@ -259,56 +260,20 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 		}
 		if (ms != null) {
 			if (ms instanceof LocalModuleSession) {
-				route2Local(pack, handler, ms);
+				localProcessor.route2Local(pack, handler, ms);
 			} else {
 				ms.onPacket(pack, handler);
 			}
 		} else {
 			// 没有找到对应的消息
-			log.debug("UnknowModule:" + pack.getModule()+",CMD="+pack.getCMD()+",from="+from+",conn="+conn+",destTO="+destTO);
+			log.debug("UnknowModule:" + pack.getModule() + ",CMD=" + pack.getCMD() + ",from=" + from + ",conn=" + conn
+					+ ",destTO=" + destTO);
 			if (pack.isSync()) {
 				handler.onFinished(
 						PacketHelper.toPBReturn(pack, new UnknowModuleBody(pack.getModule() + ",to=" + destTO, pack)));
 			}
 		}
 
-	}
-
-	public void route2Local(final FramePacket pack, final CompleteHandler handler, final PSession ms) {
-		// String packid = null;
-		String name = Thread.currentThread().getName();
-		try {
-			Thread.currentThread().setName("R2L:" + pack.getFixHead().getCmd() + pack.getFixHead().getModule());
-
-			if (pack.isSync()) {
-				final FutureImpl<String> future = Futures.createSafeFuture();
-				localPool.execute(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							ms.onPacket(pack, handler);
-						} finally {
-							future.result("F");
-						}
-					}
-				});
-				try {
-					future.get(60, TimeUnit.SECONDS);
-				} catch (Throwable e) {
-					log.error("route Failed:" + e.getMessage()+",GCMD="+pack.getFixHead().getCmd() + pack.getFixHead().getModule(), e);
-					handler.onFailed(new RuntimeException(e));
-				}
-			} else {
-				localPool.execute(new Runnable() {
-					@Override
-					public void run() {
-						ms.onPacket(pack, handler);
-					}
-				});
-			}
-		} finally {
-			Thread.currentThread().setName(name);
-		}
 	}
 
 	public synchronized void tryDropConnection(String packNameOrId) {

@@ -39,7 +39,7 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 	protected TransformationResult<FramePacket, Buffer> transformImpl(AttributeStorage storage, FramePacket input)
 			throws TransformationException {
 		byte[] bodyb = input.genBodyBytes();
-		long senttime=System.currentTimeMillis();
+		long senttime = System.currentTimeMillis();
 		input.putHeader(LOG_TIME_SENT, "" + senttime);
 		byte[] extb = input.genExtBytes();
 		input.getFixHead().setExtsize(extb.length);
@@ -55,11 +55,12 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 		}
 		output.flip();
 		output.allowBufferDispose(true);
-//		log.trace("encode:" + input.getFixHead().toStrHead() + ",extsize=" + extb.length + ",bodysize=" + bodyb.length);
-		log.debug("transio send " + input.getFixHead().getCmd() + "" + input.getFixHead().getModule() + " bodysize [" + input.getFixHead().getBodysize()
-		+ "]b sent@="+senttime+" resp="+
-		input.getFixHead().isResp()+",sync="+input.getFixHead().isSync());
-		
+		// log.trace("encode:" + input.getFixHead().toStrHead() + ",extsize=" +
+		// extb.length + ",bodysize=" + bodyb.length);
+		log.debug("transio send {}{},bodysize []b,sent@{},resp={},sync={}", input.getFixHead().getCmd(),
+				input.getFixHead().getModule(), input.getFixHead().getBodysize(), senttime, input.getFixHead().isResp(),
+				input.getFixHead().isSync());
+
 		if (bodyb.length > 0 && input.getFixHead().toStrHead().endsWith("400000T00")) {
 			log.error("unknow input::");
 			return TransformationResult.createCompletedResult(null, null);

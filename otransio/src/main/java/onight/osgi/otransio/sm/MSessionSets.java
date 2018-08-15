@@ -3,6 +3,8 @@ package onight.osgi.otransio.sm;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -17,6 +19,8 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.impl.NodeInfo;
+import onight.osgi.otransio.util.PacketTuplePool;
+import onight.osgi.otransio.util.PacketWriterPool;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
@@ -36,11 +40,25 @@ public class MSessionSets {
 	int packet_buffer_size = 10;
 	int write_thread_count = 10;
 
+	PacketTuplePool packPool;
+	PacketWriterPool writerPool;
+	int max_packet_buffer = 10;
+	Executor exec;
+	Executor readerexec;
+	Executor writerexec;
 	public MSessionSets(PropHelper params) {
 		packIDKey = UUIDGenerator.generate() + ".SID";
 		this.params = params;
 		packet_buffer_size = params.get("org.zippo.otransio.maxpacketqueue", 10);
 		write_thread_count = params.get("org.zippo.otransio.write_thread_count", 10);
+		packPool = new PacketTuplePool(params.get("org.zippo.otransio.maxpackbuffer", 10000));
+		writerPool = new PacketWriterPool(params.get("org.zippo.otransio.maxwriterbuffer", 1000));
+		exec = new ForkJoinPool(
+				params.get("org.zippo.otransio.exec.parrel", java.lang.Runtime.getRuntime().availableProcessors()));
+		writerexec = new ForkJoinPool(
+				params.get("org.zippo.otransio.writerexec.parrel", java.lang.Runtime.getRuntime().availableProcessors() * 2));
+		readerexec = new ForkJoinPool(
+				params.get("org.zippo.otransio.readerexec.parrel", java.lang.Runtime.getRuntime().availableProcessors() * 2));
 	}
 
 	OutgoingSessionManager osm;
@@ -51,15 +69,17 @@ public class MSessionSets {
 
 	ConcurrentHashMap<String, CompleteHandler> packMaps = new ConcurrentHashMap<>();
 
-//	Cache<String, CompleteHandler> packMapsCache = CacheBuilder.newBuilder().expireAfterWrite(120, TimeUnit.SECONDS)
-//			.removalListener(new RemovalListener<String, CompleteHandler>() {
-//				@Override
-//				public void onRemoval(RemovalNotification<String, CompleteHandler> notification) {
-//					if (notification != null && notification.getValue() != null) {
-//						notification.getValue().onFailed(new RuntimeException("Timeout"));
-//					}
-//				}
-//			}).build();
+	// Cache<String, CompleteHandler> packMapsCache =
+	// CacheBuilder.newBuilder().expireAfterWrite(120, TimeUnit.SECONDS)
+	// .removalListener(new RemovalListener<String, CompleteHandler>() {
+	// @Override
+	// public void onRemoval(RemovalNotification<String, CompleteHandler>
+	// notification) {
+	// if (notification != null && notification.getValue() != null) {
+	// notification.getValue().onFailed(new RuntimeException("Timeout"));
+	// }
+	// }
+	// }).build();
 	AtomicLong recvCounter = new AtomicLong(0);
 	AtomicLong sendCounter = new AtomicLong(0);
 	AtomicLong duplCounter = new AtomicLong(0);

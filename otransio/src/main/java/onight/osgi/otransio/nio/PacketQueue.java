@@ -1,38 +1,52 @@
 package onight.osgi.otransio.nio;
 
+import java.util.ArrayList;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.glassfish.grizzly.Connection;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
+import onight.osgi.otransio.util.PacketTuplePool;
+import onight.osgi.otransio.util.PacketWriterPool;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.beans.FramePacket;
 
 @Slf4j
 @Data
-public class PacketQueue {
+public class PacketQueue implements Runnable {
 
-	LinkedBlockingQueue<PacketWriteTask> queue = new LinkedBlockingQueue<>();
-	LinkedBlockingQueue<PacketWriteTask> green_queue = new LinkedBlockingQueue<>();
+	LinkedBlockingQueue<PacketTuple> queue = new LinkedBlockingQueue<>();
+	LinkedBlockingQueue<PacketTuple> green_queue = new LinkedBlockingQueue<>();
 	long lastUpdatedMS = System.currentTimeMillis();
-
-	PacketWriteWorker writer;
 
 	boolean isStop = false;
 
 	CKConnPool ckpool;
 
-	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, int writer_thread_count) {
+	PacketTuplePool packPool;
+	PacketWriterPool writerPool;
+	int max_packet_buffer = 10;
+	Executor exec;
+	Executor subexec;
+	AtomicBoolean running = new AtomicBoolean(false);
+
+	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, int writer_thread_count, Executor exec,
+			Executor subexec, PacketTuplePool packPool, PacketWriterPool writerPool) {
 		this.ckpool = ckpool;
-		writer = new PacketWriteWorker(ckpool.getNameid() + "/" + ckpool.getIp() + ":" + ckpool.getPort(), this,
-				max_packet_buffer);
-		for (int i = 0; i < writer_thread_count; i++) {
-			new Thread(writer).start();
-		}
+		this.max_packet_buffer = max_packet_buffer;
+		this.packPool = packPool;
+		this.writerPool = writerPool;
+		this.exec = exec;
+		this.subexec = subexec;
+		this.name = ckpool.getNameid() + "/" + ckpool.getIp() + ":" + ckpool.getPort();
 	}
 
-	public LinkedBlockingQueue<PacketWriteTask> getQueue(FramePacket fp) {
+	public LinkedBlockingQueue<PacketTuple> getQueue(FramePacket fp) {
 		if (fp.getFixHead().getPrio() == '9') {
 			return green_queue;
 		} else {
@@ -41,24 +55,74 @@ public class PacketQueue {
 	}
 
 	public void offer(FramePacket fp, final CompleteHandler handler) {
-		LinkedBlockingQueue<PacketWriteTask> queuetooffer = getQueue(fp);
+		LinkedBlockingQueue<PacketTuple> queuetooffer = getQueue(fp);
 
-		while (!queuetooffer.offer(new PacketWriteTask(fp, handler, false)))
+		while (!queuetooffer.offer(packPool.borrowTuple(fp, handler)))
 			;
-		try {
-			synchronized (writer) {
-				writer.notifyAll();
-			}
-		} catch (Exception e) {
-			log.warn("error:" + e.getMessage(), e);
+		if (running.compareAndSet(false, true)) {
+			exec.execute(this);
 		}
 	}
 
-	public PacketWriteTask poll(long waitms) throws InterruptedException {
-		PacketWriteTask task = green_queue.poll();
-		if (task != null ) {
+	public PacketTuple poll(long waitms) throws InterruptedException {
+		PacketTuple task = green_queue.poll();
+		if (task != null) {
 			return task;
 		}
 		return queue.poll(waitms, TimeUnit.MILLISECONDS);
+	}
+
+	String name;
+
+	@Override
+	public void run() {
+		log.debug("PacketQueue {}  .... running,", name);
+		Thread.currentThread().setName(name);
+
+		PacketTuple fp = null;
+		Connection<?> conn = null;
+		PacketWriter writer = null;
+		int failedGetConnection = 0;
+		if(isStop){
+			return;
+		}
+		try {
+			do {
+				try {
+					conn = ckpool.ensureConnection();
+					CKConnPool retPut_ckpool = ckpool;
+					if (conn == null && failedGetConnection >= 5) {
+						conn = ckpool.iterator().next();
+						retPut_ckpool = null;
+					}
+					if (conn != null) {
+						writer = writerPool.borrowWriter(name, conn, retPut_ckpool,this);
+						do {
+							fp = poll(1);
+							if (fp != null) {
+								writer.arrays.add(fp);
+							}
+						} while (fp != null && writer.arrays.size() < max_packet_buffer);
+						if (writer.arrays.size() > 0) {
+							subexec.execute(writer);
+							writer = null;
+						}
+					} else {
+						failedGetConnection++;
+						log.warn("no more connection for " + name + ",failedcc=" + failedGetConnection);
+					}
+
+				} catch (Throwable t) {
+					log.debug("get error:in running Queue:" + name + ":" + t.getMessage(), t);
+				} finally {
+					if (writer != null) {
+						writerPool.retobj(writer);
+					}
+				}
+			} while (!isStop && failedGetConnection < 10 && (queue.size() > 0 || green_queue.size() > 0));
+
+		} finally {
+			running.set(false);
+		}
 	}
 }
