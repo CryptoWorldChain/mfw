@@ -38,9 +38,7 @@ public class SerializerUtil {
 		if (object instanceof byte[]) {
 			return (byte[]) object;
 		} else {
-			try {
-				ByteArrayOutputStream bos = new ByteArrayOutputStream();
-				ObjectOutput out = new ObjectOutputStream(bos);
+			try (ByteArrayOutputStream bos = new ByteArrayOutputStream();ObjectOutput out = new ObjectOutputStream(bos);){
 				out.writeObject(object);
 				return bos.toByteArray();
 			} catch (IOException e) {
@@ -51,9 +49,8 @@ public class SerializerUtil {
 	}
 
 	public static Object fromBytes(byte [] bytes) {
-		try {
-			ByteArrayInputStream bis = new ByteArrayInputStream((byte[]) bytes);
-			ObjectInput in = new ObjectInputStream(bis);
+		try (ByteArrayInputStream bis = new ByteArrayInputStream((byte[]) bytes);
+			ObjectInput in = new ObjectInputStream(bis);){
 			return in.readObject();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();

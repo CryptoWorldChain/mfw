@@ -73,7 +73,12 @@ public class LocalMessageProcessor {
 			}
 		} else {
 			runner.reset(pack, handler, ms, null);
-			exec.execute(runner);
+			if(pack.getFixHead().getPrio()=='9'){
+				//green 
+				runner.run();
+			}else{
+				exec.execute(runner);
+			}
 		}
 	}
 }

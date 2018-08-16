@@ -119,13 +119,13 @@ public class FixHeader {
 			// 1-6 --> 命令+模块，共6字节
 			// 7-9 --> 扩展信息长度，3个字节
 			// 10->13->body长度，4个字节//
-			// 14->编码类型
+			// 14,->优先级
 			// 15-->保留字段
 			System.arraycopy(cmd.getBytes(), 0, data, 1, 3);
 			System.arraycopy(module.getBytes(), 0, data, 4, 3);
 			LengthUtils.int2Byte3(extsize, data, 7);
 			LengthUtils.int2Byte4(bodysize, data, 10);
-			data[14] = (byte) enctype;
+			data[14] = (byte) prio;
 			if (isSync) {
 				if (isResp) {
 					data[15] = '3';
@@ -181,7 +181,8 @@ public class FixHeader {
 			flag = 2;
 			extsize = LengthUtils.byte2Int(data[7], data[8], data[9]);
 			bodysize = LengthUtils.byte2Int(data[10], data[11], data[12], data[13]);
-			enctype = (char) data[14];
+			enctype = 'P';//protobuf
+			prio =  data[14];
 			reserved = (byte) (data[15]);
 			if (reserved == '0') {
 				isSync = false;
