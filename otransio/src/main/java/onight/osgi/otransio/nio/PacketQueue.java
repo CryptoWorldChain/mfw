@@ -1,6 +1,6 @@
 package onight.osgi.otransio.nio;
 
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -83,7 +83,7 @@ public class PacketQueue implements Runnable {
 		Connection<?> conn = null;
 		PacketWriter writer = null;
 		int failedGetConnection = 0;
-		if(isStop){
+		if (isStop) {
 			return;
 		}
 		try {
@@ -92,11 +92,14 @@ public class PacketQueue implements Runnable {
 					conn = ckpool.ensureConnection();
 					CKConnPool retPut_ckpool = ckpool;
 					if (conn == null && failedGetConnection >= 5) {
-						conn = ckpool.iterator().next();
-						retPut_ckpool = null;
+						Iterator<Connection> it = ckpool.iterator();
+						if (it.hasNext()) {
+							conn = it.next();
+							retPut_ckpool = null;
+						}
 					}
 					if (conn != null) {
-						writer = writerPool.borrowWriter(name, conn, retPut_ckpool,this);
+						writer = writerPool.borrowWriter(name, conn, retPut_ckpool, this);
 						do {
 							fp = poll(1);
 							if (fp != null) {
