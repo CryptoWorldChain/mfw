@@ -25,7 +25,7 @@ public class PacketWriter implements Runnable {
 	public void run() {
 		try {
 			for (PacketTuple pt : arrays) {
-				conn.write(pt);
+				conn.write(pt.pack);
 				pt.setWrited(true);
 			}
 		} catch (Exception e) {

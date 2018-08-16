@@ -6,6 +6,8 @@ import java.io.InputStream;
 
 import javax.servlet.http.HttpServletRequest;
 
+import onight.tfw.outils.pool.ReusefulLoopPool;
+
 public class HttpHelper {
 
 	public static String getIpAddr(HttpServletRequest request) {
@@ -28,9 +30,8 @@ public class HttpHelper {
 
 	public static byte[] getRequestContentBytes(HttpServletRequest request) throws IOException {
 		InputStream is = null;
-		try {
+		try (ByteArrayOutputStream bout = new ByteArrayOutputStream()){
 			is = request.getInputStream();
-			ByteArrayOutputStream bout = new ByteArrayOutputStream();
 			byte[] data = new byte[8192];
 			int rsize = 0;
 			do {

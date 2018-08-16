@@ -53,6 +53,7 @@ public class PropHelper {
 			} catch (Exception e) {
 			}
 		}
+		if(context!=null&&propfile!=null)
 		try {
 			config = context.getProperty(propfile);
 			if (config == null) {

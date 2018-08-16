@@ -19,6 +19,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.annotation.iPojoBean;
 import onight.tfw.async.CompleteHandler;
+import onight.tfw.async.CompleteHandlerWrapper;
 import onight.tfw.ntrans.api.annotation.ActorRequire;
 import onight.tfw.ojpa.api.DomainDaoSupport;
 import onight.tfw.ojpa.api.IJPAClient;
@@ -31,10 +32,10 @@ import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.ExceptionBody;
 import onight.tfw.otransio.api.beans.FramePacket;
-import onight.tfw.otransio.api.beans.SendFailedBody;
 import onight.tfw.otransio.api.beans.UnknowCMDBody;
 import onight.tfw.otransio.api.session.CMDService;
 import onight.tfw.outils.bean.JsonPBFormat;
+import onight.tfw.outils.pool.ReusefulLoopPool;
 import onight.tfw.outils.serialize.ISerializer;
 import onight.tfw.outils.serialize.SerializerFactory;
 import onight.tfw.outils.serialize.SerializerUtil;
@@ -238,38 +239,25 @@ public class ActWrapper implements IActor, IJPAClient, IQClient, PSenderService,
 	@Getter
 	public FilterManager fm = new NoneFilterManager();
 
+	protected static ReusefulLoopPool<CompleteHandler> completePool = new ReusefulLoopPool<>();
+
 	@Override
 	final public void doPacketWithFilter(FramePacket pack, final CompleteHandler handler) {
 		try {
 			if (!fm.preRouteListner(this, pack, handler)) {
 				throw new FilterException("FilterBlock!");
 			}
-			onPacket(pack, new CompleteHandler() {
-
-				@Override
-				public void onFinished(FramePacket endpack) {
-					try {
-						handler.onFinished(endpack);
-					} finally {
-						fm.onCompleteListner(ActWrapper.this, endpack);
-					}
-
-				}
-
-				@Override
-				public void onFailed(Exception e) {
-					try {
-						handler.onFailed(e);
-					} finally {
-						fm.onErrorListner(ActWrapper.this, null);
-					}
-				}
-			});
+			CompleteHandlerWrapper w = CompleteHandlerWrapper.objPool.borrow();
+			if (w == null) {
+				w = new CompleteHandlerWrapper();
+			}
+			w.reset(handler, fm, this);
+			onPacket(pack, w);
 		} catch (FilterException e) {
 			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_FILTER_EXCEPTION,
 					"FilterBlocked:" + e.getMessage()));
 		} catch (Throwable e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 			log.debug("doPacketWithFilterError:", e);
 			handler.onFinished(PacketHelper.toPBErrorReturn(pack, ExceptionBody.EC_SERVICE_EXCEPTION, e.getMessage()));
 		} finally {
