@@ -104,7 +104,7 @@ public class PropHelper {
 	}
 
 	public void addFileProps(File file) {
-		if (file.exists()) {
+		if (file!=null&&file.exists()) {
 			Properties propsConf = new Properties();
 			try {
 				InputStream in = new BufferedInputStream(new FileInputStream(file));
