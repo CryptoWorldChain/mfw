@@ -93,7 +93,7 @@ public class PacketQueue implements Runnable {
 					CKConnPool retPut_ckpool = ckpool;
 					if (conn == null && failedGetConnection >= 5) {
 						Iterator<Connection> it = ckpool.iterator();
-						if (it.hasNext()) {
+						if (it != null && it.hasNext()) {
 							conn = it.next();
 							retPut_ckpool = null;
 						}
@@ -112,20 +112,30 @@ public class PacketQueue implements Runnable {
 						}
 					} else {
 						failedGetConnection++;
-						log.warn("no more connection for " + name + ",failedcc=" + failedGetConnection);
+						// log.warn("no more connection for " + name +
+						// ",failedcc=" + failedGetConnection);
 					}
 
 				} catch (Throwable t) {
-					log.debug("get error:in running Queue:" + name + ":" + t.getMessage(), t);
+					failedGetConnection++;
 				} finally {
 					if (writer != null) {
 						writerPool.retobj(writer);
 					}
 				}
-			} while (!isStop && failedGetConnection < 10 && (queue.size() > 0 || green_queue.size() > 0));
-
+			} while (!isStop && failedGetConnection < ckpool.getCore() && (queue.size() > 0 || green_queue.size() > 0));
+			if (!isStop && failedGetConnection >= ckpool.getCore() && (queue.size() > 0 || green_queue.size() > 0)) {
+				log.warn("no more connection for " + name + ",failedcc=" + failedGetConnection + ",qsize="
+						+ queue.size() + ",green_qsize=" + green_queue.size());
+			}
 		} finally {
 			running.set(false);
+		}
+	}
+
+	public void resendBacklogs() {
+		if ((queue.size() > 0 || green_queue.size() > 0) && running.compareAndSet(false, true)) {
+			exec.execute(this);
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package onight.osgi.otransio.impl;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 import org.glassfish.grizzly.impl.FutureImpl;
@@ -15,7 +15,7 @@ import onight.tfw.outils.pool.ReusefulLoopPool;
 @Slf4j
 public class LocalMessageProcessor {
 
-	Executor exec;
+	ForkJoinPool exec;
 	int poolSize = 1000;
 
 	class Runner implements Runnable {
@@ -61,6 +61,7 @@ public class LocalMessageProcessor {
 			runner = new Runner();
 		}
 		if (pack.isSync()) {
+			long startTime = System.currentTimeMillis();
 			final FutureImpl<String> future = Futures.createSafeFuture();
 			runner.reset(pack, handler, ms, future);
 			exec.execute(runner);
@@ -68,7 +69,8 @@ public class LocalMessageProcessor {
 				future.get(60, TimeUnit.SECONDS);
 			} catch (Throwable e) {
 				log.error("route Failed:" + e.getMessage() + ",GCMD=" + pack.getFixHead().getCmd()
-						+ pack.getFixHead().getModule(), e);
+						+ pack.getFixHead().getModule()+",realcost="+(System.currentTimeMillis()-startTime)
+						+",queue="+exec.getQueuedTaskCount(), e);
 				handler.onFailed(new RuntimeException(e));
 			}
 		} else {

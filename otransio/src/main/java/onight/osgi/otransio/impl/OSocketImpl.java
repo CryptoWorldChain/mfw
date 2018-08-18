@@ -178,6 +178,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					CKConnPool ckpool = rms.getConnsPool();
 					ckpool.setIp(rmb.getNodeInfo().getAddr());
 					ckpool.setPort(rmb.getNodeInfo().getPort());
+					rms.getWriterQ().resendBacklogs();
 				} else {
 					try {
 						osm.createOutgoingSSByURI(rmb.getNodeInfo(), node_from);

@@ -3,17 +3,10 @@ package onight.osgi.otransio.sm;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.StringUtils;
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -43,9 +36,9 @@ public class MSessionSets {
 	PacketTuplePool packPool;
 	PacketWriterPool writerPool;
 	int max_packet_buffer = 10;
-	Executor exec;
-	Executor readerexec;
-	Executor writerexec;
+	ForkJoinPool exec; 
+	ForkJoinPool readerexec;
+	ForkJoinPool writerexec;
 	public MSessionSets(PropHelper params) {
 		packIDKey = UUIDGenerator.generate() + ".SID";
 		this.params = params;

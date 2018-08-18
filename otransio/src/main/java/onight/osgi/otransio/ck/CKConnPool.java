@@ -213,7 +213,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 			} catch (Exception e) {
 				// creating new Connection
-				log.warn("error in create out sub conn:" + ip + ",port=" + port, e);
+				log.warn("error in create out sub conn:" + ip + ",port=" + port+","+e.getMessage());
 			}
 		}
 		return null;
