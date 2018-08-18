@@ -39,6 +39,8 @@ public class LocalMessageProcessor {
 		public void run() {
 			try {
 				ms.onPacket(pack, handler);
+			} catch (Exception e) {
+				log.debug("error in runing local onPacket:"+e.getMessage(),e);
 			} finally {
 				if (future != null) {
 					future.result("F");
@@ -68,17 +70,20 @@ public class LocalMessageProcessor {
 			try {
 				future.get(60, TimeUnit.SECONDS);
 			} catch (Throwable e) {
-				log.error("route Failed:" + e.getMessage() + ",GCMD=" + pack.getFixHead().getCmd()
-						+ pack.getFixHead().getModule()+",realcost="+(System.currentTimeMillis()-startTime)
-						+",queue="+exec.getQueuedTaskCount(), e);
+				log.error(
+						"route Failed:" + e.getMessage() + ",GCMD=" + pack.getFixHead().getCmd()
+								+ pack.getFixHead().getModule() + ",realcost="
+								+ (System.currentTimeMillis() - startTime) + ",queue=" + exec.getQueuedTaskCount()
+								+ ",running=" + exec.getRunningThreadCount() + ",active=" + exec.getActiveThreadCount(),
+						e);
 				handler.onFailed(new RuntimeException(e));
 			}
 		} else {
 			runner.reset(pack, handler, ms, null);
-			if(pack.getFixHead().getPrio()=='9'){
-				//green 
+			if (pack.getFixHead().getPrio() == '9') {
+				// green
 				runner.run();
-			}else{
+			} else {
 				exec.execute(runner);
 			}
 		}
