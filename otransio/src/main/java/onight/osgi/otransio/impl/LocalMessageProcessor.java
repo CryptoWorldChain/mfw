@@ -40,7 +40,7 @@ public class LocalMessageProcessor {
 			try {
 				ms.onPacket(pack, handler);
 			} catch (Exception e) {
-				log.debug("error in runing local onPacket:"+e.getMessage(),e);
+				log.debug("error in runing local onPacket:" + e.getMessage(), e);
 			} finally {
 				if (future != null) {
 					future.result("F");
@@ -66,17 +66,19 @@ public class LocalMessageProcessor {
 			long startTime = System.currentTimeMillis();
 			final FutureImpl<String> future = Futures.createSafeFuture();
 			runner.reset(pack, handler, ms, future);
-			exec.execute(runner);
-			try {
-				future.get(60, TimeUnit.SECONDS);
-			} catch (Throwable e) {
-				log.error(
-						"route Failed:" + e.getMessage() + ",GCMD=" + pack.getFixHead().getCmd()
-								+ pack.getFixHead().getModule() + ",realcost="
-								+ (System.currentTimeMillis() - startTime) + ",queue=" + exec.getQueuedTaskCount()
-								+ ",running=" + exec.getRunningThreadCount() + ",active=" + exec.getActiveThreadCount(),
-						e);
-				handler.onFailed(new RuntimeException(e));
+			if (pack.getFixHead().getPrio() == '8' || pack.getFixHead().getPrio() == '9') {
+				runner.run();
+			} else {
+				exec.execute(runner);
+				try {
+					future.get(60, TimeUnit.SECONDS);
+				} catch (Throwable e) {
+					log.error("route Failed:" + e.getMessage() + ",GCMD=" + pack.getFixHead().getCmd()
+							+ pack.getFixHead().getModule() + ",realcost=" + (System.currentTimeMillis() - startTime)
+							+ ",queue=" + exec.getQueuedTaskCount() + ",running=" + exec.getRunningThreadCount()
+							+ ",active=" + exec.getActiveThreadCount(), e);
+					handler.onFailed(new RuntimeException(e));
+				}
 			}
 		} else {
 			runner.reset(pack, handler, ms, null);

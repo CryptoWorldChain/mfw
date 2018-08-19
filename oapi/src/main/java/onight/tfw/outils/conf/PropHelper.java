@@ -88,8 +88,6 @@ public class PropHelper {
 				addFileProps(dir);
 			}
 		}
-		log.debug("configFile::" + config + "::FF==" + configFile.exists());
-
 		overrideWithProperties();
 	}
 

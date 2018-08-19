@@ -22,6 +22,7 @@ public class PacketQueue implements Runnable {
 
 	LinkedBlockingQueue<PacketTuple> queue = new LinkedBlockingQueue<>();
 	LinkedBlockingQueue<PacketTuple> green_queue = new LinkedBlockingQueue<>();
+	LinkedBlockingQueue<PacketTuple> pio_queue = new LinkedBlockingQueue<>();
 	long lastUpdatedMS = System.currentTimeMillis();
 
 	boolean isStop = false;
@@ -49,6 +50,8 @@ public class PacketQueue implements Runnable {
 	public LinkedBlockingQueue<PacketTuple> getQueue(FramePacket fp) {
 		if (fp.getFixHead().getPrio() == '9') {
 			return green_queue;
+		} else if (fp.getFixHead().getPrio() == '8') {
+			return pio_queue;
 		} else {
 			return queue;
 		}
@@ -66,6 +69,10 @@ public class PacketQueue implements Runnable {
 
 	public PacketTuple poll(long waitms) throws InterruptedException {
 		PacketTuple task = green_queue.poll();
+		if (task != null) {
+			return task;
+		}
+		task = pio_queue.poll();
 		if (task != null) {
 			return task;
 		}
@@ -123,10 +130,13 @@ public class PacketQueue implements Runnable {
 						writerPool.retobj(writer);
 					}
 				}
-			} while (!isStop && failedGetConnection < ckpool.getCore() && (queue.size() > 0 || green_queue.size() > 0));
-			if (!isStop && failedGetConnection >= ckpool.getCore() && (queue.size() > 0 || green_queue.size() > 0)) {
+			} while (!isStop && failedGetConnection < ckpool.getCore()
+					&& (queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0));
+			
+			if (!isStop && failedGetConnection >= ckpool.getCore()
+					&& (queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0)) {
 				log.warn("no more connection for " + name + ",failedcc=" + failedGetConnection + ",qsize="
-						+ queue.size() + ",green_qsize=" + green_queue.size());
+						+ queue.size() + ",green_qsize=" + green_queue.size() + ",pio_qsize=" + pio_queue.size());
 			}
 		} finally {
 			running.set(false);
@@ -134,7 +144,8 @@ public class PacketQueue implements Runnable {
 	}
 
 	public void resendBacklogs() {
-		if ((queue.size() > 0 || green_queue.size() > 0) && running.compareAndSet(false, true)) {
+		if ((queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0)
+				&& running.compareAndSet(false, true)) {
 			exec.execute(this);
 		}
 	}

@@ -57,9 +57,9 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 		output.allowBufferDispose(true);
 		// log.trace("encode:" + input.getFixHead().toStrHead() + ",extsize=" +
 		// extb.length + ",bodysize=" + bodyb.length);
-		log.debug("transio send {}{},bodysize []b,sent@{},resp={},sync={}", input.getFixHead().getCmd(),
+		log.debug("transio send {}{},bodysize [{}]b,sent@{},resp={},sync={},prio={}", input.getFixHead().getCmd(),
 				input.getFixHead().getModule(), input.getFixHead().getBodysize(), senttime, input.getFixHead().isResp(),
-				input.getFixHead().isSync());
+				input.getFixHead().isSync(),input.getFixHead().getPrio());
 
 		if (bodyb.length > 0 && input.getFixHead().toStrHead().endsWith("400000T00")) {
 			log.error("unknow input::");

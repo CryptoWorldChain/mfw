@@ -88,10 +88,10 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 			ext = ExtHeader.buildFrom(extbytes);
 			String sendtime = (String) ext.get(Encoder.LOG_TIME_SENT);
 			if (StringUtils.isNumeric(sendtime)) {
-				log.debug("transio recv {}{},bodysize:{},cost:{} ms,sent={},resp={},sync={}" ,
+				log.debug("transio recv {}{},bodysize:{},cost:{} ms,sent={},resp={},sync={},pio={}" ,
 						header.getCmd() , header.getModule() , header.getBodysize()
 						, (System.currentTimeMillis() - Long.parseLong(sendtime)) , sendtime,
-						header.isResp(),header.isSync());
+						header.isResp(),header.isSync(),header.getPrio());
 			}
 		}
 		byte body[] = new byte[header.getBodysize()];
