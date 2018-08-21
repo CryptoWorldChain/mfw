@@ -75,7 +75,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	}
 
 	public synchronized Connection createOneConnection(int waitms) {
-		return createOneConnection(1,waitms);
+		return createOneConnection(1, waitms);
 	}
 
 	public void parseURI(String uri) {
@@ -101,92 +101,94 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				conn = null;
 			}
 		}
-		conn = createOneConnection(1,100);
+		conn = createOneConnection(1, 100);
 
 		return conn;
 	}
 
-//	public void sendMessage(final FramePacket pack) throws MessageException {
-//		boolean writed = false;
-//		for (int i = 0; i < 1; i++) {
-//			Connection conn = null;
-//			try {
-//				conn = borrow();
-//				if (conn != null) {
-//					if (conn.isOpen()) {
-//						if (conn.write(pack) != null) {
-//							writed = true;
-//						}
-//						break;
-//					} else {
-//						removeObject(conn);
-//						conn = null;
-//					}
-//				}
-//				if (createOneConnection(1) == null) {
-//					throw new MessageException("cannot connect");
-//				}
-//				Thread.sleep(100);
-//			} catch (Exception e) {
-//				log.error("sendMessageError:" + pack, e);
-//				throw new MessageException(e);
-//			} finally {
-//				if (conn != null && conn.isOpen()) {
-//					retobj(conn);
-//				}
-//			}
-//		}
-//		if (!writed) {
-//			throw new MessageException("No More Connections for [" + ip + ":" + port + "]");
-//		}
-//	}
+	// public void sendMessage(final FramePacket pack) throws MessageException {
+	// boolean writed = false;
+	// for (int i = 0; i < 1; i++) {
+	// Connection conn = null;
+	// try {
+	// conn = borrow();
+	// if (conn != null) {
+	// if (conn.isOpen()) {
+	// if (conn.write(pack) != null) {
+	// writed = true;
+	// }
+	// break;
+	// } else {
+	// removeObject(conn);
+	// conn = null;
+	// }
+	// }
+	// if (createOneConnection(1) == null) {
+	// throw new MessageException("cannot connect");
+	// }
+	// Thread.sleep(100);
+	// } catch (Exception e) {
+	// log.error("sendMessageError:" + pack, e);
+	// throw new MessageException(e);
+	// } finally {
+	// if (conn != null && conn.isOpen()) {
+	// retobj(conn);
+	// }
+	// }
+	// }
+	// if (!writed) {
+	// throw new MessageException("No More Connections for [" + ip + ":" + port
+	// + "]");
+	// }
+	// }
 
-//	public void sendMessage(final List<PacketTuple> packs) throws MessageException {
-//		boolean writed = false;
-//		int retry_Connect = 0;
-//		for (int i = 0; i < 30; i++) {
-//			Connection<?> conn = null;
-//			try {
-//				conn = borrow();
-//				if (conn != null) {
-//					if (conn.isOpen()) {
-//						for (PacketTuple pack : packs) {
-//							conn.write(pack.getPack());
-//							pack.setWrited(true);
-//						}
-//						writed = true;
-//						return;
-//					} else {
-//						removeObject(conn);
-//						conn = null;
-//					}
-//				}
-//				if (size() < max) {
-//					createOneConnection(1);
-//				}
-//				if (size() == 0) {// has no more connection but only connect 3
-//									// times
-//					if (retry_Connect++ <= 3) {
-//						// cannot get connection
-//						break;
-//					}
-//					Thread.sleep(1000);// try connect next time
-//				} else {// try 10*6000=60 seconds
-//					Thread.sleep(10);
-//				}
-//			} catch (Exception e) {
-//				log.error("sendMessageError:", e);
-//				throw new MessageException(e);
-//			} finally {
-//				if (conn != null && conn.isOpen()) {
-//					retobj(conn);
-//				}
-//			}
-//		}
-//		if (!writed) {
-//			throw new MessageException("No More Connections");
-//		}
-//	}
+	// public void sendMessage(final List<PacketTuple> packs) throws
+	// MessageException {
+	// boolean writed = false;
+	// int retry_Connect = 0;
+	// for (int i = 0; i < 30; i++) {
+	// Connection<?> conn = null;
+	// try {
+	// conn = borrow();
+	// if (conn != null) {
+	// if (conn.isOpen()) {
+	// for (PacketTuple pack : packs) {
+	// conn.write(pack.getPack());
+	// pack.setWrited(true);
+	// }
+	// writed = true;
+	// return;
+	// } else {
+	// removeObject(conn);
+	// conn = null;
+	// }
+	// }
+	// if (size() < max) {
+	// createOneConnection(1);
+	// }
+	// if (size() == 0) {// has no more connection but only connect 3
+	// // times
+	// if (retry_Connect++ <= 3) {
+	// // cannot get connection
+	// break;
+	// }
+	// Thread.sleep(1000);// try connect next time
+	// } else {// try 10*6000=60 seconds
+	// Thread.sleep(10);
+	// }
+	// } catch (Exception e) {
+	// log.error("sendMessageError:", e);
+	// throw new MessageException(e);
+	// } finally {
+	// if (conn != null && conn.isOpen()) {
+	// retobj(conn);
+	// }
+	// }
+	// }
+	// if (!writed) {
+	// throw new MessageException("No More Connections");
+	// }
+	// }
 
 	public synchronized Connection createOneConnectionBySubNode(int maxtries) {
 		for (NodeInfo node : subNodes) {
@@ -213,7 +215,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 			} catch (Exception e) {
 				// creating new Connection
-				log.warn("error in create out sub conn:" + ip + ",port=" + port+","+e.getMessage());
+				log.warn("error in create out sub conn:" + ip + ",port=" + port + "," + e.getMessage());
 			}
 		}
 		return null;
@@ -262,6 +264,10 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 			}
 		}
 		log.debug("cannot get more Connection:cursize=" + size() + ",max=" + max);
+		try {
+			Thread.sleep(1000);
+		} catch (Exception e) {
+		}
 		return null;
 	}
 

@@ -2,10 +2,12 @@ package onight.osgi.otransio.ck;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.concurrent.TimeoutException;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.sm.MSessionSets;
+import onight.tfw.async.CompleteHandler;
 
 @Slf4j
 @Data
@@ -20,7 +22,7 @@ public class PackMapsCheckHealth implements Runnable {
 	@Override
 	public void run() {
 		try {
-			log.debug("PackMapsCheckHealth: [START]");
+			log.debug("PackMapsCheckHealth:--START");
 			Enumeration<String> en = mss.getPackMaps().keys();
 			ArrayList<String> rmkeys = new ArrayList<>();
 			while (en.hasMoreElements()) {
@@ -40,12 +42,18 @@ public class PackMapsCheckHealth implements Runnable {
 				}
 			}
 			for (String key : rmkeys) {
-				mss.getPackMaps().remove(key);
+				CompleteHandler handler = mss.getPackMaps().remove(key);
+				if (handler != null) {
+					try {
+						handler.onFailed(new TimeoutException("pack send timeout"));
+					} catch (Exception e) {
+					}
+				}
 			}
 		} catch (Exception e) {
 			log.debug("error In PacketMapCheck thread:", e);
-		}finally{
-			log.debug("PackMapsCheckHealth: [STOP]");
+		} finally {
+			log.debug("PackMapsCheckHealth: -- END");
 		}
 	}
 
