@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.glassfish.grizzly.Connection;
+import org.slf4j.MDC;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -83,9 +84,9 @@ public class PacketQueue implements Runnable {
 
 	@Override
 	public void run() {
-		log.debug("PacketQueue {}  .... running,", name);
+//		log.debug("PacketQueue {}  .... running,", name);
 		Thread.currentThread().setName(name);
-
+		
 		PacketTuple fp = null;
 		Connection<?> conn = null;
 		PacketWriter writer = null;
@@ -135,6 +136,7 @@ public class PacketQueue implements Runnable {
 			
 			if (!isStop && failedGetConnection >= ckpool.getCore()
 					&& (queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0)) {
+				MDC.put("BCUID", name);
 				log.warn("no more connection for " + name + ",failedcc=" + failedGetConnection + ",qsize="
 						+ queue.size() + ",green_qsize=" + green_queue.size() + ",pio_qsize=" + pio_queue.size());
 			}
