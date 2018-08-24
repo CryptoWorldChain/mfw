@@ -124,7 +124,7 @@ public class ActorManager {
 		}
 	}
 
-	@Bind(aggregate = true, optional=true)
+	@Bind(aggregate = true, optional = true)
 	public void bindActor(IActor actor) {
 		log.info("bindActor:" + actor);
 		if (actor == null)
@@ -141,8 +141,13 @@ public class ActorManager {
 					servlets.put(rootpath + spath, servlet);
 					for (HttpService s : services) {
 						try {
-							s.registerServlet(rootpath+spath, servlet, null, null);
-							log.info("register servlet:" + rootpath+spath);
+							if (prop.get("org.zippo.servlet.default", "/bca/pbver.do").equals(spath)) {
+								s.registerServlet("/", servlet, null, null);
+								s.registerServlet(rootpath, servlet, null, null);
+							}
+
+							s.registerServlet(rootpath + spath, servlet, null, null);
+							log.info("register servlet:" + rootpath + spath);
 						} catch (Exception e) {
 							log.warn("Failed in register servlet:", e);
 						}
@@ -152,7 +157,7 @@ public class ActorManager {
 		}
 	}
 
-	@Unbind(aggregate = true, optional=true)
+	@Unbind(aggregate = true, optional = true)
 	public void unbindActor(IActor actor) {
 		log.debug("unbind actor" + actor);
 		if (actor == null)
@@ -164,10 +169,10 @@ public class ActorManager {
 		}
 		if (ctxpaths != null) {
 			for (String ctxpath : ctxpaths) {
-				servlets.remove(rootpath+ctxpath);
+				servlets.remove(rootpath + ctxpath);
 				for (HttpService s : services) {
 					try {
-						s.unregister(rootpath+ctxpath);
+						s.unregister(rootpath + ctxpath);
 					} catch (Exception e) {
 					}
 					log.info("unbind servlet :" + ctxpath);
