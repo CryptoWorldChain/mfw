@@ -46,6 +46,7 @@ public class NodeConnectionPool {
 	public synchronized void changePoolName(String oldname, String newname) {
 		CKConnPool pool = ckPoolByNodeName.get(oldname);
 		if (pool != null) {
+			pool.setNameid(newname);
 			CKConnPool existpool = ckPoolByNodeName.put(newname, pool);
 			if (existpool != null && pool != existpool) {
 				log.debug("stop exist pool for:" + existpool.getNameid() + ":" + existpool.getIp() + ":"

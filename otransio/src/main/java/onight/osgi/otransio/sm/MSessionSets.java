@@ -200,6 +200,7 @@ public class MSessionSets {
 				if (session instanceof RemoteModuleSession) {
 					RemoteModuleSession rms = (RemoteModuleSession) session;
 					rms.nodeInfo.setNodeName(newname);
+					rms.writerQ.setName(newname);
 				}
 				sessionByNodeName.put(newname, session);
 				sessionByNodeName.remove(oldname);

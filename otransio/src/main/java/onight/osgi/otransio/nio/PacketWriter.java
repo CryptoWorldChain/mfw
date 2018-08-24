@@ -3,6 +3,7 @@ package onight.osgi.otransio.nio;
 import java.util.ArrayList;
 
 import org.glassfish.grizzly.Connection;
+import org.slf4j.MDC;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class PacketWriter implements Runnable {
 
 	public void run() {
 		try {
+			MDC.put("BCUID", name);
 			for (PacketTuple pt : arrays) {
 				conn.write(pt.pack);
 				pt.setWrited(true);

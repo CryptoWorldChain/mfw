@@ -215,7 +215,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 			} catch (Exception e) {
 				// creating new Connection
-				log.warn("error in create out sub conn:" + ip + ",port=" + port + "," + e.getMessage());
+				log.warn("error in create out sub conn:" + ip + ",port=" + port + ",nameid="+nameid+",e=" + e.getMessage());
 			}
 		}
 		return null;
@@ -254,7 +254,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					log.debug("cannot create Connection to " + ip + ":" + port);
 				}
 			} catch (TimeoutException te) {
-				log.debug("Timeout:", te);
+				log.debug("TimeoutConnect:to="+ip+":"+port+",name="+nameid, te);
 				return createOneConnectionBySubNode(maxtries);
 			} catch (ExecutionException ce) {
 				return createOneConnectionBySubNode(maxtries);
