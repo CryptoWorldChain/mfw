@@ -142,8 +142,11 @@ public class ActorManager {
 					for (HttpService s : services) {
 						try {
 							if (prop.get("org.zippo.servlet.default", "/bca/pbver.do").equals(spath)) {
-								s.registerServlet("/", servlet, null, null);
-								s.registerServlet(rootpath, servlet, null, null);
+								try {
+									s.registerServlet("/", servlet, null, null);
+									s.registerServlet(rootpath, servlet, null, null);
+								} catch (Exception e) {
+								}
 							}
 
 							s.registerServlet(rootpath + spath, servlet, null, null);
