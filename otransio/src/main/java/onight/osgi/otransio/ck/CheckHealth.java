@@ -63,6 +63,7 @@ public class CheckHealth {
 			public void run() {
 				try {
 					if (!conn.isOpen()) {
+						log.debug("connetion is not open:"+conn.getLocalAddress()+",peer="+conn.getPeerAddress());
 						conn.close();
 						exec.remove(this);
 					} else {

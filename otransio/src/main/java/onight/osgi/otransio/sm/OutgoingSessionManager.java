@@ -19,6 +19,7 @@ import onight.osgi.otransio.ck.CheckHealth;
 import onight.osgi.otransio.ck.NewConnCheckHealth;
 import onight.osgi.otransio.ck.NodeConnectionPool;
 import onight.osgi.otransio.ck.PackMapsCheckHealth;
+import onight.osgi.otransio.ck.SyncMapCheckHealth;
 import onight.osgi.otransio.exception.NoneServerException;
 import onight.osgi.otransio.exception.UnAuthorizedConnectionException;
 import onight.osgi.otransio.impl.NodeInfo;
@@ -51,6 +52,7 @@ public class OutgoingSessionManager {
 		return sb.toString();
 	}
 	PackMapsCheckHealth pmch ;
+	SyncMapCheckHealth smch;
 
 	public OutgoingSessionManager(OSocketImpl oimpl, PropHelper params, MSessionSets mss) {
 		this.params = params;
@@ -61,7 +63,8 @@ public class OutgoingSessionManager {
 		nck = new NewConnCheckHealth(params.get("otrans.max.conn.each.ip", 100),
 				params.get("otrans.max.conn.timeout.sec", 30), ck.getExec());
 		pmch = new PackMapsCheckHealth(mss);
-		
+		smch = new SyncMapCheckHealth(mss);
+		ck.getExec().scheduleWithFixedDelay(smch, 10, 3, TimeUnit.SECONDS);
 		ck.getExec().scheduleWithFixedDelay(pmch, 60, 60, TimeUnit.SECONDS);
 	}
 

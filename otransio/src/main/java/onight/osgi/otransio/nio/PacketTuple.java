@@ -11,18 +11,25 @@ public class PacketTuple {
 	FramePacket pack;
 	CompleteHandler handler;
 	boolean writed = false;
+
 	int rewriteTimes = 0;
 
-	public void reset(FramePacket pack, CompleteHandler handler) {
+	long writeTime = -1;
+	boolean responsed = false;
+	PacketQueue packQ;
+	public void reset(FramePacket pack, CompleteHandler handler,PacketQueue packQ) {
 		this.pack = pack;
 		this.handler = handler;
 		writed = false;
+		responsed = false;
+		writeTime = -1;
 		rewriteTimes = 0;
+		this.packQ = packQ;
 	}
 	
 	public void reset() {
-		this.pack = null;
-		this.handler = null;
+		reset(null,null,null);
+
 	}
 	// FutureImpl<FramePacket> future;
 }

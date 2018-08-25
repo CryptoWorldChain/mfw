@@ -26,16 +26,20 @@ public class PacketWriter implements Runnable {
 	public void run() {
 		try {
 			MDC.put("BCUID", name);
+			long writeTime = System.currentTimeMillis();
 			for (PacketTuple pt : arrays) {
-				conn.write(pt.pack);
-				pt.setWrited(true);
+				if (!pt.isResponsed() || !pt.isWrited()) {
+					pt.setWriteTime(writeTime);
+					conn.write(pt.pack);
+					pt.setWrited(true);
+				}
 			}
 		} catch (Exception e) {
 			if (!conn.isOpen()) {
 				for (PacketTuple pw : arrays) {
 					if (!pw.isWrited()) {
 						pw.rewriteTimes++;
-						if (pw.rewriteTimes < 3) {
+						if (pw.rewriteTimes < 5) {
 							queue.offer(pw.pack, pw.handler);
 						} else {
 							pw.handler.onFailed(e);

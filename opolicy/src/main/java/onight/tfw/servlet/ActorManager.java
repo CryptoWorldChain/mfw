@@ -145,14 +145,16 @@ public class ActorManager {
 								try {
 									s.registerServlet("/", servlet, null, null);
 									s.registerServlet(rootpath, servlet, null, null);
+									s.registerServlet(rootpath + spath, servlet, null, null);
 								} catch (Exception e) {
 								}
 							}
-
-							s.registerServlet(rootpath + spath, servlet, null, null);
-							log.info("register servlet:" + rootpath + spath);
+							else{
+								s.registerServlet(rootpath + spath, servlet, null, null);
+								log.info("register servlet:" + rootpath + spath);
+							}
 						} catch (Exception e) {
-							log.warn("Failed in register servlet:", e);
+							log.warn("Failed in register servlet:"+rootpath+spath, e);
 						}
 					}
 				}

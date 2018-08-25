@@ -1,10 +1,12 @@
 package onight.osgi.otransio.nio;
 
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.glassfish.grizzly.Connection;
 import org.slf4j.MDC;
@@ -24,6 +26,8 @@ public class PacketQueue implements Runnable {
 	LinkedBlockingQueue<PacketTuple> queue = new LinkedBlockingQueue<>();
 	LinkedBlockingQueue<PacketTuple> green_queue = new LinkedBlockingQueue<>();
 	LinkedBlockingQueue<PacketTuple> pio_queue = new LinkedBlockingQueue<>();
+	ConcurrentHashMap<String, PacketTuple> check_Map;
+
 	long lastUpdatedMS = System.currentTimeMillis();
 
 	boolean isStop = false;
@@ -36,9 +40,12 @@ public class PacketQueue implements Runnable {
 	Executor exec;
 	Executor subexec;
 	AtomicBoolean running = new AtomicBoolean(false);
+	AtomicLong packCounter = new AtomicLong(0);
+
+	public static String PACK_RESEND_ID = "_PRID";
 
 	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, int writer_thread_count, Executor exec,
-			Executor subexec, PacketTuplePool packPool, PacketWriterPool writerPool) {
+			Executor subexec, PacketTuplePool packPool, PacketWriterPool writerPool,ConcurrentHashMap<String, PacketTuple> check_Map) {
 		this.ckpool = ckpool;
 		this.max_packet_buffer = max_packet_buffer;
 		this.packPool = packPool;
@@ -46,6 +53,15 @@ public class PacketQueue implements Runnable {
 		this.exec = exec;
 		this.subexec = subexec;
 		this.name = ckpool.getNameid() + "/" + ckpool.getIp() + ":" + ckpool.getPort();
+		this.check_Map = check_Map;
+	}
+
+	public void ensurePacketID(FramePacket fp,PacketTuple pt) {
+		if (fp.getExtProp(PACK_RESEND_ID) == null) {
+			String packid = System.currentTimeMillis() % 100000000 + "" + packCounter.incrementAndGet();
+			fp.putHeader(PACK_RESEND_ID, packid);
+			check_Map.put(PACK_RESEND_ID, pt);
+		}
 	}
 
 	public LinkedBlockingQueue<PacketTuple> getQueue(FramePacket fp) {
@@ -61,7 +77,7 @@ public class PacketQueue implements Runnable {
 	public void offer(FramePacket fp, final CompleteHandler handler) {
 		LinkedBlockingQueue<PacketTuple> queuetooffer = getQueue(fp);
 
-		while (!queuetooffer.offer(packPool.borrowTuple(fp, handler)))
+		while (!queuetooffer.offer(packPool.borrowTuple(fp, handler,this)))
 			;
 		if (running.compareAndSet(false, true)) {
 			exec.execute(this);
@@ -84,9 +100,9 @@ public class PacketQueue implements Runnable {
 
 	@Override
 	public void run() {
-//		log.debug("PacketQueue {}  .... running,", name);
+		// log.debug("PacketQueue {} .... running,", name);
 		Thread.currentThread().setName(name);
-		
+
 		PacketTuple fp = null;
 		Connection<?> conn = null;
 		PacketWriter writer = null;
@@ -111,6 +127,10 @@ public class PacketQueue implements Runnable {
 						do {
 							fp = poll(1);
 							if (fp != null) {
+								FramePacket packet = fp.getPack();
+								if (packet.getFixHead().getPrio() == '9' || packet.getFixHead().getPrio() == '8') {
+									ensurePacketID(packet,fp);
+								}
 								writer.arrays.add(fp);
 							}
 						} while (fp != null && writer.arrays.size() < max_packet_buffer);
@@ -133,7 +153,7 @@ public class PacketQueue implements Runnable {
 				}
 			} while (!isStop && failedGetConnection < ckpool.getCore()
 					&& (queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0));
-			
+
 			if (!isStop && failedGetConnection >= ckpool.getCore()
 					&& (queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0)) {
 				MDC.put("BCUID", name);

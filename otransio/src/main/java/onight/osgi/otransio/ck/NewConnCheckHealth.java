@@ -46,8 +46,10 @@ public class NewConnCheckHealth {
 			conns = new ArrayList<Connection<?>>();
 			connByIP.put(ip, conns);
 		}
-		if (conns.size() > maxConnPreIP) {
+		if (conns.size() >= maxConnPreIP) {
+			log.debug("cannot connect more for ip="+ip+",cursize="+conns.size()+",maxConnPreIP="+maxConnPreIP);
 			conn.close();
+			return;
 		} else {
 			conns.add(conn);
 		}

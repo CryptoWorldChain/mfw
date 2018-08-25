@@ -38,6 +38,7 @@ public class SessionFilter extends BaseFilter {
 	}
 
 	NilCompleteHandler nch = new NilCompleteHandler();
+	public static String GCMD_ECHOS = "ECHO**";
 
 	@Override
 	public NextAction handleRead(final FilterChainContext ctx) throws IOException {
@@ -55,8 +56,27 @@ public class SessionFilter extends BaseFilter {
 			FixHeader header = pack.getFixHead();
 			log.debug("transio session recv " + header.getCmd() + "" + header.getModule() + " bodysize ["
 					+ header.getBodysize() + "]b cost[" + (System.currentTimeMillis() - Long.parseLong(sendtime))
-					+ "]ms sent@=" + sendtime + " resp=" + header.isResp() + ",sync=" + header.isSync()+" local="+
-					ctx.getConnection().getLocalAddress()+" peer="+ctx.getConnection().getPeerAddress());
+					+ "]ms sent@=" + sendtime + " resp=" + header.isResp() + ",sync=" + header.isSync() + " local="
+					+ ctx.getConnection().getLocalAddress() + " peer=" + ctx.getConnection().getPeerAddress());
+		}
+		if (pack.getFixHead().getPrio() == '8' || pack.getFixHead().getPrio() == '9') {
+			String packid = pack.getExtStrProp(PacketQueue.PACK_RESEND_ID);
+			if (packid != null) {
+				if (GCMD_ECHOS.equals(pack.getGlobalCMD())) {
+					PacketTuple pt = oimpl.getMss().getResendMap().remove(packid);
+					if (pt != null) {
+						pt.setResponsed(true);
+					}
+					return ctx.getInvokeAction();
+				} else {
+					FramePacket resp = PacketHelper.buildJsonFromStr("{}", GCMD_ECHOS);
+					resp.getFixHead().setSync(false);
+					resp.getFixHead().setResp(true);
+					resp.getFixHead().setPrio((byte) '9');
+					resp.putHeader(PacketQueue.PACK_RESEND_ID, packid);
+					ctx.write(resp);
+				}
+			}
 		}
 
 		CompleteHandler handler = null;

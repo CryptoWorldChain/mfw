@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.impl.NodeInfo;
+import onight.osgi.otransio.nio.PacketTuple;
 import onight.osgi.otransio.util.PacketTuplePool;
 import onight.osgi.otransio.util.PacketWriterPool;
 import onight.tfw.async.CompleteHandler;
@@ -35,10 +36,12 @@ public class MSessionSets {
 
 	PacketTuplePool packPool;
 	PacketWriterPool writerPool;
+	ConcurrentHashMap<String, PacketTuple> resendMap = new ConcurrentHashMap<>();
 	int max_packet_buffer = 10;
-	ForkJoinPool exec; 
+	ForkJoinPool exec;
 	ForkJoinPool readerexec;
 	ForkJoinPool writerexec;
+
 	public MSessionSets(PropHelper params) {
 		packIDKey = UUIDGenerator.generate() + ".SID";
 		this.params = params;
@@ -48,10 +51,10 @@ public class MSessionSets {
 		writerPool = new PacketWriterPool(params.get("org.zippo.otransio.maxwriterbuffer", 1000));
 		exec = new ForkJoinPool(
 				params.get("org.zippo.otransio.exec.parrel", java.lang.Runtime.getRuntime().availableProcessors()));
-		writerexec = new ForkJoinPool(
-				params.get("org.zippo.otransio.writerexec.parrel", java.lang.Runtime.getRuntime().availableProcessors() * 2));
-		readerexec = new ForkJoinPool(
-				params.get("org.zippo.otransio.readerexec.parrel", java.lang.Runtime.getRuntime().availableProcessors() * 2));
+		writerexec = new ForkJoinPool(params.get("org.zippo.otransio.writerexec.parrel",
+				java.lang.Runtime.getRuntime().availableProcessors() * 2));
+		readerexec = new ForkJoinPool(params.get("org.zippo.otransio.readerexec.parrel",
+				java.lang.Runtime.getRuntime().availableProcessors() * 2));
 	}
 
 	OutgoingSessionManager osm;
@@ -91,18 +94,29 @@ public class MSessionSets {
 		sb.append("\"name\":\"").append(rmb.getNodeInfo().getNodeName()).append("\"");
 		sb.append(",\"addr\":\"").append(rmb.getNodeInfo().getAddr()).append(":").append(rmb.getNodeInfo().getPort())
 				.append("\"");
-		sb.append(",\"modules\":[");
 		int i = 0;
+		sb.append(",\"recv\":").append(recvCounter.get());
+		sb.append(",\"send\":").append(sendCounter.get());
+		sb.append(",\"sent\":").append(sentCounter.get());
+		sb.append(",\"pioresendsize\":").append(resendMap.size());
+		sb.append(",\"packchecksize\":").append(packMaps.size());
+		// sb.append(",\"allS\":").append(allSCounter.get());
+		sb.append(",\"drop\":").append(dropCounter.get());
+		sb.append(",\"dupl\":").append(duplCounter.get());
+		sb.append(",\"modules\":[");
+		i = 0;
 		for (Entry<String, LocalModuleSession> kv : localsessionByModule.entrySet()) {
 			if (kv.getKey().length() > 0) {
-				if (i > 0)
-					sb.append(",");
-				i++;
-				sb.append(kv.getValue().getJsonStr());
+				for (String cmd : kv.getValue().getServiceByCMD().keySet()) {
+					if (i > 0)
+						sb.append(",");
+					i++;
+					sb.append("\"").append(kv.getKey()).append(cmd).append("\"");
+				}
 			}
 		}
-
-		sb.append("],\"sessions\":[");
+		sb.append("]");
+		sb.append(",\"sessions\":[");
 		i = 0;
 		for (Entry<String, PSession> kv : sessionByNodeName.entrySet()) {
 			if (i > 0)
@@ -114,14 +128,8 @@ public class MSessionSets {
 			}
 
 		}
-		sb.append("],\"stats\":{");
-		sb.append("\"recv\":").append(recvCounter.get());
-		sb.append(",\"send\":").append(sendCounter.get());
-		sb.append(",\"sent\":").append(sentCounter.get());
-		// sb.append(",\"allS\":").append(allSCounter.get());
-		sb.append(",\"drop\":").append(dropCounter.get());
-		sb.append(",\"dupl\":").append(duplCounter.get());
-		sb.append("}");
+		sb.append("]");
+		
 		// sb.append(",\"osm\":").append(osm.getJsonInfo());
 		sb.append("}");
 		return sb.toString();

@@ -229,7 +229,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 						@Override
 						public void onClosed(Closeable closeable, ICloseType type) throws IOException {
-							log.debug("CheckHealth remove Connection!:" + closeable);
+							log.debug("CheckHealth onClosed Connection!:" + closeable);
 							if (closeable instanceof Connection) {
 								removeObject((Connection) closeable);
 							}
@@ -248,7 +248,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 						} catch (InterruptedException e) {
 						}
 					}
-					addObject(conn);
+					this.getAllObjs().put(conn, conn);
 					return conn;
 				} else {
 					log.debug("cannot create Connection to " + ip + ":" + port);

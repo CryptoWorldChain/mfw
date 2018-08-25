@@ -1,6 +1,7 @@
 package onight.osgi.otransio.util;
 
 import lombok.AllArgsConstructor;
+import onight.osgi.otransio.nio.PacketQueue;
 import onight.osgi.otransio.nio.PacketTuple;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.beans.FramePacket;
@@ -11,12 +12,12 @@ public class PacketTuplePool extends ReusefulLoopPool<PacketTuple> {
 
 	int maxObjectSize = 1000;
 
-	public PacketTuple borrowTuple(FramePacket fp, final CompleteHandler handler) {
+	public PacketTuple borrowTuple(FramePacket fp,  CompleteHandler handler,PacketQueue packQ) {
 		PacketTuple task = super.borrow();
 		if (task != null) {
-			task.reset(fp, handler);
+			task.reset(fp, handler,packQ);
 		} else {
-			task = new PacketTuple(fp, handler, false,0);
+			task = new PacketTuple(fp, handler, false,0,0,false,packQ);
 		}
 		return task;
 	}
