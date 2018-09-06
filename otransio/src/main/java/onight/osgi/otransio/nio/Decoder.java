@@ -22,6 +22,7 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 	protected final Attribute<FixHeader> headerStore;
 	protected final Attribute<AtomicLong> blankHeaderCount;
 	protected final Attribute<Long> lastCheckHealthMS;
+	protected final Attribute<Byte> firstByte;
 
 	public static final int MAX_BLANK_COUNT = 128;
 
@@ -29,6 +30,7 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 		headerStore = attributeBuilder.createAttribute("Decoder.FixHeader");
 		lastCheckHealthMS = attributeBuilder.createAttribute("Decoder.CheckHealth");
 		blankHeaderCount = attributeBuilder.createAttribute("Decoder.blankcount");
+		firstByte = attributeBuilder.createAttribute("Decoder.firstByte");
 	}
 
 	@Override
@@ -40,7 +42,7 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 		headerStore.remove(storage);
 		lastCheckHealthMS.remove(storage);
 		blankHeaderCount.remove(storage);
-
+		firstByte.remove(storage);
 	}
 
 	@Override
@@ -51,6 +53,10 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 		if (header == null) {
 			byte first = '\n';
 			int blankcount = 0;
+			if (firstByte.get(storage) != null) {
+				first = firstByte.get(storage);
+			}
+
 			while (input.hasRemaining() && (first == '\n' || first == '\r' || first == ' ' || first == '\t')
 					&& blankcount < MAX_BLANK_COUNT) {
 				first = input.get();
@@ -68,10 +74,13 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 					throw new TransformationException("too many blank bytes");
 				}
 			}
-			if (input.remaining() < FixHeader.LENGTH) {
+			if (input.remaining() < FixHeader.LENGTH - 1) {
+				// input.position(input.position() - 1);//reput... for bugs
+				firstByte.set(storage, first);
 				return TransformationResult.createIncompletedResult(input);
 			}
 			ll.set(0);
+			firstByte.remove(storage);
 			byte headerbytes[] = new byte[FixHeader.LENGTH];
 			headerbytes[0] = first;
 			input.get(headerbytes, 1, FixHeader.LENGTH - 1);

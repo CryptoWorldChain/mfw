@@ -145,7 +145,15 @@ public class FixHeader {
 						data[i + 4] = bb[i];
 					} else {
 						data[i + 4] = '*';
-						log.error("module length error:cmd=" + cmd + ",module=" + module);
+						try {
+							throw new MessageException("module length error:cmd=" + cmd + ",module=" + module);
+						} catch (Exception e) {
+							e.printStackTrace();
+							log.error("error:Stack", e);
+							throw new MessageException(e);
+						}
+						
+//						log.error("module length error:cmd=" + cmd + ",module=" + module);
 					}
 				}
 			}
@@ -252,7 +260,7 @@ public class FixHeader {
 			reserved = (byte) (data[15]);
 		} else {
 			log.error("unknow package:" + Hex.encodeHexString(data));
-			throw new MessageException("unknow package:Type:" + data[0]+",fh="+Hex.encodeHexString(data));
+			throw new MessageException("unknow package:Type:" + data[0] + ",fh=" + Hex.encodeHexString(data));
 		}
 		return this;
 	}
