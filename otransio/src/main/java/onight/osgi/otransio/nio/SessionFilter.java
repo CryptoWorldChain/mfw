@@ -28,8 +28,6 @@ import onight.tfw.outils.conf.PropHelper;
 public class SessionFilter extends BaseFilter {
 	Logger log = LoggerFactory.getLogger(SessionFilter.class);
 
-	protected final AttributeBuilder attributeBuilder = Grizzly.DEFAULT_ATTRIBUTE_BUILDER;
-
 	private OSocketImpl oimpl;
 
 	public SessionFilter(OSocketImpl oimpl, PropHelper prop) {

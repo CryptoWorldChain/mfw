@@ -20,6 +20,7 @@ import onight.osgi.otransio.nio.OClient;
 import onight.osgi.otransio.nio.PacketTuple;
 import onight.osgi.otransio.sm.MSessionSets;
 import onight.osgi.otransio.sm.RemoteModuleBean;
+import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
@@ -206,16 +207,35 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					});
 					// final FramePacket pack = mss.getLocalModulesPacket();
 					RemoteModuleBean rmb = new RemoteModuleBean();
-					FramePacket pack = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN, PackHeader.REMOTE_MODULE,
+					FramePacket pack = PacketHelper.genSyncPack(PackHeader.REMOTE_LOGIN, PackHeader.REMOTE_MODULE, rmb);
 
-							rmb);
-					conn.write(pack);
-					addObject(conn);
+					conn.write(pack, new org.glassfish.grizzly.CompletionHandler() {
+
+						@Override
+						public void cancelled() {
+
+						}
+
+						@Override
+						public void failed(Throwable throwable) {
+
+						}
+
+						@Override
+						public void completed(Object result) {
+							addObject(conn);
+						}
+
+						@Override
+						public void updated(Object result) {
+						}
+					});
 					return conn;
 				}
 			} catch (Exception e) {
 				// creating new Connection
-				log.warn("error in create out sub conn:" + ip + ",port=" + port + ",nameid="+nameid+",e=" + e.getMessage());
+				log.warn("error in create out sub conn:" + ip + ",port=" + port + ",nameid=" + nameid + ",e="
+						+ e.getMessage());
 			}
 		}
 		return null;
@@ -254,7 +274,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					log.debug("cannot create Connection to " + ip + ":" + port);
 				}
 			} catch (TimeoutException te) {
-				log.debug("TimeoutConnect:to="+ip+":"+port+",name="+nameid, te);
+				log.debug("TimeoutConnect:to=" + ip + ":" + port + ",name=" + nameid, te);
 				return createOneConnectionBySubNode(maxtries);
 			} catch (ExecutionException ce) {
 				return createOneConnectionBySubNode(maxtries);

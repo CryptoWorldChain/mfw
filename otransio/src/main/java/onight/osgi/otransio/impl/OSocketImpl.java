@@ -42,6 +42,8 @@ import onight.osgi.otransio.sm.RemoteModuleBean;
 import onight.osgi.otransio.sm.RemoteModuleSession;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.ntrans.api.ActorService;
+import onight.tfw.ntrans.api.FilterManager;
+import onight.tfw.ntrans.api.annotation.ActorRequire;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.PSenderService;
 import onight.tfw.otransio.api.PackHeader;
@@ -118,6 +120,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					/**
 					 * 等2秒主要是为了等注册
 					 */
+					log.info("transio startup:");
 					Thread.sleep(2000);
 				} catch (InterruptedException e) {
 				}

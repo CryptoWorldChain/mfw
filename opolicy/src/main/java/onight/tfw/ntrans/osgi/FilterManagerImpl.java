@@ -108,7 +108,8 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 
 	@Override
 	public boolean preRouteListner(ActWrapper actor, FramePacket pack, CompleteHandler handler) {
-		String module = actor.getModule();
+		if(pack==null)return false;
+		String module = pack.getModule();
 		ArrayList<PacketFilter> listeners = filterByModule.get(module);
 		for (PacketFilter pl : globalFilters) {
 			if (!pl.preRoute(actor, pack, handler)) {
@@ -128,7 +129,8 @@ public class FilterManagerImpl implements FilterManager, ActorService {
 
 	@Override
 	public boolean postRouteListner(ActWrapper actor, FramePacket pack, CompleteHandler handler) {
-		String module = actor.getModule();
+		if(pack==null)return false;
+		String module = pack.getModule();
 		ArrayList<PacketFilter> listeners = filterByModule.get(module);
 		for (PacketFilter pl : globalFilters) {
 			pl.postRoute(actor, pack, handler);

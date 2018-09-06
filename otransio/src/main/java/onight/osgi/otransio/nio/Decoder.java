@@ -2,6 +2,7 @@ package onight.osgi.otransio.nio;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.grizzly.AbstractTransformer;
 import org.glassfish.grizzly.Buffer;
@@ -35,6 +36,13 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 		return "";
 	}
 
+	public void clean(AttributeStorage storage) {
+		headerStore.remove(storage);
+		lastCheckHealthMS.remove(storage);
+		blankHeaderCount.remove(storage);
+
+	}
+
 	@Override
 	protected TransformationResult<Buffer, FramePacket> transformImpl(AttributeStorage storage, Buffer input)
 			throws TransformationException {
@@ -56,6 +64,7 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 			if (blankcount > 0) {
 				if (ll.addAndGet(blankcount) >= MAX_BLANK_COUNT) {
 					log.error("too many blank bytes {}", ll.get());
+					clean(storage);
 					throw new TransformationException("too many blank bytes");
 				}
 			}
@@ -68,14 +77,19 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 			input.get(headerbytes, 1, FixHeader.LENGTH - 1);
 			try {
 				header = FixHeader.parseFrom(headerbytes);
+				if (header.getTotalSize() > 1024 * 1024 * 128 || header.getExtsize() < 0 || header.getBodysize() < 0) {
+					log.error("packet Size too large {},storage={}", header.getTotalSize(), storage);
+					throw new TransformationException();
+				}
 			} catch (Exception e) {
-				log.error("parse Head Error:header=" + new String(headerbytes));
+				log.error("parse Head Error:header=" + Hex.encodeHexString(headerbytes) + ",@" + storage);
+				clean(storage);
 				throw e;
 			}
 			headerStore.set(storage, header);
 		}
 
-		log.trace("Decoder.getHeader.step2::remain={},header={}" , input.remaining() , header);
+		log.trace("Decoder.getHeader.step2::remain={},header={}", input.remaining(), header);
 		// readsize
 		if (input.remaining() < header.getTotalSize()) {
 			return TransformationResult.createIncompletedResult(input);
@@ -88,22 +102,22 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 			ext = ExtHeader.buildFrom(extbytes);
 			String sendtime = (String) ext.get(Encoder.LOG_TIME_SENT);
 			if (StringUtils.isNumeric(sendtime)) {
-				log.debug("transio recv {}{},bodysize:{},cost:{} ms,sent={},resp={},sync={},pio={}" ,
-						header.getCmd() , header.getModule() , header.getBodysize()
-						, (System.currentTimeMillis() - Long.parseLong(sendtime)) , sendtime,
-						header.isResp(),header.isSync(),header.getPrio());
+				log.debug("transio recv {}{},bodysize:{},cost:{} ms,sent={},resp={},sync={},pio={}", header.getCmd(),
+						header.getModule(), header.getBodysize(),
+						(System.currentTimeMillis() - Long.parseLong(sendtime)), sendtime, header.isResp(),
+						header.isSync(), header.getPrio());
 			}
 		}
 		byte body[] = new byte[header.getBodysize()];
 		input.get(body);
 		FramePacket pack = new FramePacket(header, ext, body, header.getCmd() + header.getModule());
-		log.trace("Decoder.OKOK::remain={},totalsize={}" , input.remaining() , header.getTotalSize());
+		log.trace("Decoder.OKOK::remain={},totalsize={}", input.remaining(), header.getTotalSize());
 		return TransformationResult.createCompletedResult(pack, input);
 	}
 
 	@Override
 	public void release(AttributeStorage storage) {
-		headerStore.remove(storage);
+		clean(storage);
 		super.release(storage);
 	}
 

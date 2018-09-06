@@ -36,6 +36,12 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 	// '\n' });
 
 	@Override
+	public void release(AttributeStorage storage) {
+		lastCheckHealthMS.remove(storage);
+		super.release(storage);
+	}
+
+	@Override
 	protected TransformationResult<FramePacket, Buffer> transformImpl(AttributeStorage storage, FramePacket input)
 			throws TransformationException {
 		byte[] bodyb = input.genBodyBytes();
@@ -46,6 +52,8 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 		input.getFixHead().setBodysize(bodyb.length);
 
 		Buffer output = obtainMemoryManager(storage).allocate(16 + input.getFixHead().getTotalSize());
+	    output.allowBufferDispose(true);
+
 		output.put(input.getFixHead().genBytes());
 		if (extb.length > 0) {
 			output.put(extb);
@@ -54,7 +62,7 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 			output.put(bodyb);
 		}
 		output.flip();
-		output.allowBufferDispose(true);
+		//output.allowBufferDispose(true);
 		// log.trace("encode:" + input.getFixHead().toStrHead() + ",extsize=" +
 		// extb.length + ",bodysize=" + bodyb.length);
 		log.debug("transio send {}{},bodysize [{}]b,sent@{},resp={},sync={},prio={}", input.getFixHead().getCmd(),
@@ -67,5 +75,6 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 		}
 		lastCheckHealthMS.set(storage.getAttributes(), System.currentTimeMillis());
 		return TransformationResult.createCompletedResult(output, null);
+		
 	}
 }

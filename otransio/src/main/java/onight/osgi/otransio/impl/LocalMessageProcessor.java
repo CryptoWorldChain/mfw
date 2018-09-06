@@ -6,13 +6,17 @@ import java.util.concurrent.TimeUnit;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Futures;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.async.CompleteHandler;
+import onight.tfw.ntrans.api.FilterManager;
+import onight.tfw.ntrans.api.annotation.ActorRequire;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.session.PSession;
 import onight.tfw.outils.pool.ReusefulLoopPool;
 
 @Slf4j
+@Data
 public class LocalMessageProcessor {
 
 	ForkJoinPool exec;
@@ -37,6 +41,13 @@ public class LocalMessageProcessor {
 
 		@Override
 		public void run() {
+//			if (fm != null && pack != null) {
+//				try {
+//					fm.preRouteListner(null, pack, handler);
+//				} catch (Exception e) {
+//					log.error("error in prerouter message:" + pack.getModuleAndCMD());
+//				}
+//			}
 			try {
 				ms.onPacket(pack, handler);
 			} catch (Exception e) {
@@ -45,6 +56,15 @@ public class LocalMessageProcessor {
 				if (future != null) {
 					future.result("F");
 				}
+//				if (fm != null && pack != null) {
+//					try {
+//						fm.postRouteListner(null, pack, handler);
+//					} catch (Exception e) {
+//						log.error("error in prerouter message:" + pack.getModuleAndCMD() + ",erro=" + e.getMessage(),
+//								e);
+//					}
+//				}
+
 				if (runnerPool.size() < poolSize) {
 					this.reset(null, null, null, null);
 					runnerPool.retobj(this);

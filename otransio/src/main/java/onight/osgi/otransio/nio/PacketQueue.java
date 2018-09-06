@@ -83,6 +83,15 @@ public class PacketQueue implements Runnable {
 			exec.execute(this);
 		}
 	}
+	public void offer(PacketTuple pt) {
+		LinkedBlockingQueue<PacketTuple> queuetooffer = getQueue(pt.pack);
+
+		while (!queuetooffer.offer(pt))
+			;
+		if (running.compareAndSet(false, true)) {
+			exec.execute(this);
+		}
+	}
 
 	public PacketTuple poll(long waitms) throws InterruptedException {
 		PacketTuple task = green_queue.poll();

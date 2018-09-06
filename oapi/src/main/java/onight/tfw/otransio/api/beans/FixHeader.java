@@ -2,11 +2,14 @@ package onight.tfw.otransio.api.beans;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.felix.ipojo.util.Log;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import onight.tfw.otransio.api.LengthUtils;
+import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.PackHeader;
 
 /**
@@ -16,6 +19,7 @@ import onight.tfw.otransio.api.PackHeader;
  *
  */
 @Data
+@Slf4j
 public class FixHeader {
 	//
 	// -- 1字节版本号，3字节cmd，3字节moduel模块id;
@@ -121,8 +125,31 @@ public class FixHeader {
 			// 10->13->body长度，4个字节//
 			// 14,->优先级
 			// 15-->保留字段
-			System.arraycopy(cmd.getBytes(), 0, data, 1, 3);
-			System.arraycopy(module.getBytes(), 0, data, 4, 3);
+			{
+				// System.arraycopy(cmd.getBytes(), 0, data, 1, 3);
+				byte bb[] = cmd.getBytes();
+				for (int i = 0; i < 3; i++) {
+					if (i < bb.length) {
+						data[i + 1] = bb[i];
+					} else {
+						data[i + 1] = '*';
+						log.error("cmd length error:cmd=" + cmd + ",module=" + module);
+					}
+				}
+			}
+			{
+				// System.arraycopy(module.getBytes(), 0, data, 4, 3);
+				byte bb[] = module.getBytes();
+				for (int i = 0; i < 3; i++) {
+					if (i < bb.length) {
+						data[i + 4] = bb[i];
+					} else {
+						data[i + 4] = '*';
+						log.error("module length error:cmd=" + cmd + ",module=" + module);
+					}
+				}
+			}
+
 			LengthUtils.int2Byte3(extsize, data, 7);
 			LengthUtils.int2Byte4(bodysize, data, 10);
 			data[14] = (byte) prio;
@@ -181,8 +208,8 @@ public class FixHeader {
 			flag = 2;
 			extsize = LengthUtils.byte2Int(data[7], data[8], data[9]);
 			bodysize = LengthUtils.byte2Int(data[10], data[11], data[12], data[13]);
-			enctype = 'P';//protobuf
-			prio =  data[14];
+			enctype = 'P';// protobuf
+			prio = data[14];
 			reserved = (byte) (data[15]);
 			if (reserved == '0') {
 				isSync = false;
@@ -198,7 +225,7 @@ public class FixHeader {
 				isSync = true;
 			}
 
-		} else {//
+		} else if (ver == 'v' || ver == 'V') {// 2进制版本{//
 			cmd = new String(data, 1, 3).trim();
 			module = new String(data, 4, 3).trim();
 			if (data[7] <= '9') {
@@ -223,6 +250,9 @@ public class FixHeader {
 			enctype = (char) data[13];
 			prio = (byte) (data[14] - '0');
 			reserved = (byte) (data[15]);
+		} else {
+			log.error("unknow package:" + Hex.encodeHexString(data));
+			throw new MessageException("unknow package:Type:" + data[0]+",fh="+Hex.encodeHexString(data));
 		}
 		return this;
 	}
