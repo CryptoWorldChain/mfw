@@ -41,13 +41,14 @@ public class LocalMessageProcessor {
 
 		@Override
 		public void run() {
-//			if (fm != null && pack != null) {
-//				try {
-//					fm.preRouteListner(null, pack, handler);
-//				} catch (Exception e) {
-//					log.error("error in prerouter message:" + pack.getModuleAndCMD());
-//				}
-//			}
+			// if (fm != null && pack != null) {
+			// try {
+			// fm.preRouteListner(null, pack, handler);
+			// } catch (Exception e) {
+			// log.error("error in prerouter message:" +
+			// pack.getModuleAndCMD());
+			// }
+			// }
 			try {
 				ms.onPacket(pack, handler);
 			} catch (Exception e) {
@@ -56,14 +57,15 @@ public class LocalMessageProcessor {
 				if (future != null) {
 					future.result("F");
 				}
-//				if (fm != null && pack != null) {
-//					try {
-//						fm.postRouteListner(null, pack, handler);
-//					} catch (Exception e) {
-//						log.error("error in prerouter message:" + pack.getModuleAndCMD() + ",erro=" + e.getMessage(),
-//								e);
-//					}
-//				}
+				// if (fm != null && pack != null) {
+				// try {
+				// fm.postRouteListner(null, pack, handler);
+				// } catch (Exception e) {
+				// log.error("error in prerouter message:" +
+				// pack.getModuleAndCMD() + ",erro=" + e.getMessage(),
+				// e);
+				// }
+				// }
 
 				if (runnerPool.size() < poolSize) {
 					this.reset(null, null, null, null);
@@ -84,10 +86,11 @@ public class LocalMessageProcessor {
 		}
 		if (pack.isSync()) {
 			long startTime = System.currentTimeMillis();
-			final FutureImpl<String> future = Futures.createSafeFuture();
+			FutureImpl<String> future = Futures.createSafeFuture();
 			runner.reset(pack, handler, ms, future);
 			if (pack.getFixHead().getPrio() == '8' || pack.getFixHead().getPrio() == '9') {
 				runner.run();
+				runner = null;
 			} else {
 				exec.execute(runner);
 				try {
@@ -96,7 +99,8 @@ public class LocalMessageProcessor {
 					log.error("route Failed:" + e.getMessage() + ",GCMD=" + pack.getFixHead().getCmd()
 							+ pack.getFixHead().getModule() + ",realcost=" + (System.currentTimeMillis() - startTime)
 							+ ",queue=" + exec.getQueuedTaskCount() + ",running=" + exec.getRunningThreadCount()
-							+ ",active=" + exec.getActiveThreadCount(), e);
+							+ ",active=" + exec.getActiveThreadCount() + ",poolsize=" + runnerPool.size()
+							+ ",activepoolsize=" + runnerPool.getActiveObjs().size(), e);
 					handler.onFailed(new RuntimeException(e));
 				}
 			}
@@ -105,6 +109,7 @@ public class LocalMessageProcessor {
 			if (pack.getFixHead().getPrio() == '9') {
 				// green
 				runner.run();
+				runner = null;
 			} else {
 				exec.execute(runner);
 			}

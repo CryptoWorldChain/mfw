@@ -275,9 +275,10 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 			} catch (TimeoutException te) {
 				log.debug("TimeoutConnect:to=" + ip + ":" + port + ",name=" + nameid, te);
-				return createOneConnectionBySubNode(maxtries);
+//				return createOneConnectionBySubNode(maxtries);
 			} catch (ExecutionException ce) {
-				return createOneConnectionBySubNode(maxtries);
+				log.debug("ExecutionException=" + ip + ":" + port + ",name=" + nameid, ce);
+//				return createOneConnectionBySubNode(maxtries);
 			} catch (Exception e) {
 				// creating new Connection
 				log.warn("error in create out conn:" + ip + ",port=" + port, e);
