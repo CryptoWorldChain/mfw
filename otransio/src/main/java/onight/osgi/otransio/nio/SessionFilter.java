@@ -74,6 +74,14 @@ public class SessionFilter extends BaseFilter {
 					resp.putHeader(PacketQueue.PACK_RESEND_ID, packid);
 					ctx.write(resp);
 				}
+				if (oimpl.getMss().getDuplicateCheckMap().containsKey(packid)) {
+					log.debug("duplicate message:{}", packid);
+					return ctx.getInvokeAction();
+				} else {
+					if (oimpl.getMss().getDuplicateCheckMap().size() < oimpl.getMss().getResendBufferSize()) {
+						oimpl.getMss().getDuplicateCheckMap().put(packid, System.currentTimeMillis());
+					}
+				}
 			}
 		}
 

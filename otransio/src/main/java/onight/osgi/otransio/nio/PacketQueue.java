@@ -41,11 +41,13 @@ public class PacketQueue implements Runnable {
 	Executor subexec;
 	AtomicBoolean running = new AtomicBoolean(false);
 	AtomicLong packCounter = new AtomicLong(0);
+	int maxResendBufferSize = 100000;
 
 	public static String PACK_RESEND_ID = "_PRID";
 
 	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, int writer_thread_count, Executor exec,
-			Executor subexec, PacketTuplePool packPool, PacketWriterPool writerPool,ConcurrentHashMap<String, PacketTuple> check_Map) {
+			Executor subexec, PacketTuplePool packPool, PacketWriterPool writerPool,
+			ConcurrentHashMap<String, PacketTuple> check_Map, int maxResendBufferSize) {
 		this.ckpool = ckpool;
 		this.max_packet_buffer = max_packet_buffer;
 		this.packPool = packPool;
@@ -54,13 +56,16 @@ public class PacketQueue implements Runnable {
 		this.subexec = subexec;
 		this.name = ckpool.getNameid() + "/" + ckpool.getIp() + ":" + ckpool.getPort();
 		this.check_Map = check_Map;
+		this.maxResendBufferSize = maxResendBufferSize;
 	}
 
-	public void ensurePacketID(FramePacket fp,PacketTuple pt) {
+	public void ensurePacketID(FramePacket fp, PacketTuple pt) {
 		if (fp.getExtProp(PACK_RESEND_ID) == null) {
 			String packid = System.currentTimeMillis() % 100000000 + "" + packCounter.incrementAndGet();
 			fp.putHeader(PACK_RESEND_ID, packid);
-			check_Map.put(PACK_RESEND_ID, pt);
+			if (check_Map.size() < maxResendBufferSize) {
+				check_Map.put(packid, pt);
+			}
 		}
 	}
 
@@ -77,12 +82,13 @@ public class PacketQueue implements Runnable {
 	public void offer(FramePacket fp, final CompleteHandler handler) {
 		LinkedBlockingQueue<PacketTuple> queuetooffer = getQueue(fp);
 
-		while (!queuetooffer.offer(packPool.borrowTuple(fp, handler,this)))
+		while (!queuetooffer.offer(packPool.borrowTuple(fp, handler, this)))
 			;
 		if (running.compareAndSet(false, true)) {
 			exec.execute(this);
 		}
 	}
+
 	public void offer(PacketTuple pt) {
 		LinkedBlockingQueue<PacketTuple> queuetooffer = getQueue(pt.pack);
 
@@ -138,7 +144,7 @@ public class PacketQueue implements Runnable {
 							if (fp != null) {
 								FramePacket packet = fp.getPack();
 								if (packet.getFixHead().getPrio() == '9' || packet.getFixHead().getPrio() == '8') {
-									ensurePacketID(packet,fp);
+									ensurePacketID(packet, fp);
 								}
 								writer.arrays.add(fp);
 							}

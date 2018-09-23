@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.lang3.StringUtils;
 
 import lombok.Data;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.impl.NodeInfo;
@@ -37,14 +38,26 @@ public class MSessionSets {
 	PacketTuplePool packPool;
 	PacketWriterPool writerPool;
 	ConcurrentHashMap<String, PacketTuple> resendMap = new ConcurrentHashMap<>();
+	ConcurrentHashMap<String, Long> duplicateCheckMap = new ConcurrentHashMap<>();
 	int max_packet_buffer = 10;
 	ForkJoinPool exec;
 	ForkJoinPool readerexec;
 	ForkJoinPool writerexec;
+	
+	int resendBufferSize = 100000;
+	int resendTimeOutMS = 60000;
+	int resendTimeMS = 3000;
+	int resendTryTimes = 5;
+	AtomicLong resendTimes = new AtomicLong(0); 
 
 	public MSessionSets(PropHelper params) {
 		packIDKey = UUIDGenerator.generate() + ".SID";
 		this.params = params;
+		resendBufferSize = params.get("org.zippo.otransio.resend.buffer.size", 100000);
+		resendTimeOutMS = params.get("org.zippo.otransio.resend.timeoutms",60000);
+		resendTimeOutMS = params.get("org.zippo.otransio.resend.timems",3000);
+		resendTryTimes = params.get("org.zippo.otransio.resend.try.times",5);
+
 		packet_buffer_size = params.get("org.zippo.otransio.maxpacketqueue", 10);
 		write_thread_count = params.get("org.zippo.otransio.write_thread_count", 10);
 		packPool = new PacketTuplePool(params.get("org.zippo.otransio.maxpackbuffer", 10000));
@@ -99,7 +112,9 @@ public class MSessionSets {
 		sb.append(",\"send\":").append(sendCounter.get());
 		sb.append(",\"sent\":").append(sentCounter.get());
 		sb.append(",\"pioresendsize\":").append(resendMap.size());
+		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
 		sb.append(",\"packchecksize\":").append(packMaps.size());
+		sb.append(",\"resendtimes\":").append(resendTimes.get());
 		// sb.append(",\"allS\":").append(allSCounter.get());
 		sb.append(",\"drop\":").append(dropCounter.get());
 		sb.append(",\"dupl\":").append(duplCounter.get());

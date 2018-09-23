@@ -86,7 +86,7 @@ public class RemoteModuleSession extends PSession {
 		this.nodeInfo = nodeInfo;
 		this.connsPool = ckpool;
 		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size, mss.write_thread_count, mss.exec, mss.writerexec,
-				mss.packPool, mss.writerPool,mss.resendMap);
+				mss.packPool, mss.writerPool,mss.resendMap,mss.getResendBufferSize());
 	}
 
 	public RemoteModuleSession addConnection(Connection<?> conn) {

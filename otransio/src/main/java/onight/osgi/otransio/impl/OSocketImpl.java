@@ -77,7 +77,6 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	public static String DROP_CONN = "DROP**";
 
 	BundleContext context;
-
 	public OSocketImpl(BundleContext context) {
 		this.context = context;
 		params = new PropHelper(context);
