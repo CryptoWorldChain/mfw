@@ -76,6 +76,9 @@ public class SyncMapCheckHealth implements Runnable {
 						mss.getResendTimes().incrementAndGet();
 						removed.add(resendid);
 						pt.setWriteTime(-1);
+						if(pt.getRewriteTimes()<=0){
+							mss.getResendPacketTimes().incrementAndGet();
+						}
 						pt.setRewriteTimes(pt.getRewriteTimes() + 1);
 						pt.getPackQ().offer(pt);
 					}
@@ -88,7 +91,7 @@ public class SyncMapCheckHealth implements Runnable {
 			}
 
 		} catch (Exception e) {
-			log.debug("error In PacketMapCheck thread:", e);
+			log.error("error In PacketMapCheck thread:", e);
 		} finally {
 			
 		}

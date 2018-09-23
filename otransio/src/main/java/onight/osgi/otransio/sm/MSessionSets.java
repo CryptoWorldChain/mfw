@@ -49,13 +49,14 @@ public class MSessionSets {
 	int resendTimeMS = 3000;
 	int resendTryTimes = 5;
 	AtomicLong resendTimes = new AtomicLong(0); 
+	AtomicLong resendPacketTimes = new AtomicLong(0); 
 
 	public MSessionSets(PropHelper params) {
 		packIDKey = UUIDGenerator.generate() + ".SID";
 		this.params = params;
 		resendBufferSize = params.get("org.zippo.otransio.resend.buffer.size", 100000);
 		resendTimeOutMS = params.get("org.zippo.otransio.resend.timeoutms",60000);
-		resendTimeOutMS = params.get("org.zippo.otransio.resend.timems",3000);
+		resendTimeMS = params.get("org.zippo.otransio.resend.timems",3000);
 		resendTryTimes = params.get("org.zippo.otransio.resend.try.times",5);
 
 		packet_buffer_size = params.get("org.zippo.otransio.maxpacketqueue", 10);
@@ -115,6 +116,7 @@ public class MSessionSets {
 		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
 		sb.append(",\"packchecksize\":").append(packMaps.size());
 		sb.append(",\"resendtimes\":").append(resendTimes.get());
+		sb.append(",\"resendpacktimes\":").append(resendPacketTimes.get());
 		// sb.append(",\"allS\":").append(allSCounter.get());
 		sb.append(",\"drop\":").append(dropCounter.get());
 		sb.append(",\"dupl\":").append(duplCounter.get());
