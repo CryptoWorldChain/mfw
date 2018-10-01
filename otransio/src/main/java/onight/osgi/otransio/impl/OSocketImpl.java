@@ -1,14 +1,10 @@
 package onight.osgi.otransio.impl;
 
-import java.beans.Transient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -23,11 +19,8 @@ import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.Unbind;
 import org.apache.felix.ipojo.annotations.Validate;
 import org.glassfish.grizzly.Connection;
-import org.glassfish.grizzly.impl.FutureImpl;
-import org.glassfish.grizzly.utils.Futures;
 import org.osgi.framework.BundleContext;
 
-import io.netty.util.internal.StringUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
@@ -44,8 +37,6 @@ import onight.osgi.otransio.sm.RemoteModuleSession;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.mservice.NodeHelper;
 import onight.tfw.ntrans.api.ActorService;
-import onight.tfw.ntrans.api.FilterManager;
-import onight.tfw.ntrans.api.annotation.ActorRequire;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.PSenderService;
 import onight.tfw.otransio.api.PackHeader;
@@ -79,6 +70,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	public static String DROP_CONN = "DROP**";
 
 	BundleContext context;
+
 	public OSocketImpl(BundleContext context) {
 		this.context = context;
 		params = new PropHelper(context);
@@ -238,11 +230,19 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			ms = mss.byNodeName(destTO);
 			if (ms == null) {// not found
 				String uri = pack.getExtStrProp(PACK_URI);
-				log.debug("creating new Connection:" + uri + ":name=" + destTO + ",from=" + from);
 				if (StringUtils.isNotBlank(uri)) {
 					NodeInfo node = NodeInfo.fromURI(uri, destTO);
 					try {
-						ms = osm.createOutgoingSSByURI(node, from);
+						if (StringUtils.equalsIgnoreCase(node.getAddr(), NodeHelper.getCurrNodeListenOutAddr())
+								&& node.getPort() == NodeHelper.getCurrNodeListenOutPort()) {
+							ms = mss.getLocalsessionByModule().get(pack.getModule());
+							log.debug("get Local new Connection:" + uri + ":name=" + destTO + ",from=" + from);
+
+						} else {
+							log.debug("creating new Connection:" + uri + ":name=" + destTO + ",from=" + from);
+
+							ms = osm.createOutgoingSSByURI(node, from);
+						}
 					} catch (Exception e) {
 						log.error("route ERROR:" + e.getMessage(), e);
 						throw new MessageException(e);
@@ -267,12 +267,12 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			if (ms instanceof LocalModuleSession) {
 				localProcessor.route2Local(pack, handler, ms);
 			} else {
-				RemoteModuleSession rms = (RemoteModuleSession)ms;
-				if(StringUtils.equalsIgnoreCase(rms.getNodeInfo().getAddr(), NodeHelper.getCurrNodeListenOutAddr())
-					||rms.getNodeInfo().getPort()==NodeHelper.getCurrNodeListenOutPort()){
+				RemoteModuleSession rms = (RemoteModuleSession) ms;
+				if (StringUtils.equalsIgnoreCase(rms.getNodeInfo().getAddr(), NodeHelper.getCurrNodeListenOutAddr())
+						&& rms.getNodeInfo().getPort() == NodeHelper.getCurrNodeListenOutPort()) {
 					LocalModuleSession lms = mss.getLocalsessionByModule().get(pack.getModule());
 					localProcessor.route2Local(pack, handler, lms);
-				}else{
+				} else {
 					ms.onPacket(pack, handler);
 				}
 			}
