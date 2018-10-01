@@ -45,9 +45,9 @@ public class PacketQueue implements Runnable {
 
 	public static String PACK_RESEND_ID = "_PRID";
 
-	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, int writer_thread_count, Executor exec,
-			Executor subexec, PacketTuplePool packPool, PacketWriterPool writerPool,
-			ConcurrentHashMap<String, PacketTuple> check_Map, int maxResendBufferSize) {
+	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, Executor exec, Executor subexec,
+			PacketTuplePool packPool, PacketWriterPool writerPool, ConcurrentHashMap<String, PacketTuple> check_Map,
+			int maxResendBufferSize) {
 		this.ckpool = ckpool;
 		this.max_packet_buffer = max_packet_buffer;
 		this.packPool = packPool;
@@ -56,6 +56,7 @@ public class PacketQueue implements Runnable {
 		this.subexec = subexec;
 		this.name = ckpool.getNameid() + "/" + ckpool.getIp() + ":" + ckpool.getPort();
 		this.check_Map = check_Map;
+		new Thread(this).start();
 		this.maxResendBufferSize = maxResendBufferSize;
 	}
 
@@ -84,9 +85,9 @@ public class PacketQueue implements Runnable {
 
 		while (!queuetooffer.offer(packPool.borrowTuple(fp, handler, this)))
 			;
-		if (running.compareAndSet(false, true)) {
-			exec.execute(this);
-		}
+		// if (running.compareAndSet(false, true)) {
+		// exec.execute(this);
+		// }
 	}
 
 	public void offer(PacketTuple pt) {
@@ -94,9 +95,9 @@ public class PacketQueue implements Runnable {
 
 		while (!queuetooffer.offer(pt))
 			;
-		if (running.compareAndSet(false, true)) {
-			exec.execute(this);
-		}
+		// if (running.compareAndSet(false, true)) {
+		// exec.execute(this);
+		// }
 	}
 
 	public PacketTuple poll(long waitms) throws InterruptedException {
@@ -125,58 +126,66 @@ public class PacketQueue implements Runnable {
 		if (isStop) {
 			return;
 		}
-		try {
-			do {
-				try {
-					conn = ckpool.ensureConnection();
-					CKConnPool retPut_ckpool = ckpool;
-					if (conn == null && failedGetConnection >= 5) {
-						Iterator<Connection> it = ckpool.iterator();
-						if (it != null && it.hasNext()) {
-							conn = it.next();
-							retPut_ckpool = null;
-						}
-					}
-					if (conn != null) {
-						writer = writerPool.borrowWriter(name, conn, retPut_ckpool, this);
-						do {
-							fp = poll(1);
-							if (fp != null) {
-								FramePacket packet = fp.getPack();
-								if (packet.getFixHead().getPrio() == '9' || packet.getFixHead().getPrio() == '8') {
-									ensurePacketID(packet, fp);
-								}
-								writer.arrays.add(fp);
-							}
-						} while (fp != null && writer.arrays.size() < max_packet_buffer);
-						if (writer.arrays.size() > 0) {
-							subexec.execute(writer);
-							writer = null;
-						}
-					} else {
-						failedGetConnection++;
-						// log.warn("no more connection for " + name +
-						// ",failedcc=" + failedGetConnection);
-					}
-
-				} catch (Throwable t) {
-					failedGetConnection++;
-				} finally {
-					if (writer != null) {
-						writerPool.retobj(writer);
+		while (!isStop) {
+			// do {
+			try {
+				conn = ckpool.ensureConnection();
+				writer = null;
+				CKConnPool retPut_ckpool = ckpool;
+				if (conn == null && failedGetConnection >= 5) {
+					Iterator<Connection> it = ckpool.iterator();
+					if (it != null && it.hasNext()) {
+						conn = it.next();
+						retPut_ckpool = null;
 					}
 				}
-			} while (!isStop && failedGetConnection < ckpool.getCore()
-					&& (queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0));
+				if (conn != null) {
+					writer = writerPool.borrowWriter(name, conn, retPut_ckpool, this);
+					boolean hasGreenpack = false;
+					do {
+						fp = poll(1);
+						if (fp != null) {
+							FramePacket packet = fp.getPack();
+							if (packet.getFixHead().getPrio() == '9' || packet.getFixHead().getPrio() == '8') {
+								ensurePacketID(packet, fp);
+								hasGreenpack = true;
+							}
+							writer.arrays.add(fp);
+						}
+					} while (fp != null && writer.arrays.size() < max_packet_buffer && !hasGreenpack);
+					if (writer.arrays.size() > 0) {
+						subexec.execute(writer);
+						writer = null;
+					}
+				} else {
+					failedGetConnection++;
+					log.warn("no more connection for " + name + ",failedcc=" + failedGetConnection);
+				}
 
-			if (!isStop && failedGetConnection >= ckpool.getCore()
-					&& (queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0)) {
-				MDC.put("BCUID", name);
-				log.warn("no more connection for " + name + ",failedcc=" + failedGetConnection + ",qsize="
-						+ queue.size() + ",green_qsize=" + green_queue.size() + ",pio_qsize=" + pio_queue.size());
+			} catch (Throwable t) {
+				failedGetConnection++;
+				log.warn("error in get connection for " + name + ",failedcc=" + failedGetConnection, t);
+			} finally {
+				if (writer != null) {
+					writerPool.retobj(writer);
+				}
 			}
-		} finally {
-			running.set(false);
+			// } while (!running.compareAndSet(true, false) || (!isStop &&
+			// failedGetConnection < ckpool.getCore()
+			// && (queue.size() > 0 || green_queue.size() > 0 ||
+			// pio_queue.size() > 0)));
+			//
+			// if (!isStop && failedGetConnection >= ckpool.getCore()
+			// && (queue.size() > 0 || green_queue.size() > 0 ||
+			// pio_queue.size() > 0)) {
+			// MDC.put("BCUID", name);
+			// log.warn("no more connection for " + name + ",failedcc=" +
+			// failedGetConnection + ",qsize="
+			// + queue.size() + ",green_qsize=" + green_queue.size() +
+			// ",pio_qsize=" + pio_queue.size());
+			// }
+			// } finally {
+			// running.set(false);
 		}
 	}
 

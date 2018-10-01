@@ -33,7 +33,7 @@ public class MSessionSets {
 	private PropHelper params;
 
 	int packet_buffer_size = 10;
-	int write_thread_count = 10;
+//	int write_thread_count = 10;
 
 	PacketTuplePool packPool;
 	PacketWriterPool writerPool;
@@ -60,7 +60,7 @@ public class MSessionSets {
 		resendTryTimes = params.get("org.zippo.otransio.resend.try.times",5);
 
 		packet_buffer_size = params.get("org.zippo.otransio.maxpacketqueue", 10);
-		write_thread_count = params.get("org.zippo.otransio.write_thread_count", 10);
+//		write_thread_count = params.get("org.zippo.otransio.write_thread_count", 10);
 		packPool = new PacketTuplePool(params.get("org.zippo.otransio.maxpackbuffer", 10000));
 		writerPool = new PacketWriterPool(params.get("org.zippo.otransio.maxwriterbuffer", 1000));
 		exec = new ForkJoinPool(
@@ -120,6 +120,19 @@ public class MSessionSets {
 		// sb.append(",\"allS\":").append(allSCounter.get());
 		sb.append(",\"drop\":").append(dropCounter.get());
 		sb.append(",\"dupl\":").append(duplCounter.get());
+		sb.append(",\"queues\":[");
+		i = 0;
+		for (Entry<String, PSession> kv : sessionByNodeName.entrySet()) {
+			if (i > 0)
+				sb.append(",");
+			if (kv.getValue() instanceof RemoteModuleSession) {
+				sb.append(((RemoteModuleSession) kv.getValue()).getQueueJsonStr());
+				i++;
+			} else {
+			}
+
+		}
+		sb.append("]");
 		sb.append(",\"modules\":[");
 		i = 0;
 		for (Entry<String, LocalModuleSession> kv : localsessionByModule.entrySet()) {

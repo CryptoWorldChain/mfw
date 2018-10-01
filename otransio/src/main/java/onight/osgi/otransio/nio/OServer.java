@@ -30,7 +30,7 @@ public class OServer {
 		// Add TransportFilter, which is responsible
 		// for reading and writing data to the connection
 		filterChainBuilder.add(new TransportFilter());
-		
+
 		// StringFilter is responsible for Buffer <-> String conversion
 		filterChainBuilder.add(new OTransFilter());
 
@@ -38,17 +38,17 @@ public class OServer {
 		// filterChainBuilder.add(new AuthFilter());
 
 		// EchoFilter is responsible for echoing received messages
-		SessionFilter sf=new SessionFilter(listener, params);
+		SessionFilter sf = new SessionFilter(listener, params);
 		filterChainBuilder.add(sf);
 
 		// Create TCP transport
 		transport = TCPNIOTransportBuilder.newInstance().build();
 		transport.setProcessor(filterChainBuilder.build());
-		ThreadPoolConfig ktpc=ThreadPoolConfig.defaultConfig();
+		ThreadPoolConfig ktpc = ThreadPoolConfig.defaultConfig();
 		ktpc.setCorePoolSize(params.get("otrans.kernel.core", 10)).setMaxPoolSize(params.get("otrans.kernel.max", 100));
 		transport.setKernelThreadPoolConfig(ktpc);
 
-		ThreadPoolConfig wtpc=ThreadPoolConfig.defaultConfig();
+		ThreadPoolConfig wtpc = ThreadPoolConfig.defaultConfig();
 		wtpc.setCorePoolSize(params.get("otrans.worker.core", 10)).setMaxPoolSize(params.get("otrans.worker.max", 100));
 		transport.setWorkerThreadPoolConfig(wtpc);
 		transport.setIOStrategy(LeaderFollowerNIOStrategy.getInstance());

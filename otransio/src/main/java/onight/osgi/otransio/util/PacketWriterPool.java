@@ -16,7 +16,7 @@ public class PacketWriterPool extends ReusefulLoopPool<PacketWriter> {
 
 	int maxObjectSize = 1000;
 
-	public PacketWriter borrowWriter(String name, Connection<?> conn,CKConnPool ckpool,PacketQueue queue) {
+	public PacketWriter borrowWriter(String name, Connection<?> conn, CKConnPool ckpool, PacketQueue queue) {
 		PacketWriter writer = super.borrow();
 		if (writer != null) {
 			writer.setName(name);
@@ -24,15 +24,18 @@ public class PacketWriterPool extends ReusefulLoopPool<PacketWriter> {
 			writer.setCkpool(ckpool);
 			writer.setQueue(queue);
 		} else {
-			writer = new PacketWriter(name, conn, new ArrayList<PacketTuple>(10),this,ckpool,queue);
+			writer = new PacketWriter(name, conn, new ArrayList<PacketTuple>(10), this, ckpool, queue);
 		}
 		return writer;
 	}
 
 	@Override
 	public void retobj(PacketWriter t) {
-		if (super.size() < maxObjectSize) {
-			super.retobj(t);
+		if (t != null) {
+			t.release();
+			if (super.size() < maxObjectSize) {
+				super.retobj(t);
+			}
 		}
 	}
 

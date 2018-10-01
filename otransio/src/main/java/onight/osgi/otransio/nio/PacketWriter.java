@@ -55,11 +55,14 @@ public class PacketWriter implements Runnable {
 				}
 			}
 		} finally {
-			arrays.clear();
-			if (ckpool != null) {
-				ckpool.retobj(conn);
-			}
 			writerPool.retobj(this);
+		}
+	}
+
+	public void release() {
+		arrays.clear();
+		if (ckpool != null) {
+			ckpool.retobj(conn);
 		}
 	}
 }

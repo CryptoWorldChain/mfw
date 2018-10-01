@@ -89,7 +89,13 @@ public class LocalMessageProcessor {
 			FutureImpl<String> future = Futures.createSafeFuture();
 			runner.reset(pack, handler, ms, future);
 			if (pack.getFixHead().getPrio() == '8' || pack.getFixHead().getPrio() == '9') {
+				long start = System.currentTimeMillis();
 				runner.run();
+				log.debug("sync pio run success: ,GCMD=" + pack.getFixHead().getCmd()
+						+ pack.getFixHead().getModule() + ",realcost=" + (System.currentTimeMillis() - start)
+						+ ",queue=" + exec.getQueuedTaskCount() + ",running=" + exec.getRunningThreadCount()
+						+ ",active=" + exec.getActiveThreadCount() + ",poolsize=" + runnerPool.size()
+						+ ",activepoolsize=" + runnerPool.getActiveObjs().size());
 				runner = null;
 			} else {
 				exec.execute(runner);

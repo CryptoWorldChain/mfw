@@ -52,20 +52,18 @@ public class RemoteModuleSession extends PSession {
 	private String genPackID() {
 		return rand + "_" + System.currentTimeMillis() + "_" + counter.incrementAndGet();
 	}
-
 	public String getJsonStr() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{\"remoteid\":\"").append(nodeInfo.getNodeName()).append("\"");
 		sb.append(",\"alias\":\"").append(connsPool.getSubnodeURI()).append("\"");
-		sb.append(",\"channels\":").append(connsPool.size()).append("");
+		sb.append(",\"channels\":").append(connsPool.size());
 //		sb.append(",\"recvcc\":").append(recvCounter.get()).append("");
 //		sb.append(",\"sentcc\":").append(sendCounter.get()).append("");
 //		sb.append(",\"sendcc\":").append(sentCounter.get()).append("");
 //		sb.append(",\"dropcc\":").append(dropCounter.get()).append("");
-		sb.append(",\"core\":").append(nodeInfo.getCore()).append("");
-		sb.append(",\"max\":").append(nodeInfo.getMax()).append("");
+		sb.append(",\"core\":").append(nodeInfo.getCore());
+		sb.append(",\"max\":").append(nodeInfo.getMax());
 		sb.append(",\"uri\":\"").append(nodeInfo.getAddr() + ":" + nodeInfo.getPort()).append("\"");
-
 		sb.append(",\"chdetails\":[");
 		Iterator<Connection> it = connsPool.iterator();
 		while (it.hasNext()) {
@@ -80,12 +78,24 @@ public class RemoteModuleSession extends PSession {
 		sb.append("}");
 		return sb.toString();
 	}
+	public String getQueueJsonStr() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("{\"remoteid\":\"").append(nodeInfo.getNodeName()).append("\"");
+		sb.append(",\"alias\":\"").append(connsPool.getSubnodeURI()).append("\"");
+		sb.append(",\"channels\":").append(connsPool.size());
+		sb.append(",\"queue\":[").append(writerQ.getGreen_queue().size()).append(",")
+		.append(writerQ.getPio_queue().size()).append(",")
+		.append(writerQ.getQueue().size()).append("]");
+		sb.append("}");
+		return sb.toString();
+	}
+
 
 	public RemoteModuleSession(NodeInfo nodeInfo, MSessionSets mss, CKConnPool ckpool) {
 		this.mss = mss;
 		this.nodeInfo = nodeInfo;
 		this.connsPool = ckpool;
-		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size, mss.write_thread_count, mss.exec, mss.writerexec,
+		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size, mss.exec, mss.writerexec,
 				mss.packPool, mss.writerPool,mss.resendMap,mss.getResendBufferSize());
 	}
 
@@ -122,7 +132,10 @@ public class RemoteModuleSession extends PSession {
 			// 发送到远程
 			packid = genPackID();
 			pack.putHeader(mss.packIDKey, packid);
-			pack.getExtHead().remove(OSocketImpl.PACK_TO);
+			Object to_pack=pack.getExtHead().remove(OSocketImpl.PACK_TO);
+			if(to_pack!=null){
+				pack.getExtHead().append(OSocketImpl.PACK_TO+"_D", to_pack);
+			}
 			mss.packMaps.put(packid, handler);
 			log.debug("sendSyncPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
 		} else {

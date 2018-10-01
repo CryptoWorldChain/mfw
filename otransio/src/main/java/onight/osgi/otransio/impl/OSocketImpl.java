@@ -27,6 +27,7 @@ import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Futures;
 import org.osgi.framework.BundleContext;
 
+import io.netty.util.internal.StringUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
@@ -41,6 +42,7 @@ import onight.osgi.otransio.sm.OutgoingSessionManager;
 import onight.osgi.otransio.sm.RemoteModuleBean;
 import onight.osgi.otransio.sm.RemoteModuleSession;
 import onight.tfw.async.CompleteHandler;
+import onight.tfw.mservice.NodeHelper;
 import onight.tfw.ntrans.api.ActorService;
 import onight.tfw.ntrans.api.FilterManager;
 import onight.tfw.ntrans.api.annotation.ActorRequire;
@@ -265,7 +267,14 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			if (ms instanceof LocalModuleSession) {
 				localProcessor.route2Local(pack, handler, ms);
 			} else {
-				ms.onPacket(pack, handler);
+				RemoteModuleSession rms = (RemoteModuleSession)ms;
+				if(StringUtils.equalsIgnoreCase(rms.getNodeInfo().getAddr(), NodeHelper.getCurrNodeListenOutAddr())
+					||rms.getNodeInfo().getPort()==NodeHelper.getCurrNodeListenOutPort()){
+					LocalModuleSession lms = mss.getLocalsessionByModule().get(pack.getModule());
+					localProcessor.route2Local(pack, handler, lms);
+				}else{
+					ms.onPacket(pack, handler);
+				}
 			}
 		} else {
 			// 没有找到对应的消息
