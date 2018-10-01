@@ -37,7 +37,7 @@ public class PacketQueue implements Runnable {
 	PacketTuplePool packPool;
 	PacketWriterPool writerPool;
 	int max_packet_buffer = 10;
-	Executor exec;
+//	Executor exec;
 	Executor subexec;
 	AtomicBoolean running = new AtomicBoolean(false);
 	AtomicLong packCounter = new AtomicLong(0);
@@ -45,14 +45,14 @@ public class PacketQueue implements Runnable {
 
 	public static String PACK_RESEND_ID = "_PRID";
 
-	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, Executor exec, Executor subexec,
+	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, Executor subexec,
 			PacketTuplePool packPool, PacketWriterPool writerPool, ConcurrentHashMap<String, PacketTuple> check_Map,
 			int maxResendBufferSize) {
 		this.ckpool = ckpool;
 		this.max_packet_buffer = max_packet_buffer;
 		this.packPool = packPool;
 		this.writerPool = writerPool;
-		this.exec = exec;
+//		this.exec = exec;
 		this.subexec = subexec;
 		this.name = ckpool.getNameid() + "/" + ckpool.getIp() + ":" + ckpool.getPort();
 		this.check_Map = check_Map;
@@ -189,10 +189,10 @@ public class PacketQueue implements Runnable {
 		}
 	}
 
-	public void resendBacklogs() {
-		if ((queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0)
-				&& running.compareAndSet(false, true)) {
-			exec.execute(this);
-		}
-	}
+//	public void resendBacklogs() {
+////		if ((queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0)
+////				&& running.compareAndSet(false, true)) {
+////			subexec.execute(this);
+////		}
+//	}
 }

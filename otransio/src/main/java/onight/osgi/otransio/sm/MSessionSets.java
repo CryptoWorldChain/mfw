@@ -64,7 +64,7 @@ public class MSessionSets {
 		packPool = new PacketTuplePool(params.get("org.zippo.otransio.maxpackbuffer", 10000));
 		writerPool = new PacketWriterPool(params.get("org.zippo.otransio.maxwriterbuffer", 1000));
 		exec = new ForkJoinPool(
-				params.get("org.zippo.otransio.exec.parrel", java.lang.Runtime.getRuntime().availableProcessors()));
+				params.get("org.zippo.otransio.exec.parrel", java.lang.Runtime.getRuntime().availableProcessors()*2));
 		writerexec = new ForkJoinPool(params.get("org.zippo.otransio.writerexec.parrel",
 				java.lang.Runtime.getRuntime().availableProcessors() * 2));
 		readerexec = new ForkJoinPool(params.get("org.zippo.otransio.readerexec.parrel",
@@ -115,8 +115,6 @@ public class MSessionSets {
 		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount()+"/"+exec.getPoolSize());
 		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount()+"/"+readerexec.getPoolSize());
 		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount()+"/"+writerexec.getPoolSize());
-		sb.append(",\"sent\":").append(exec.getActiveThreadCount());
-		sb.append(",\"sent\":").append(exec.getActiveThreadCount());
 		sb.append(",\"pioresendsize\":").append(resendMap.size());
 		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
 		sb.append(",\"packchecksize\":").append(packMaps.size());

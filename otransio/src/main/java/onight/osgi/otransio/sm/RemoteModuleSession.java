@@ -97,7 +97,7 @@ public class RemoteModuleSession extends PSession {
 		this.mss = mss;
 		this.nodeInfo = nodeInfo;
 		this.connsPool = ckpool;
-		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size, mss.exec, mss.writerexec,
+		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size, mss.writerexec,
 				mss.packPool, mss.writerPool,mss.resendMap,mss.getResendBufferSize());
 	}
 
