@@ -112,6 +112,11 @@ public class MSessionSets {
 		sb.append(",\"recv\":").append(recvCounter.get());
 		sb.append(",\"send\":").append(sendCounter.get());
 		sb.append(",\"sent\":").append(sentCounter.get());
+		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount()+"/"+exec.getPoolSize());
+		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount()+"/"+readerexec.getPoolSize());
+		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount()+"/"+writerexec.getPoolSize());
+		sb.append(",\"sent\":").append(exec.getActiveThreadCount());
+		sb.append(",\"sent\":").append(exec.getActiveThreadCount());
 		sb.append(",\"pioresendsize\":").append(resendMap.size());
 		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
 		sb.append(",\"packchecksize\":").append(packMaps.size());
