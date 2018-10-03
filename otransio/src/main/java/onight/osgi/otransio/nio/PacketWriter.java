@@ -47,7 +47,7 @@ public class PacketWriter implements Runnable {
 					}
 				}
 			} else {
-				log.debug("getSend Actor Error:" + e.getMessage() + ",arrays.size=" + arrays.size(), e);
+				log.error("getSend Actor Error:" + e.getMessage() + ",arrays.size=" + arrays.size(), e);
 				for (PacketTuple pw : arrays) {
 					if (!pw.isWrited()) {
 						pw.handler.onFailed(e);

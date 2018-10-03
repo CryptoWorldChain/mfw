@@ -88,9 +88,9 @@ public class PacketQueue implements Runnable {
 			;
 		if (polling.get()) {
 			if (queuetooffer == green_queue) {
-				tryDirectSendPacket(green_queue, greenPool);
+				tryDirectSendPacket(green_queue, greenPool,"green");
 			} else if (queuetooffer == pio_queue) {
-				tryDirectSendPacket(pio_queue, pioPool);
+				tryDirectSendPacket(pio_queue, pioPool,"pio");
 			}
 		}
 	}
@@ -102,9 +102,9 @@ public class PacketQueue implements Runnable {
 			;
 		if (polling.get()) {
 			if (queuetooffer == green_queue) {
-				tryDirectSendPacket(green_queue, greenPool);
+				tryDirectSendPacket(green_queue, greenPool,"green");
 			} else if (queuetooffer == pio_queue) {
-				tryDirectSendPacket(pio_queue, pioPool);
+				tryDirectSendPacket(pio_queue, pioPool,"pio");
 			}
 		}
 	}
@@ -169,7 +169,7 @@ public class PacketQueue implements Runnable {
 					do {
 						if (firstpoll) {
 							polling.set(true);
-							fp = poll(10000);
+							fp = poll(1000);
 							polling.set(false);
 							firstpoll = false;
 						} else {
@@ -184,14 +184,26 @@ public class PacketQueue implements Runnable {
 							writer.arrays.add(fp);
 						}
 					} while (fp != null && writer.arrays.size() < max_packet_buffer && !hasGreenpack);
-					polling.set(false);
 					if (writer.arrays.size() > 0) {
 						subexec.execute(writer);
 						writer = null;
+					} else {
+						while (greenPool.size() < ckpool.getCore() / 4) {
+							conn = ckpool.ensureConnection();
+							if (conn != null) {
+								greenPool.addObject(conn);
+							}
+						}
+						while (pioPool.size() < ckpool.getCore() / 4) {
+							conn = ckpool.ensureConnection();
+							if (conn != null) {
+								pioPool.addObject(conn);
+							}
+						}
 					}
 				} else {
-					tryDirectSendPacket(green_queue, greenPool);
-					tryDirectSendPacket(pio_queue, pioPool);
+					tryDirectSendPacket(green_queue, greenPool,"green");
+					tryDirectSendPacket(pio_queue, pioPool,"pio");
 					failedGetConnection++;
 					log.error("no more connection for " + name + ",failedcc=" + failedGetConnection);
 				}
@@ -207,8 +219,9 @@ public class PacketQueue implements Runnable {
 		}
 	}
 
-	public void tryDirectSendPacket(LinkedBlockingQueue<PacketTuple> queue, ReusefulLoopPool<Connection> pool) {
+	public void tryDirectSendPacket(LinkedBlockingQueue<PacketTuple> queue, ReusefulLoopPool<Connection> pool,String name) {
 		try {
+			log.error("tryDirectSendPacket:"+queue.size()+",pool="+pool.size()+",queuename="+name);
 			PacketTuple fp = queue.poll();
 			if (fp != null) {
 				Connection conn = pool.borrow();
