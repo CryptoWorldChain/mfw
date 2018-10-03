@@ -63,7 +63,7 @@ public class CheckHealth {
 			public void run() {
 				try {
 					if (!conn.isOpen()) {
-						log.debug("connetion is not open:"+conn.getLocalAddress()+",peer="+conn.getPeerAddress());
+						log.error("connetion is not open:"+conn.getLocalAddress()+",peer="+conn.getPeerAddress());
 						conn.close();
 						exec.remove(this);
 					} else {
@@ -78,7 +78,7 @@ public class CheckHealth {
 					}
 
 				} catch (Exception e) {
-					log.debug("error In HB thread:", e);
+					log.error("error In HB thread:", e);
 				}
 			}
 		}, 30, delay, TimeUnit.SECONDS);
@@ -115,7 +115,7 @@ public class CheckHealth {
 					// exec.remove(this);
 				} else {
 					log.debug("check health:" + pool.ip + ",port=" + pool.port + ",name=" + pool.getNameid());
-					for (int i = pool.size(); i < pool.getCore() / 2 && !pool.isStop(); i++) {
+					for (int i = pool.size(); i < pool.getCore() && !pool.isStop(); i++) {
 						Connection conn = pool.createOneConnection(0);
 						// if (conn != null) {
 						// log.debug("add more conn core size." +

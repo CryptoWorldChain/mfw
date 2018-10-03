@@ -157,13 +157,6 @@ public class PacketQueue implements Runnable {
 				conn = ckpool.ensureConnection();
 				writer = null;
 				CKConnPool retPut_ckpool = ckpool;
-				if (conn == null && failedGetConnection >= 5) {
-					Iterator<Connection> it = ckpool.iterator();
-					if (it != null && it.hasNext()) {
-						conn = it.next();
-						retPut_ckpool = null;
-					}
-				}
 				if (conn != null) {
 					writer = writerPool.borrowWriter(name, conn, retPut_ckpool, this);
 					boolean hasGreenpack = false;
@@ -207,7 +200,9 @@ public class PacketQueue implements Runnable {
 					tryDirectSendPacket(green_queue, greenPool, "green");
 					tryDirectSendPacket(pio_queue, pioPool, "pio");
 					failedGetConnection++;
-					log.error("no more connection for " + name + ",failedcc=" + failedGetConnection);
+					log.error("TT1-no more connection for " + name + ",failedcc=" + failedGetConnection + ",pool="
+							+ ckpool.getActiveObjs().size() + "/" + ckpool.size() + ",queuesize=[" + green_queue.size()
+							+ "," + pio_queue.size() + "," + queue.size() + "]");
 				}
 
 			} catch (Throwable t) {
@@ -226,8 +221,8 @@ public class PacketQueue implements Runnable {
 		PacketWriter writer = null;
 		try {
 			Thread.currentThread().setName("tryDirectSendPacket--" + queuename);
-			log.error("TTT-tryDirectSendPacket:pool=" + pool.getActiveObjs().size() + "/"
-					+ pool.size() + ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name);
+			log.error("TTT-tryDirectSendPacket:pool=" + pool.getActiveObjs().size() + "/" + pool.size() + ",queuesize="
+					+ queue.size() + ",queuename=" + queuename + ",@" + name);
 			long start = System.currentTimeMillis();
 			PacketTuple fp = queue.poll();
 			if (fp != null) {
@@ -236,12 +231,12 @@ public class PacketQueue implements Runnable {
 					if (conn != null) {
 						log.error("TTT-remove not open connection:pool=" + pool.getActiveObjs().size() + "/"
 								+ pool.size() + ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name
-							+",conn="+conn);
+								+ ",conn=" + conn);
 
 						ckpool.removeObject(conn);
 					}
-					log.error("TTT-Create on more connection:pool=" + pool.getActiveObjs().size() + "/"
-					+ pool.size() + ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name);
+					log.error("TTT-Create one more connection:pool=" + pool.getActiveObjs().size() + "/" + pool.size()
+							+ ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name);
 					conn = ckpool.ensureConnection();// try to create new one
 				}
 				if (conn != null && conn.isOpen()) {
@@ -257,7 +252,7 @@ public class PacketQueue implements Runnable {
 					if (conn != null) {
 						log.error("TTT-remove not open connection:pool=" + pool.getActiveObjs().size() + "/"
 								+ pool.size() + ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name
-							+",conn="+conn);
+								+ ",conn=" + conn);
 
 						ckpool.removeObject(conn);
 					}

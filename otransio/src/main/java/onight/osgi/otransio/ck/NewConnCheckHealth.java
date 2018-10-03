@@ -47,7 +47,7 @@ public class NewConnCheckHealth {
 			connByIP.put(ip, conns);
 		}
 		if (conns.size() >= maxConnPreIP) {
-			log.debug("cannot connect more for ip="+ip+",cursize="+conns.size()+",maxConnPreIP="+maxConnPreIP);
+			log.error("cannot connect more for ip="+ip+",cursize="+conns.size()+",maxConnPreIP="+maxConnPreIP);
 			conn.close();
 			return;
 		} else {
@@ -87,7 +87,7 @@ public class NewConnCheckHealth {
 				if (conn != null && conn.isOpen()) {
 					// exec.remove(this);
 					if (conn.getAttributes().getAttribute(CONN_AUTH_INFO) == null) {
-						log.debug("drop connection because no auth");
+						log.error("drop connection because no auth");
 						conn.close();
 					}
 				}

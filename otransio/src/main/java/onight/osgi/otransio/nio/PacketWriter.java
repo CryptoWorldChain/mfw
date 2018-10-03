@@ -27,7 +27,7 @@ public class PacketWriter implements Runnable {
 		try {
 			MDC.put("BCUID", name);
 			long writeTime = System.currentTimeMillis();
-			if(!conn.isOpen()){
+			if (!conn.isOpen()) {
 				for (PacketTuple pw : arrays) {
 					queue.offer(pw.pack, pw.handler);
 				}
@@ -40,7 +40,7 @@ public class PacketWriter implements Runnable {
 				}
 			}
 		} catch (Exception e) {
-			log.error("error in writing packet:",e);
+			log.error("error in writing packet:", e);
 			if (!conn.isOpen()) {
 				for (PacketTuple pw : arrays) {
 					if (!pw.isWrited()) {
@@ -67,7 +67,7 @@ public class PacketWriter implements Runnable {
 
 	public void release() {
 		arrays.clear();
-		if (ckpool != null) {
+		if (ckpool != null && conn != null && conn.isOpen()) {
 			ckpool.retobj(conn);
 		}
 	}

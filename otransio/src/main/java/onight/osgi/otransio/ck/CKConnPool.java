@@ -93,17 +93,15 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	}
 
 	public Connection<?> ensureConnection() throws MessageException {
-		Connection<?> conn = borrow();
-		if (conn != null) {
+		Connection<?> conn = null;
+		while ((conn = borrow()) != null) {
 			if (conn.isOpen()) {
 				return conn;
 			} else {
 				removeObject(conn);
-				conn = null;
 			}
 		}
 		conn = createOneConnection(1, 100);
-
 		return conn;
 	}
 
@@ -191,10 +189,10 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				}
 			} catch (TimeoutException te) {
 				log.debug("TimeoutConnect:to=" + ip + ":" + port + ",name=" + nameid, te);
-//				return createOneConnectionBySubNode(maxtries);
+				// return createOneConnectionBySubNode(maxtries);
 			} catch (ExecutionException ce) {
 				log.debug("ExecutionException=" + ip + ":" + port + ",name=" + nameid, ce);
-//				return createOneConnectionBySubNode(maxtries);
+				// return createOneConnectionBySubNode(maxtries);
 			} catch (Exception e) {
 				// creating new Connection
 				log.warn("error in create out conn:" + ip + ",port=" + port, e);
