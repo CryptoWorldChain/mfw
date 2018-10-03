@@ -63,11 +63,15 @@ public class CheckHealth {
 			public void run() {
 				try {
 					if (!conn.isOpen()) {
-						log.error("connetion is not open:" + conn.getLocalAddress() + ",peer=" + conn.getPeerAddress());
+						log.error("connetion is not open:" + conn.getLocalAddress() + ",peer=" + conn.getPeerAddress()
+						+",reason="+conn.getCloseReason());
 						conn.close();
+						lastCheckHealthMS.remove(conn);
 						exec.remove(this);
 					} else {
-						if (lastCheckHealthMS.get(conn.getAttributes()) - System.currentTimeMillis() > delay * 1000) {
+						if (!lastCheckHealthMS.isSet(conn.getAttributes())
+								|| lastCheckHealthMS.get(conn.getAttributes()) - System.currentTimeMillis() > delay
+										* 1000) {
 							// conn.write(hbpack);
 							lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
 							// log.trace("!!CheckHealth TO:" +
@@ -117,7 +121,7 @@ public class CheckHealth {
 					log.debug("check health:" + pool.ip + ",port=" + pool.port + ",name=" + pool.getNameid());
 					for (int i = pool.size(); i < pool.getCore() && !pool.isStop(); i++) {
 						Connection conn = pool.createOneConnection(0);
-						if (conn != null&&conn.isOpen()) {
+						if (conn != null && conn.isOpen()) {
 							pool.retobj(conn);
 							addCheckHealth(conn);
 						}

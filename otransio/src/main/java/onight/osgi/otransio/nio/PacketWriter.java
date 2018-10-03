@@ -67,8 +67,12 @@ public class PacketWriter implements Runnable {
 
 	public void release() {
 		arrays.clear();
-		if (ckpool != null && conn != null && conn.isOpen()) {
-			ckpool.retobj(conn);
+		if (ckpool != null && conn != null) {
+			if (conn.isOpen()) {
+				ckpool.retobj(conn);
+			} else {
+				ckpool.removeObject(conn);
+			}
 		}
 	}
 }

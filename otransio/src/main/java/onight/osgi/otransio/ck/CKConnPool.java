@@ -2,6 +2,7 @@ package onight.osgi.otransio.ck;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -17,10 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.impl.NodeInfo;
 import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.nio.OClient;
-import onight.osgi.otransio.nio.PacketTuple;
 import onight.osgi.otransio.sm.MSessionSets;
 import onight.osgi.otransio.sm.RemoteModuleBean;
-import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
@@ -113,7 +112,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 						@Override
 						public void onClosed(Closeable closeable, ICloseType type) throws IOException {
-							log.debug("CheckHealth remove Connection!:" + closeable);
+							log.error(" Connection is OnClose Connection!:" + closeable);
 							if (closeable instanceof Connection) {
 								removeObject((Connection) closeable);
 							}
@@ -185,20 +184,43 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 					this.getAllObjs().put(conn, conn);
 					return conn;
 				} else {
-					log.debug("cannot create Connection to " + ip + ":" + port);
+					log.error("cannot create Connection to " + ip + ":" + port);
 				}
 			} catch (TimeoutException te) {
-				log.debug("TimeoutConnect:to=" + ip + ":" + port + ",name=" + nameid, te);
+				log.error("TimeoutConnect:to=" + ip + ":" + port + ",name=" + nameid, te);
 				// return createOneConnectionBySubNode(maxtries);
 			} catch (ExecutionException ce) {
-				log.debug("ExecutionException=" + ip + ":" + port + ",name=" + nameid, ce);
+				log.error("ExecutionException=" + ip + ":" + port + ",name=" + nameid, ce);
 				// return createOneConnectionBySubNode(maxtries);
 			} catch (Exception e) {
 				// creating new Connection
-				log.warn("error in create out conn:" + ip + ",port=" + port, e);
+				log.error("error in create out conn:" + ip + ",port=" + port, e);
 			}
 		}
-		log.debug("cannot get more Connection:cursize=" + size() + ",max=" + max);
+		if (waitms <= 0) {
+			log.debug("cannot get more Connection:cursize=" + size() + ",max=" + max);
+			try {
+				Thread.sleep(100);
+			} catch (Exception e) {
+			}
+			return null;
+		}
+		if (size() >= max) {
+			Iterator<Connection> it = this.iterator();
+			List<Connection> rmList = new ArrayList<>();
+			while (it.hasNext()) {
+				Connection conn = it.next();
+				if (conn != null && !conn.isOpen()) {
+					rmList.add(conn);
+				}
+			}
+			for (Connection conn : rmList) {
+				removeObject(conn);
+			}
+			if (size() < max) {
+				return createOneConnection(1, -1);
+			}
+		}
 		try {
 			Thread.sleep(100);
 		} catch (Exception e) {

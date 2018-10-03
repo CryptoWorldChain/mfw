@@ -47,7 +47,8 @@ public class NewConnCheckHealth {
 			connByIP.put(ip, conns);
 		}
 		if (conns.size() >= maxConnPreIP) {
-			log.error("cannot connect more for ip="+ip+",cursize="+conns.size()+",maxConnPreIP="+maxConnPreIP);
+			log.error(
+					"cannot connect more for ip=" + ip + ",cursize=" + conns.size() + ",maxConnPreIP=" + maxConnPreIP);
 			conn.close();
 			return;
 		} else {
@@ -57,6 +58,7 @@ public class NewConnCheckHealth {
 		conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 			@Override
 			public void onClosed(Closeable closeable, ICloseType type) throws IOException {
+				log.error("connection on Closed " + conn);
 				fconns.remove(conn);
 				removeConnection(conn, ip);
 			}
