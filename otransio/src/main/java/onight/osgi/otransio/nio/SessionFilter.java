@@ -67,7 +67,7 @@ public class SessionFilter extends BaseFilter {
 					}
 					return ctx.getInvokeAction();
 				} else {
-					FramePacket resp = PacketHelper.buildJsonFromStr("{}", GCMD_ECHOS);
+					FramePacket resp = PacketHelper.toPBReturn(pack, null);
 					resp.getFixHead().setSync(false);
 					resp.getFixHead().setResp(true);
 					resp.getFixHead().setPrio((byte) '9');
@@ -97,7 +97,6 @@ public class SessionFilter extends BaseFilter {
 						if (conn.isOpen()) {
 							conn.write(vpacket);
 						} else {
-
 							String packfrom = vpacket.getExtStrProp(OSocketImpl.PACK_FROM);
 							// log.debug("get Pack callback from :" + packfrom);
 							vpacket.putHeader(OSocketImpl.PACK_TO, packfrom);
@@ -134,14 +133,18 @@ public class SessionFilter extends BaseFilter {
 		} else {
 			handler = nch;
 		}
-		oimpl.onPacket(pack, handler, ctx.getConnection());
+		try{
+			oimpl.onPacket(pack, handler, ctx.getConnection());
+		}catch(Throwable t){
+			log.error("error in process pack:"+pack.getCMD()+""+pack.getModule()+",conn="+ctx.getConnection(),t);
+		}
 		/*
 		 * log.debug("[MSG] " + pack.getCMD() + " " + pack.getModule()// +
 		 * " , FROM: " + ctx.getConnection().getPeerAddress() // + " , TO: " +
 		 * ctx.getConnection().getLocalAddress() // + " COST " +
 		 * (System.currentTimeMillis() - start) + " ms");
 		 */
-		return ctx.getStopAction();
+		return ctx.getInvokeAction();
 	}
 
 	@Override
