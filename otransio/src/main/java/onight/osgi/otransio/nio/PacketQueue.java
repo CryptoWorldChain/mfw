@@ -18,6 +18,7 @@ import onight.osgi.otransio.util.PacketTuplePool;
 import onight.osgi.otransio.util.PacketWriterPool;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.beans.FramePacket;
+import onight.tfw.outils.pool.ReusefulLoopPool;
 
 @Slf4j
 @Data
@@ -37,22 +38,22 @@ public class PacketQueue implements Runnable {
 	PacketTuplePool packPool;
 	PacketWriterPool writerPool;
 	int max_packet_buffer = 10;
-//	Executor exec;
 	Executor subexec;
-	AtomicBoolean running = new AtomicBoolean(false);
+	AtomicBoolean polling = new AtomicBoolean(false);
 	AtomicLong packCounter = new AtomicLong(0);
 	int maxResendBufferSize = 100000;
 
 	public static String PACK_RESEND_ID = "_PRID";
 
-	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, Executor subexec,
-			PacketTuplePool packPool, PacketWriterPool writerPool, ConcurrentHashMap<String, PacketTuple> check_Map,
-			int maxResendBufferSize) {
+	ReusefulLoopPool<Connection> greenPool = new ReusefulLoopPool<>();
+	ReusefulLoopPool<Connection> pioPool = new ReusefulLoopPool<>();
+
+	public PacketQueue(CKConnPool ckpool, int max_packet_buffer, Executor subexec, PacketTuplePool packPool,
+			PacketWriterPool writerPool, ConcurrentHashMap<String, PacketTuple> check_Map, int maxResendBufferSize) {
 		this.ckpool = ckpool;
 		this.max_packet_buffer = max_packet_buffer;
 		this.packPool = packPool;
 		this.writerPool = writerPool;
-//		this.exec = exec;
 		this.subexec = subexec;
 		this.name = ckpool.getNameid() + "/" + ckpool.getIp() + ":" + ckpool.getPort();
 		this.check_Map = check_Map;
@@ -85,9 +86,13 @@ public class PacketQueue implements Runnable {
 
 		while (!queuetooffer.offer(packPool.borrowTuple(fp, handler, this)))
 			;
-		// if (running.compareAndSet(false, true)) {
-		// exec.execute(this);
-		// }
+		if (polling.get()) {
+			if (queuetooffer == green_queue) {
+				tryDirectSendPacket(green_queue, greenPool);
+			} else if (queuetooffer == pio_queue) {
+				tryDirectSendPacket(pio_queue, pioPool);
+			}
+		}
 	}
 
 	public void offer(PacketTuple pt) {
@@ -95,9 +100,13 @@ public class PacketQueue implements Runnable {
 
 		while (!queuetooffer.offer(pt))
 			;
-		// if (running.compareAndSet(false, true)) {
-		// exec.execute(this);
-		// }
+		if (polling.get()) {
+			if (queuetooffer == green_queue) {
+				tryDirectSendPacket(green_queue, greenPool);
+			} else if (queuetooffer == pio_queue) {
+				tryDirectSendPacket(pio_queue, pioPool);
+			}
+		}
 	}
 
 	public PacketTuple poll(long waitms) throws InterruptedException {
@@ -126,6 +135,20 @@ public class PacketQueue implements Runnable {
 		if (isStop) {
 			return;
 		}
+		while (greenPool.size() < ckpool.getCore() / 4) {
+			conn = ckpool.ensureConnection();
+			if (conn != null) {
+				greenPool.addObject(conn);
+			}
+		}
+		while (pioPool.size() < ckpool.getCore() / 4) {
+			conn = ckpool.ensureConnection();
+			if (conn != null) {
+				pioPool.addObject(conn);
+			}
+		}
+
+		conn = null;
 		while (!isStop) {
 			// do {
 			try {
@@ -142,8 +165,16 @@ public class PacketQueue implements Runnable {
 				if (conn != null) {
 					writer = writerPool.borrowWriter(name, conn, retPut_ckpool, this);
 					boolean hasGreenpack = false;
+					boolean firstpoll = true;
 					do {
-						fp = poll(1);
+						if (firstpoll) {
+							polling.set(true);
+							fp = poll(10000);
+							polling.set(false);
+							firstpoll = false;
+						} else {
+							fp = poll(1);
+						}
 						if (fp != null) {
 							FramePacket packet = fp.getPack();
 							if (packet.getFixHead().getPrio() == '9' || packet.getFixHead().getPrio() == '8') {
@@ -153,13 +184,16 @@ public class PacketQueue implements Runnable {
 							writer.arrays.add(fp);
 						}
 					} while (fp != null && writer.arrays.size() < max_packet_buffer && !hasGreenpack);
+					polling.set(false);
 					if (writer.arrays.size() > 0) {
 						subexec.execute(writer);
 						writer = null;
 					}
 				} else {
+					tryDirectSendPacket(green_queue, greenPool);
+					tryDirectSendPacket(pio_queue, pioPool);
 					failedGetConnection++;
-					log.warn("no more connection for " + name + ",failedcc=" + failedGetConnection);
+					log.error("no more connection for " + name + ",failedcc=" + failedGetConnection);
 				}
 
 			} catch (Throwable t) {
@@ -170,29 +204,38 @@ public class PacketQueue implements Runnable {
 					writerPool.retobj(writer);
 				}
 			}
-			// } while (!running.compareAndSet(true, false) || (!isStop &&
-			// failedGetConnection < ckpool.getCore()
-			// && (queue.size() > 0 || green_queue.size() > 0 ||
-			// pio_queue.size() > 0)));
-			//
-			// if (!isStop && failedGetConnection >= ckpool.getCore()
-			// && (queue.size() > 0 || green_queue.size() > 0 ||
-			// pio_queue.size() > 0)) {
-			// MDC.put("BCUID", name);
-			// log.warn("no more connection for " + name + ",failedcc=" +
-			// failedGetConnection + ",qsize="
-			// + queue.size() + ",green_qsize=" + green_queue.size() +
-			// ",pio_qsize=" + pio_queue.size());
-			// }
-			// } finally {
-			// running.set(false);
 		}
 	}
 
-//	public void resendBacklogs() {
-////		if ((queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() > 0)
-////				&& running.compareAndSet(false, true)) {
-////			subexec.execute(this);
-////		}
-//	}
+	public void tryDirectSendPacket(LinkedBlockingQueue<PacketTuple> queue, ReusefulLoopPool<Connection> pool) {
+		try {
+			PacketTuple fp = queue.poll();
+			if (fp != null) {
+				Connection conn = pool.borrow();
+				if (conn != null) {
+					PacketWriter writer = writerPool.borrowWriter(name, conn, pool, this);
+					FramePacket packet = fp.getPack();
+					ensurePacketID(packet, fp);
+					writer.arrays.add(fp);
+					writer.run();
+				} else {
+					log.error("no more connection for green packet:queuesize=" + queue.size() + ",connsize="
+							+ pool.getActiveObjs().size());
+					queue.offer(fp);
+				}
+			}
+		} catch (Exception e) {
+			log.error("err in send greenPacket");
+		} finally {
+
+		}
+	}
+
+	// public void resendBacklogs() {
+	//// if ((queue.size() > 0 || green_queue.size() > 0 || pio_queue.size() >
+	// 0)
+	//// && running.compareAndSet(false, true)) {
+	//// subexec.execute(this);
+	//// }
+	// }
 }

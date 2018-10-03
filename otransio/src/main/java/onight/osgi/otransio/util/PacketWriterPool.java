@@ -16,7 +16,7 @@ public class PacketWriterPool extends ReusefulLoopPool<PacketWriter> {
 
 	int maxObjectSize = 1000;
 
-	public PacketWriter borrowWriter(String name, Connection<?> conn, CKConnPool ckpool, PacketQueue queue) {
+	public PacketWriter borrowWriter(String name, Connection<?> conn, ReusefulLoopPool ckpool, PacketQueue queue) {
 		PacketWriter writer = super.borrow();
 		if (writer != null) {
 			writer.setName(name);

@@ -33,16 +33,15 @@ public class NodeHelper {
 
 	public static String getCurrNodeName() {
 		String def = getPropInstance().get("otrans.node.name",
-				getCurrNodeListenOutAddr() + "." + getCurrNodeListenOutPort() );
+				getCurrNodeListenOutAddr() + "." + getCurrNodeListenOutPort());
 		String envid = System.getProperty("otrans.node.name", def);
 
 		return envInEnv(envid);
 	}
-	
 
-//	public static String getCurrNodeID() {
-//		return String.valueOf(getCurrNodeIdx());
-//	}
+	// public static String getCurrNodeID() {
+	// return String.valueOf(getCurrNodeIdx());
+	// }
 	public static String getCurrNodeID() {
 		String def = getPropInstance().get("otrans.node.id",
 				getCurrNodeListenOutAddr() + "." + getCurrNodeListenOutPort());
@@ -56,16 +55,23 @@ public class NodeHelper {
 		return envInEnv(envid);
 	}
 
+	static String _outAddr = null;
+
 	public static String getCurrNodeListenOutAddr() {
+		if (_outAddr != null) {
+			return _outAddr;
+		}
 		String def;
 		try {
 			def = getPropInstance().get("otrans.addr.out", InetAddress.getLocalHost().getHostAddress());
 			String envid = System.getProperty("otrans.addr.out", def);
-			return envInEnv(envid);
+			_outAddr = envInEnv(envid);
+			return _outAddr;
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-		return "127.0.0.1";
+		_outAddr = "127.0.0.1";
+		return _outAddr;
 	}
 
 	static int listeninport = -1;
@@ -114,13 +120,22 @@ public class NodeHelper {
 		}
 	}
 
+	static int _outPort = -1;
+
 	public static int getCurrNodeListenOutPort() {
+		if (_outPort > 0)
+		{
+			return _outPort;
+		}
 		String def = getPropInstance().get("otrans.port.out", null);
 		String envid = System.getProperty("otrans.port.out", def);
-		if (envid == null)
-			return getCurrNodeListenInPort();
+		if (envid == null) {
+			_outPort = getCurrNodeListenInPort();
+			return _outPort;
+		}
 		try {
-			return Integer.parseInt(envInEnv(envid));
+			_outPort = Integer.parseInt(envInEnv(envid));
+			return _outPort;
 		} catch (NumberFormatException e) {
 			return 5100;
 		}

@@ -8,8 +8,8 @@ import org.slf4j.MDC;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.util.PacketWriterPool;
+import onight.tfw.outils.pool.ReusefulLoopPool;
 
 @AllArgsConstructor
 @Slf4j
@@ -20,7 +20,7 @@ public class PacketWriter implements Runnable {
 	Connection<?> conn;
 	ArrayList<PacketTuple> arrays;
 	PacketWriterPool writerPool;
-	CKConnPool ckpool;
+	ReusefulLoopPool ckpool;
 	PacketQueue queue;
 
 	public void run() {

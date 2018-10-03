@@ -61,8 +61,10 @@ public class RemoteModuleSession extends PSession {
 //		sb.append(",\"sentcc\":").append(sendCounter.get()).append("");
 //		sb.append(",\"sendcc\":").append(sentCounter.get()).append("");
 //		sb.append(",\"dropcc\":").append(dropCounter.get()).append("");
-		sb.append(",\"core\":").append(nodeInfo.getCore());
-		sb.append(",\"max\":").append(nodeInfo.getMax());
+		sb.append(",\"core\":").append(connsPool.getCore());
+		sb.append(",\"free\":").append(connsPool.getActiveObjs().size());
+		sb.append(",\"curr\":").append(connsPool.getAllObjs().size());
+		sb.append(",\"max\":").append(connsPool.getMax());
 		sb.append(",\"uri\":\"").append(nodeInfo.getAddr() + ":" + nodeInfo.getPort()).append("\"");
 		sb.append(",\"chdetails\":[");
 		Iterator<Connection> it = connsPool.iterator();

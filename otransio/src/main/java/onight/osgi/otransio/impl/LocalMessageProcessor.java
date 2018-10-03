@@ -104,7 +104,7 @@ public class LocalMessageProcessor {
 				} catch (Throwable e) {
 					log.error("route Failed:" + e.getMessage() + ",GCMD=" + pack.getFixHead().getCmd()
 							+ pack.getFixHead().getModule() + ",realcost=" + (System.currentTimeMillis() - startTime)
-							+ ",queue=" + exec.getQueuedTaskCount() + ",running=" + exec.getRunningThreadCount()
+							+ ",queue=" + exec.getQueuedTaskCount() + ",execpoolsize=" + exec.getPoolSize()
 							+ ",active=" + exec.getActiveThreadCount() + ",poolsize=" + runnerPool.size()
 							+ ",activepoolsize=" + runnerPool.getActiveObjs().size(), e);
 					handler.onFailed(new RuntimeException(e));

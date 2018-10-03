@@ -29,7 +29,9 @@ public class NodeConnectionPool {
 		int i = 0;
 		for (Entry<String, CKConnPool> sets : ckPoolByNodeName.entrySet()) {
 			if (i > 0)
+			{
 				sb.append(",");
+			}
 			i++;
 			sb.append("{\"nodename\":\"" + sets.getKey() + "\"");
 			sb.append(",\"conns\":" + sets.getValue().getJsonStr() + "");
