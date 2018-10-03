@@ -63,7 +63,7 @@ public class CheckHealth {
 			public void run() {
 				try {
 					if (!conn.isOpen()) {
-						log.error("connetion is not open:"+conn.getLocalAddress()+",peer="+conn.getPeerAddress());
+						log.error("connetion is not open:" + conn.getLocalAddress() + ",peer=" + conn.getPeerAddress());
 						conn.close();
 						exec.remove(this);
 					} else {
@@ -117,10 +117,14 @@ public class CheckHealth {
 					log.debug("check health:" + pool.ip + ",port=" + pool.port + ",name=" + pool.getNameid());
 					for (int i = pool.size(); i < pool.getCore() && !pool.isStop(); i++) {
 						Connection conn = pool.createOneConnection(0);
+						if (conn != null&&conn.isOpen()) {
+							pool.retobj(conn);
+							addCheckHealth(conn);
+						}
 						// if (conn != null) {
 						// log.debug("add more conn core size." +
 						// conn.getPeerAddress());
-						// addCheckHealth(conn);
+						//
 						// }
 					}
 					// if (!pool.isStop()) {

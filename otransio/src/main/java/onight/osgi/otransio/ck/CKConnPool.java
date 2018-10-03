@@ -101,7 +101,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				removeObject(conn);
 			}
 		}
-		conn = createOneConnection(1, 100);
+		conn = createOneConnection(1, 10);
 		return conn;
 	}
 
