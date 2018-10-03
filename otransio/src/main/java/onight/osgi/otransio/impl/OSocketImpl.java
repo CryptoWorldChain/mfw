@@ -187,7 +187,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			}
 			// conn.write(mss.getLocalModulesPacketBack());
 		} else if (DROP_CONN.equals(pack.getGlobalCMD())) {// 来自远端的模块信息返回
-			log.debug("get drop connection message");
+			log.error("get drop connection message");
 			osm.dropSessionByRemote(conn);
 			conn.closeSilently();
 		} else if (PackHeader.CMD_HB.equals(pack.getGlobalCMD())) {// 来自远端的心跳线

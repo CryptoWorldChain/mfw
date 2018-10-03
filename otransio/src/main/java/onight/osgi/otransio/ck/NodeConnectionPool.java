@@ -51,7 +51,7 @@ public class NodeConnectionPool {
 			pool.setNameid(newname);
 			CKConnPool existpool = ckPoolByNodeName.put(newname, pool);
 			if (existpool != null && pool != existpool) {
-				log.debug("stop exist pool for:" + existpool.getNameid() + ":" + existpool.getIp() + ":"
+				log.error("stop exist pool for:" + existpool.getNameid() + ":" + existpool.getIp() + ":"
 						+ existpool.getPort());
 				existpool.setStop(true);
 			}

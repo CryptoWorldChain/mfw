@@ -132,7 +132,7 @@ public class OutgoingSessionManager {
 	public void dropSessionByRemote(final Connection<?> conn) {
 		RemoteModuleSession rms = osmStore.get(conn);
 		if (rms != null) {
-			log.debug("dropSessionByRemote:" + rms.nodeInfo.getNodeName());
+			log.error("dropSessionByRemote:" + rms.nodeInfo.getNodeName());
 			mss.dropSession(rms.nodeInfo.getNodeName(), false);
 		}
 	}

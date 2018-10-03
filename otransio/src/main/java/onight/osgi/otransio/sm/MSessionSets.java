@@ -219,7 +219,7 @@ public class MSessionSets {
 
 	public synchronized void dropSession(String name, boolean sendDDNode) {
 		if (StringUtils.isNotBlank(name)) {
-			log.debug("dropSession:" + name + ",sendDD=" + sendDDNode);
+			log.error("dropSession:" + name + ",sendDD=" + sendDDNode);
 			PSession session = sessionByNodeName.remove(name);
 			osm.rmNetPool(name);
 			if (session != null) {
