@@ -64,7 +64,7 @@ public class CheckHealth {
 				try {
 					if (!conn.isOpen()) {
 						log.error("connetion is not open:" + conn.getLocalAddress() + ",peer=" + conn.getPeerAddress()
-						+",reason="+conn.getCloseReason());
+						+",reason="+conn.getCloseReason().getType()+":"+conn.getCloseReason().getCause());
 						conn.close();
 						lastCheckHealthMS.remove(conn);
 						exec.remove(this);
@@ -102,12 +102,13 @@ public class CheckHealth {
 		public void run() {
 			try {
 				if (pool.isStop()) {
-					log.debug("stop Pool:" + pool.getIp() + ":" + pool.getPort() + "," + pool.getNameid());
+					log.error("stop Pool:" + pool.getIp() + ":" + pool.getPort() + "," + pool.getNameid());
 					Iterator<Connection> it = pool.iterator();
 					while (it.hasNext()) {
 						try {
 							Connection conn = it.next();
 							if (conn.isOpen()) {
+								log.error("stop Pool:" + pool.getIp() + ":" + pool.getPort() + "," + pool.getNameid()+",conn="+conn);
 								conn.close();
 							}
 						} catch (Exception e) {

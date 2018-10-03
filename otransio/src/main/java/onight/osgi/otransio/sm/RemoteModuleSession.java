@@ -176,11 +176,15 @@ public class RemoteModuleSession extends PSession {
 		dropp.genBodyBytes();
 		dropp.genExtBytes();
 		dropp.getFixHead().genBytes();
+		log.error("destroy session::"+sendDDNode+",writerQ="+writerQ.getName());
 		int cc = 0;
 		while (it.hasNext()) {
 			try {
 				final Connection conn = it.next();
+				log.error("close conn for dropsession::"+sendDDNode+",writerQ="+writerQ.getName()+",conn="+conn);
+
 				if (cc == 0 && sendDDNode) {
+					
 					conn.write(dropp, new CompletionHandler<Object>() {
 						@Override
 						public void cancelled() {

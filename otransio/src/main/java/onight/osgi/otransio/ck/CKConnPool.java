@@ -190,7 +190,9 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				log.error("TimeoutConnect:to=" + ip + ":" + port + ",name=" + nameid, te);
 				// return createOneConnectionBySubNode(maxtries);
 			} catch (ExecutionException ce) {
-				log.error("ExecutionException=" + ip + ":" + port + ",name=" + nameid, ce);
+				//java.net.ConnectException: Connection refused
+				log.debug("ExecutionException=" + ip + ":" + port + ",name=" + nameid, ce);
+				break;
 				// return createOneConnectionBySubNode(maxtries);
 			} catch (Exception e) {
 				// creating new Connection
