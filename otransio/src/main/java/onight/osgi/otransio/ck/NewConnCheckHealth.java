@@ -58,7 +58,12 @@ public class NewConnCheckHealth {
 		conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
 			@Override
 			public void onClosed(Closeable closeable, ICloseType type) throws IOException {
-				log.error("connection on Closed " + conn);
+				if (conn.getCloseReason() != null) {
+					log.error("connection on Closed " + conn + ",reason=" + conn.getCloseReason().getType() + ":"
+							+ conn.getCloseReason().getCause());
+				} else {
+					log.error("connection on Closed " + conn + ",reason=" + conn.getCloseReason());
+				}
 				fconns.remove(conn);
 				removeConnection(conn, ip);
 			}

@@ -158,7 +158,15 @@ public class SessionFilter extends BaseFilter {
 
 	@Override
 	public NextAction handleClose(FilterChainContext ctx) throws IOException {
-		log.error("close connection:" + ctx.getConnection().getPeerAddress()+",closereson="+ctx.getConnection().getCloseReason());
+		if(ctx.getConnection().getCloseReason()!=null)
+		{
+			Connection conn = ctx.getConnection();
+			log.error("close connection:" + ctx.getConnection().getPeerAddress()+
+					 ",reason=" + conn.getCloseReason().getType() + ":"
+					+ conn.getCloseReason().getCause());
+		}else{
+			log.error("close connection:" + ctx.getConnection().getPeerAddress()+",closereson="+ctx.getConnection().getCloseReason());
+		}
 		return ctx.getInvokeAction();
 	}
 
