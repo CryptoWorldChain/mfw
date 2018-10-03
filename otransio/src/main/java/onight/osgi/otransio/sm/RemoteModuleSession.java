@@ -64,6 +64,8 @@ public class RemoteModuleSession extends PSession {
 		sb.append(",\"core\":").append(connsPool.getCore());
 		sb.append(",\"free\":").append(connsPool.getActiveObjs().size());
 		sb.append(",\"curr\":").append(connsPool.getAllObjs().size());
+		sb.append(",\"green\":").append(writerQ.getGreenPool().size());
+		sb.append(",\"pio\":").append(writerQ.getPioPool().size());
 		sb.append(",\"max\":").append(connsPool.getMax());
 		sb.append(",\"uri\":\"").append(nodeInfo.getAddr() + ":" + nodeInfo.getPort()).append("\"");
 		sb.append(",\"chdetails\":[");

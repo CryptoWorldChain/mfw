@@ -35,6 +35,7 @@ public class PacketWriter implements Runnable {
 				}
 			}
 		} catch (Exception e) {
+			log.error("error in writing packet:",e);
 			if (!conn.isOpen()) {
 				for (PacketTuple pw : arrays) {
 					if (!pw.isWrited()) {

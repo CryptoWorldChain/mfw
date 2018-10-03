@@ -31,7 +31,7 @@ public class PacketWriterPool extends ReusefulLoopPool<PacketWriter> {
 
 	@Override
 	public void retobj(PacketWriter t) {
-		if (t != null) {
+		if (t != null && t.getConn() != null && t.getConn().isOpen()) {
 			t.release();
 			if (super.size() < maxObjectSize) {
 				super.retobj(t);
