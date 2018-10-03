@@ -222,6 +222,7 @@ public class PacketQueue implements Runnable {
 	public void tryDirectSendPacket(LinkedBlockingQueue<PacketTuple> queue, ReusefulLoopPool<Connection> pool,String name) {
 		try {
 			log.error("tryDirectSendPacket:"+queue.size()+",pool="+pool.size()+",queuename="+name);
+			long start=System.currentTimeMillis();
 			PacketTuple fp = queue.poll();
 			if (fp != null) {
 				Connection conn = pool.borrow();
@@ -231,14 +232,17 @@ public class PacketQueue implements Runnable {
 					ensurePacketID(packet, fp);
 					writer.arrays.add(fp);
 					writer.run();
+					log.error("DirectSendPacket "+name+" packet:queuesize=" + queue.size() + ",connsize="
+							+ pool.getActiveObjs().size()+",cost="+(System.currentTimeMillis()-start));
 				} else {
-					log.error("no more connection for green packet:queuesize=" + queue.size() + ",connsize="
-							+ pool.getActiveObjs().size());
+					
 					queue.offer(fp);
+					log.error("no more connection for "+name+" packet:queuesize=" + queue.size() + ",connsize="
+							+ pool.getActiveObjs().size());
 				}
 			}
 		} catch (Exception e) {
-			log.error("err in send greenPacket");
+			log.error("err in send Packet for queue="+name,e);
 		} finally {
 
 		}
