@@ -27,6 +27,11 @@ public class PacketWriter implements Runnable {
 		try {
 			MDC.put("BCUID", name);
 			long writeTime = System.currentTimeMillis();
+			if(!conn.isOpen()){
+				for (PacketTuple pw : arrays) {
+					queue.offer(pw.pack, pw.handler);
+				}
+			}
 			for (PacketTuple pt : arrays) {
 				if (!pt.isResponsed() || !pt.isWrited()) {
 					pt.setWriteTime(writeTime);
