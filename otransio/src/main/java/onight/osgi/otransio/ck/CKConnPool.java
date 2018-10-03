@@ -198,7 +198,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 			}
 		}
 		if (waitms <= 0) {
-			log.debug("cannot get more Connection:cursize=" + size() + ",max=" + max);
+			log.error("cannot get more Connection:cursize=" + size() + ",max=" + max);
 			try {
 				Thread.sleep(100);
 			} catch (Exception e) {
