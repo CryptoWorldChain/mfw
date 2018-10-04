@@ -19,6 +19,8 @@ import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.Unbind;
 import org.apache.felix.ipojo.annotations.Validate;
 import org.glassfish.grizzly.Connection;
+import org.glassfish.grizzly.Grizzly;
+import org.glassfish.grizzly.attributes.Attribute;
 import org.osgi.framework.BundleContext;
 
 import lombok.Getter;
@@ -66,6 +68,9 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	public static String PACK_FROM = PackHeader.PACK_FROM;
 	public static String PACK_TO = PackHeader.PACK_TO;
 	public static String PACK_URI = PackHeader.PACK_URI;
+
+	protected final Attribute<String> connectBCUID = Grizzly.DEFAULT_ATTRIBUTE_BUILDER
+			.createAttribute("osocket.connection.bcuid");
 
 	public static String DROP_CONN = "DROP**";
 
@@ -157,7 +162,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	}
 
 	public void onPacket(FramePacket pack, final CompleteHandler handler, Connection<?> conn) throws TransIOException {
-		if (PackHeader.REMOTE_LOGIN.equals(pack.getGlobalCMD())) {// 来自远端的登录
+		if (PackHeader.REMOTE_LOGIN.equals(pack.getGlobalCMD()) && conn != null) {// 来自远端的登录
 			RemoteModuleBean rmb = pack.parseBO(RemoteModuleBean.class);
 			String node_from = pack.getExtStrProp(PACK_FROM);
 			if (StringUtils.isBlank(node_from)) {
@@ -165,7 +170,9 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			} else {
 				rmb.getNodeInfo().setNodeName(node_from);
 			}
-			log.error("Get New Login Connection From:" + rmb.getNodeInfo().getUname() + ",nodeid=" + node_from);
+			connectBCUID.set(conn, node_from);
+			log.error("Get New Login Connection From:" + rmb.getNodeInfo().getUname() + ",nodeid=" + node_from
+					+ ",conn=" + conn);
 			if (node_from != null) {
 				PSession session = mss.byNodeName(node_from);
 				if (session != null && session instanceof RemoteModuleSession) {
@@ -267,6 +274,24 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					LocalModuleSession lms = mss.getLocalsessionByModule().get(pack.getModule());
 					localProcessor.route2Local(pack, handler, lms);
 				} else {
+					if (conn != null && from != null) {
+						if (connectBCUID.isSet(conn)) {
+							String orgbcuid = connectBCUID.get(conn);
+							if (!StringUtils.equals(orgbcuid, from)) {
+								log.error(
+										"connection my change pack_from:" + orgbcuid + "==>" + from + ",conn=" + conn);
+								connectBCUID.set(conn, from);
+								rms.addConnection(conn);
+								PSession oldms = mss.byNodeName(orgbcuid);
+								if (oldms instanceof RemoteModuleSession) {
+									log.error("remove connection from" + orgbcuid + "conn=" + conn);
+									((RemoteModuleSession) oldms).removeConnection(conn);
+								}
+							}
+
+						}
+					}
+
 					ms.onPacket(pack, handler);
 				}
 			}
