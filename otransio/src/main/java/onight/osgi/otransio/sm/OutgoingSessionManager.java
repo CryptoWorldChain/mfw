@@ -61,7 +61,7 @@ public class OutgoingSessionManager {
 		this.mss = mss;
 		client = new OClient(oimpl);
 		client.init(this, params);
-		ck = new CheckHealth(params.get("otrans.checkhealth.size", 2), params.get("otrans.checkhealth.delay", 30));
+		ck = new CheckHealth(params.get("otrans.checkhealth.size", 2), params.get("otrans.checkhealth.delay", 30),mss);
 		nck = new NewConnCheckHealth(params.get("otrans.max.conn.each.ip", 100),
 				params.get("otrans.max.conn.timeout.sec", 30), ck.getExec());
 		pmch = new PackMapsCheckHealth(mss);

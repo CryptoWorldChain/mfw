@@ -1,6 +1,5 @@
 package onight.osgi.otransio.ck;
 
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -13,6 +12,9 @@ import org.glassfish.grizzly.attributes.AttributeBuilder;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import onight.osgi.otransio.impl.OSocketImpl;
+import onight.osgi.otransio.sm.MSessionSets;
+import onight.osgi.otransio.sm.OutgoingSessionManager;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.beans.FixHeader;
 import onight.tfw.otransio.api.beans.FramePacket;
@@ -27,28 +29,18 @@ public class CheckHealth {
 	protected final AttributeBuilder attributeBuilder = Grizzly.DEFAULT_ATTRIBUTE_BUILDER;
 
 	int delay;
+	MSessionSets mss;
 
-	public CheckHealth(int corePool, int delay) {
+	public CheckHealth(int corePool, int delay, MSessionSets mss) {
 		exec = new ScheduledThreadPoolExecutor(corePool);
 		this.delay = Math.max(5, delay);
 
 		lastCheckHealthMS = attributeBuilder.createAttribute("Decoder.CheckHealth");
-
-		hbpack = new FramePacket();
-		FixHeader header = new FixHeader();
-		header.setCmd(PackHeader.CMD_HB.substring(0, 3));
-		header.setModule(PackHeader.CMD_HB.substring(3));
-		header.setBodysize(0);
-		header.setExtsize(0);
-		header.setEnctype('T');
-		header.genBytes();
-		hbpack.setFixHead(header);
+		this.mss = mss;
 
 	}
 
 	boolean isStop = false;
-
-	FramePacket hbpack;
 
 	public synchronized void addCheckHealth(final Connection conn) {
 		if (conn == null)
@@ -73,6 +65,17 @@ public class CheckHealth {
 						if (!lastCheckHealthMS.isSet(conn.getAttributes())
 								|| lastCheckHealthMS.get(conn.getAttributes()) - System.currentTimeMillis() > delay
 										* 1000) {
+							FramePacket hbpack = new FramePacket();
+							FixHeader header = new FixHeader();
+							header.setCmd(PackHeader.CMD_HB.substring(0, 3));
+							header.setModule(PackHeader.CMD_HB.substring(3));
+							header.setBodysize(0);
+							header.setExtsize(0);
+							header.setEnctype('T');
+							header.genBytes();
+							hbpack.setFixHead(header);
+							hbpack.putHeader(OSocketImpl.PACK_FROM, mss.getRmb().getNodeInfo().getNodeName());
+
 							conn.write(hbpack);
 							lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
 							// log.trace("!!CheckHealth TO:" +
