@@ -133,10 +133,11 @@ public class SessionFilter extends BaseFilter {
 		} else {
 			handler = nch;
 		}
-		try{
+		try {
 			oimpl.onPacket(pack, handler, ctx.getConnection());
-		}catch(Throwable t){
-			log.error("error in process pack:"+pack.getCMD()+""+pack.getModule()+",conn="+ctx.getConnection(),t);
+		} catch (Throwable t) {
+			log.error("error in process pack:" + pack.getCMD() + "" + pack.getModule() + ",conn=" + ctx.getConnection()
+					+ ":pack=" + pack, t);
 		}
 		/*
 		 * log.debug("[MSG] " + pack.getCMD() + " " + pack.getModule()// +
@@ -161,14 +162,13 @@ public class SessionFilter extends BaseFilter {
 
 	@Override
 	public NextAction handleClose(FilterChainContext ctx) throws IOException {
-		if(ctx.getConnection().getCloseReason()!=null)
-		{
+		if (ctx.getConnection().getCloseReason() != null) {
 			Connection conn = ctx.getConnection();
-			log.error("close connection:" + ctx.getConnection().getPeerAddress()+
-					 ",reason=" + conn.getCloseReason().getType() + ":"
-					+ conn.getCloseReason().getCause());
-		}else{
-			log.error("close connection:" + ctx.getConnection().getPeerAddress()+",closereson="+ctx.getConnection().getCloseReason());
+			log.error("close connection:" + ctx.getConnection().getPeerAddress() + ",reason="
+					+ conn.getCloseReason().getType() + ":" + conn.getCloseReason().getCause());
+		} else {
+			log.error("close connection:" + ctx.getConnection().getPeerAddress() + ",closereson="
+					+ ctx.getConnection().getCloseReason());
 		}
 		return ctx.getInvokeAction();
 	}

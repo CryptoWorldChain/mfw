@@ -222,6 +222,11 @@ public class MSessionSets {
 			log.error("dropSession:" + name + ",sendDD=" + sendDDNode);
 			PSession session = sessionByNodeName.remove(name);
 			osm.rmNetPool(name);
+			try{
+				throw new RuntimeException("log drop:"+name);
+			}catch(RuntimeException t){
+				log.error("drop session,",t);
+			}
 			if (session != null) {
 				dropCounter.incrementAndGet();
 				if (session instanceof RemoteModuleSession) {

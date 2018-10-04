@@ -46,6 +46,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	public void setStop(boolean isstop) {
 		this.stop = true;
 		if (core <= 0) {
+			log.error("setDrop:"+nameid);
 			mss.dropSession(nameid, false);
 		}
 	}
