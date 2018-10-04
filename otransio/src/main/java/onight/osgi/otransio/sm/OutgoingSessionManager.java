@@ -124,7 +124,7 @@ public class OutgoingSessionManager {
 			return pms;
 		}
 		CKConnPool pool = addNetPool(node.getNodeName(), node.getAddr() + ":" + node.getPort(), 0, 0);
-		pool.setFrom_bcuid(from_bcuid);
+		pool.setNameid(from_bcuid);
 		return createOutgoingSS(node, pool);
 	}
 

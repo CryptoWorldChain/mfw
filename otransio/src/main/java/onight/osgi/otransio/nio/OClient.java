@@ -48,6 +48,7 @@ public class OClient {
 		transport.setKeepAlive(true);
 		transport = TCPNIOTransportBuilder.newInstance().build();
 		transport.setProcessor(filterChainBuilder.build());
+		transport.setClientSocketSoTimeout(60*1000);
 		transport.setTcpNoDelay(true);
 		try {
 			transport.start();

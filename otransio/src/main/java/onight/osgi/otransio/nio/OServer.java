@@ -55,6 +55,7 @@ public class OServer {
 		transport.setTcpNoDelay(true);
 		transport.setKeepAlive(true);
 		transport.setOptimizedForMultiplexing(true);
+		transport.setClientSocketSoTimeout(60*1000);
 		try {
 			// binding transport to start listen on certain host and port
 			int oport = NodeHelper.getCurrNodeListenInPort();

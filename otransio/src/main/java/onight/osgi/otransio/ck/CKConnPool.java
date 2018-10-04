@@ -37,7 +37,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	int max;
 	boolean stop = false;
 	String subnodeURI = "";
-	String from_bcuid = "";
+//	String from_bcuid = "";
 
 	ArrayList<NodeInfo> subNodes = new ArrayList<>();
 
@@ -123,7 +123,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 						}
 					});
 					final FramePacket pack = mss.getLocalModulesPacket();
-					pack.putHeader(OSocketImpl.PACK_FROM, from_bcuid);
+					pack.putHeader(OSocketImpl.PACK_FROM, nameid);
 					log.debug("write LoginModulePack from {}", mss.getRmb().getNodeInfo().getUname());
 					// log.trace("!!WriteLocalModulesPacket TO:" +
 					// conn.getPeerAddress() + ",From="

@@ -36,8 +36,8 @@ public class CheckHealth {
 
 		hbpack = new FramePacket();
 		FixHeader header = new FixHeader();
-		header.setCmd(PackHeader.CMD_HB);
-		header.setModule(PackHeader.REMOTE_MODULE);
+		header.setCmd(PackHeader.CMD_HB.substring(0, 3));
+		header.setModule(PackHeader.CMD_HB.substring(3));
 		header.setBodysize(0);
 		header.setExtsize(0);
 		header.setEnctype('T');
@@ -50,7 +50,7 @@ public class CheckHealth {
 
 	FramePacket hbpack;
 
-	public void addCheckHealth(final Connection conn) {
+	public synchronized void addCheckHealth(final Connection conn) {
 		if (conn == null)
 			return;
 		if (lastCheckHealthMS.isSet(conn.getAttributes())) {
@@ -64,7 +64,8 @@ public class CheckHealth {
 				try {
 					if (!conn.isOpen()) {
 						log.error("connetion is not open:" + conn.getLocalAddress() + ",peer=" + conn.getPeerAddress()
-						+",reason="+conn.getCloseReason().getType()+":"+conn.getCloseReason().getCause());
+								+ ",reason=" + conn.getCloseReason().getType() + ":"
+								+ conn.getCloseReason().getCause());
 						conn.close();
 						lastCheckHealthMS.remove(conn);
 						exec.remove(this);
@@ -72,7 +73,7 @@ public class CheckHealth {
 						if (!lastCheckHealthMS.isSet(conn.getAttributes())
 								|| lastCheckHealthMS.get(conn.getAttributes()) - System.currentTimeMillis() > delay
 										* 1000) {
-							 conn.write(hbpack);
+							conn.write(hbpack);
 							lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
 							// log.trace("!!CheckHealth TO:" +
 							// conn.getPeerAddress() + ",From=" +
@@ -108,7 +109,8 @@ public class CheckHealth {
 						try {
 							Connection conn = it.next();
 							if (conn.isOpen()) {
-								log.error("stop Pool:" + pool.getIp() + ":" + pool.getPort() + "," + pool.getNameid()+",conn="+conn);
+								log.error("stop Pool:" + pool.getIp() + ":" + pool.getPort() + "," + pool.getNameid()
+										+ ",conn=" + conn);
 								conn.close();
 							}
 						} catch (Exception e) {
