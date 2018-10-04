@@ -33,7 +33,7 @@ public class MSessionSets {
 	private PropHelper params;
 
 	int packet_buffer_size = 10;
-//	int write_thread_count = 10;
+	// int write_thread_count = 10;
 
 	PacketTuplePool packPool;
 	PacketWriterPool writerPool;
@@ -43,28 +43,29 @@ public class MSessionSets {
 	ForkJoinPool exec;
 	ForkJoinPool readerexec;
 	ForkJoinPool writerexec;
-	
+
 	int resendBufferSize = 100000;
 	int resendTimeOutMS = 60000;
 	int resendTimeMS = 3000;
 	int resendTryTimes = 5;
-	AtomicLong resendTimes = new AtomicLong(0); 
-	AtomicLong resendPacketTimes = new AtomicLong(0); 
+	AtomicLong resendTimes = new AtomicLong(0);
+	AtomicLong resendPacketTimes = new AtomicLong(0);
 
 	public MSessionSets(PropHelper params) {
 		packIDKey = UUIDGenerator.generate() + ".SID";
 		this.params = params;
 		resendBufferSize = params.get("org.zippo.otransio.resend.buffer.size", 100000);
-		resendTimeOutMS = params.get("org.zippo.otransio.resend.timeoutms",60000);
-		resendTimeMS = params.get("org.zippo.otransio.resend.timems",3000);
-		resendTryTimes = params.get("org.zippo.otransio.resend.try.times",5);
+		resendTimeOutMS = params.get("org.zippo.otransio.resend.timeoutms", 60000);
+		resendTimeMS = params.get("org.zippo.otransio.resend.timems", 3000);
+		resendTryTimes = params.get("org.zippo.otransio.resend.try.times", 5);
 
 		packet_buffer_size = params.get("org.zippo.otransio.maxpacketqueue", 10);
-//		write_thread_count = params.get("org.zippo.otransio.write_thread_count", 10);
+		// write_thread_count =
+		// params.get("org.zippo.otransio.write_thread_count", 10);
 		packPool = new PacketTuplePool(params.get("org.zippo.otransio.maxpackbuffer", 10000));
 		writerPool = new PacketWriterPool(params.get("org.zippo.otransio.maxwriterbuffer", 1000));
 		exec = new ForkJoinPool(
-				params.get("org.zippo.otransio.exec.parrel", java.lang.Runtime.getRuntime().availableProcessors()*2));
+				params.get("org.zippo.otransio.exec.parrel", java.lang.Runtime.getRuntime().availableProcessors() * 2));
 		writerexec = new ForkJoinPool(params.get("org.zippo.otransio.writerexec.parrel",
 				java.lang.Runtime.getRuntime().availableProcessors() * 2));
 		readerexec = new ForkJoinPool(params.get("org.zippo.otransio.readerexec.parrel",
@@ -112,9 +113,9 @@ public class MSessionSets {
 		sb.append(",\"recv\":").append(recvCounter.get());
 		sb.append(",\"send\":").append(sendCounter.get());
 		sb.append(",\"sent\":").append(sentCounter.get());
-		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount()+"/"+exec.getPoolSize());
-		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount()+"/"+readerexec.getPoolSize());
-		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount()+"/"+writerexec.getPoolSize());
+		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount() + "/" + exec.getPoolSize());
+		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize());
+		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize());
 		sb.append(",\"pioresendsize\":").append(resendMap.size());
 		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
 		sb.append(",\"packchecksize\":").append(packMaps.size());
@@ -162,7 +163,7 @@ public class MSessionSets {
 
 		}
 		sb.append("]");
-		
+
 		// sb.append(",\"osm\":").append(osm.getJsonInfo());
 		sb.append("}");
 		return sb.toString();
@@ -222,10 +223,10 @@ public class MSessionSets {
 			log.error("dropSession:" + name + ",sendDD=" + sendDDNode);
 			PSession session = sessionByNodeName.remove(name);
 			osm.rmNetPool(name);
-			try{
-				throw new RuntimeException("log drop:"+name);
-			}catch(RuntimeException t){
-				log.error("drop session,",t);
+			try {
+				throw new RuntimeException("log drop:" + name);
+			} catch (RuntimeException t) {
+				log.error("drop session,", t);
 			}
 			if (session != null) {
 				dropCounter.incrementAndGet();
@@ -238,7 +239,8 @@ public class MSessionSets {
 	}
 
 	public synchronized void renameSession(String oldname, String newname) {
-		if (StringUtils.isNotBlank(oldname) && StringUtils.isNotBlank(newname)) {
+		if (StringUtils.isNotBlank(oldname) && StringUtils.isNotBlank(newname)
+				&& !StringUtils.equals(oldname, newname)) {
 			PSession session = sessionByNodeName.get(oldname);
 			if (session != null) {
 				session.setMmid(newname);

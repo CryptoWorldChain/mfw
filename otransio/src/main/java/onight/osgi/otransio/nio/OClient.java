@@ -45,7 +45,7 @@ public class OClient {
 		ThreadPoolConfig wtpc = ThreadPoolConfig.defaultConfig();
 		wtpc.setCorePoolSize(params.get("otransio.cworker.core", 10)).setMaxPoolSize(params.get("otransio.cworker.max", 100));
 		transport.setWorkerThreadPoolConfig(wtpc);
-
+		transport.setKeepAlive(true);
 		transport = TCPNIOTransportBuilder.newInstance().build();
 		transport.setProcessor(filterChainBuilder.build());
 		transport.setTcpNoDelay(true);

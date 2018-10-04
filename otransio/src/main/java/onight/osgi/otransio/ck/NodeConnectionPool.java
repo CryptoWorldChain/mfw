@@ -3,6 +3,8 @@ package onight.osgi.otransio.ck;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringUtils;
+
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.nio.OClient;
 import onight.osgi.otransio.sm.MSessionSets;
@@ -28,8 +30,7 @@ public class NodeConnectionPool {
 		sb.append("[");
 		int i = 0;
 		for (Entry<String, CKConnPool> sets : ckPoolByNodeName.entrySet()) {
-			if (i > 0)
-			{
+			if (i > 0) {
 				sb.append(",");
 			}
 			i++;
@@ -50,7 +51,7 @@ public class NodeConnectionPool {
 		if (pool != null) {
 			pool.setNameid(newname);
 			CKConnPool existpool = ckPoolByNodeName.put(newname, pool);
-			if (existpool != null && pool != existpool) {
+			if (existpool != null && pool != existpool && !StringUtils.equals(existpool.getNameid(), pool.nameid)) {
 				log.error("stop exist pool for:" + existpool.getNameid() + ":" + existpool.getIp() + ":"
 						+ existpool.getPort());
 				existpool.setStop(true);

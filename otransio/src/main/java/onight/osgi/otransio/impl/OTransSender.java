@@ -74,7 +74,9 @@ public class OTransSender extends FutureSender {
 
 				@Override
 				public void onFinished(FramePacket rfp) {
-					rfp.genBodyBytes();
+					if(rfp.getBody() == null){
+						rfp.genBodyBytes();
+					}
 					cb.onSuccess(rfp);
 				}
 			});

@@ -36,6 +36,8 @@ public class OutgoingSessionManager {
 	OClient client;
 
 	MSessionSets mss;
+	
+	@Getter
 	CheckHealth ck;
 	@Getter
 	NewConnCheckHealth nck;
@@ -137,49 +139,49 @@ public class OutgoingSessionManager {
 		}
 	}
 
-	public RemoteModuleSession addIncomming(final String nodename, final Connection<?> conn)
-			throws UnAuthorizedConnectionException {
-		RemoteModuleSession rms = osmStore.get(conn);
-		if (rms == null) {
-			synchronized (nodename.intern()) {
-				PSession ms = mss.byNodeName(nodename);
-				if (ms != null) {
-					rms = (RemoteModuleSession) ms;
-					log.debug("add exist connection:uid={},peer={}" , nodename , conn.getPeerAddress());
-					rms.addConnection(conn);
-					osmStore.set(conn, rms);
-					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
-						@Override
-						public void onClosed(Closeable closeable, ICloseType type) throws IOException {
-							try {
-								log.debug("remove attr from name=" + nodename + "conn:" + conn.getPeerAddress());
-								osmStore.remove(conn);
-							} catch (Exception e) {
-							}
-						}
-					});
-				} else {
-					log.info("unknow connection from nodename:" + nodename);
-					throw new UnAuthorizedConnectionException("unknow connnection node name:" + nodename);
-					// NodeInfo ni = NodeInfo.fromName(nodename, conn);
-					// CKConnPool pool = nodePool.getPool(nodename);// unknow
-					// // modules
-					// if (pool == null) {
-					// pool = nodePool.addPool(client, nodename, ni.getAddr(),
-					// ni.getPort(), ni.getCore(), ni.getMax(),
-					// mss);
-					// ck.addCheckHealth(nodePool,pool);
-					// }
-					// log.debug("add new connection:uid=" + nodename + ",peer="
-					// + conn.getPeerAddress());
-					// rms = mss.addRemoteSession(ni, pool);
-				}
-
-			}
-		}
-
-		return rms;
-	}
+//	public RemoteModuleSession addIncomming(final String nodename, final Connection<?> conn)
+//			throws UnAuthorizedConnectionException {
+//		RemoteModuleSession rms = osmStore.get(conn);
+//		if (rms == null) {
+//			synchronized (nodename.intern()) {
+//				PSession ms = mss.byNodeName(nodename);
+//				if (ms != null) {
+//					rms = (RemoteModuleSession) ms;
+//					log.error("add exist connection:uid={},peer={}" , nodename , conn.getPeerAddress());
+//					rms.addConnection(conn);
+//					osmStore.set(conn, rms);
+//					conn.addCloseListener(new CloseListener<Closeable, ICloseType>() {
+//						@Override
+//						public void onClosed(Closeable closeable, ICloseType type) throws IOException {
+//							try {
+//								log.debug("remove attr from name=" + nodename + "conn:" + conn.getPeerAddress());
+//								osmStore.remove(conn);
+//							} catch (Exception e) {
+//							}
+//						}
+//					});
+//				} else {
+//					log.info("unknow connection from nodename:" + nodename);
+//					throw new UnAuthorizedConnectionException("unknow connnection node name:" + nodename);
+//					// NodeInfo ni = NodeInfo.fromName(nodename, conn);
+//					// CKConnPool pool = nodePool.getPool(nodename);// unknow
+//					// // modules
+//					// if (pool == null) {
+//					// pool = nodePool.addPool(client, nodename, ni.getAddr(),
+//					// ni.getPort(), ni.getCore(), ni.getMax(),
+//					// mss);
+//					// ck.addCheckHealth(nodePool,pool);
+//					// }
+//					// log.debug("add new connection:uid=" + nodename + ",peer="
+//					// + conn.getPeerAddress());
+//					// rms = mss.addRemoteSession(ni, pool);
+//				}
+//
+//			}
+//		}
+//
+//		return rms;
+//	}
 
 	public synchronized RemoteModuleSession createOutgoingSS(NodeInfo node, CKConnPool ckpool)
 			throws NoneServerException {

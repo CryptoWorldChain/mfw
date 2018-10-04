@@ -89,7 +89,8 @@ public class RemoteModuleSession extends PSession {
 		sb.append(",\"addr\":\"").append(nodeInfo.getAddr()).append("\"");
 		sb.append(",\"port\":\"").append(nodeInfo.getPort()).append("\"");
 		sb.append(",\"totalconn\":").append(connsPool.size());
-		sb.append(",\"freeconn\":").append(connsPool.getActiveObjs().size());
+		sb.append(",\"freeconn\":").append(connsPool.getActiveObjs().size()+writerQ.getGreenPool().size()
+				+writerQ.getPioPool().size());
 		sb.append(",\"queue\":[").append(writerQ.getGreen_queue().size()).append(",")
 		.append(writerQ.getPio_queue().size()).append(",")
 		.append(writerQ.getQueue().size()).append("]");
@@ -144,7 +145,7 @@ public class RemoteModuleSession extends PSession {
 				pack.getExtHead().append(OSocketImpl.PACK_TO+"_D", to_pack);
 			}
 			mss.packMaps.put(packid, handler);
-			log.debug("sendSyncPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
+			log.error("sendSyncPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
 		} else {
 			rehandler = handler;
 		}

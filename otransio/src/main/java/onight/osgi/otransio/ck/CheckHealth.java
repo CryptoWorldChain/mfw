@@ -72,7 +72,7 @@ public class CheckHealth {
 						if (!lastCheckHealthMS.isSet(conn.getAttributes())
 								|| lastCheckHealthMS.get(conn.getAttributes()) - System.currentTimeMillis() > delay
 										* 1000) {
-							// conn.write(hbpack);
+							 conn.write(hbpack);
 							lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
 							// log.trace("!!CheckHealth TO:" +
 							// conn.getPeerAddress() + ",From=" +

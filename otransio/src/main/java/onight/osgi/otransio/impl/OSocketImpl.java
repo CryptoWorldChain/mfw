@@ -165,7 +165,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			} else {
 				rmb.getNodeInfo().setNodeName(node_from);
 			}
-			log.debug("Get New Login Connection From:" + rmb.getNodeInfo().getUname() + ",nodeid=" + node_from);
+			log.error("Get New Login Connection From:" + rmb.getNodeInfo().getUname() + ",nodeid=" + node_from);
 			if (node_from != null) {
 				PSession session = mss.byNodeName(node_from);
 				if (session != null && session instanceof RemoteModuleSession) {
@@ -174,7 +174,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					CKConnPool ckpool = rms.getConnsPool();
 					ckpool.setIp(rmb.getNodeInfo().getAddr());
 					ckpool.setPort(rmb.getNodeInfo().getPort());
-//					rms.getWriterQ().resendBacklogs();
+					// rms.getWriterQ().resendBacklogs();
 				} else {
 					try {
 						osm.createOutgoingSSByURI(rmb.getNodeInfo(), node_from);
@@ -230,38 +230,32 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			ms = mss.byNodeName(destTO);
 			if (ms == null) {// not found
 				String uri = pack.getExtStrProp(PACK_URI);
-				if (StringUtils.isNotBlank(uri)) {
-					NodeInfo node = NodeInfo.fromURI(uri, destTO);
-					try {
-						if (StringUtils.equalsIgnoreCase(node.getAddr(), NodeHelper.getCurrNodeListenOutAddr())
-								&& node.getPort() == NodeHelper.getCurrNodeListenOutPort()) {
-							ms = mss.getLocalsessionByModule().get(pack.getModule());
-							log.debug("get Local new Connection:" + uri + ":name=" + destTO + ",from=" + from);
+				synchronized (destTO.intern()) {
+					ms = mss.byNodeName(destTO);
+					if (ms == null) {// second entry
+						if (StringUtils.isNotBlank(uri)) {
+							NodeInfo node = NodeInfo.fromURI(uri, destTO);
+							try {
+								if (StringUtils.equalsIgnoreCase(node.getAddr(), NodeHelper.getCurrNodeListenOutAddr())
+										&& node.getPort() == NodeHelper.getCurrNodeListenOutPort()) {
+									ms = mss.getLocalsessionByModule().get(pack.getModule());
+									log.debug("get Local new Connection:" + uri + ":name=" + destTO + ",from=" + from);
 
-						} else {
-							log.debug("creating new Connection:" + uri + ":name=" + destTO + ",from=" + from);
+								} else {
+									log.debug("creating new Connection:" + uri + ":name=" + destTO + ",from=" + from);
 
-							ms = osm.createOutgoingSSByURI(node, from);
+									ms = osm.createOutgoingSSByURI(node, from);
+								}
+							} catch (Exception e) {
+								log.error("route ERROR:" + e.getMessage(), e);
+								throw new MessageException(e);
+							}
 						}
-					} catch (Exception e) {
-						log.error("route ERROR:" + e.getMessage(), e);
-						throw new MessageException(e);
 					}
 				}
 			}
 		} else {// re
-			if (conn != null) {
-				if (StringUtils.isNotBlank(from)) {
-					try {
-						osm.addIncomming(from, conn);
-					} catch (UnAuthorizedConnectionException e) {
-						// conn.close();
-					}
-				}
-				ms = mss.getLocalsessionByModule().get(pack.getModule());
-			} else {
-				ms = mss.getLocalsessionByModule().get(pack.getModule());
-			}
+			ms = mss.getLocalsessionByModule().get(pack.getModule());
 		}
 		if (ms != null) {
 			if (ms instanceof LocalModuleSession) {
@@ -278,7 +272,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			}
 		} else {
 			// 没有找到对应的消息
-			log.debug("UnknowModule:" + pack.getModule() + ",CMD=" + pack.getCMD() + ",from=" + from + ",conn=" + conn
+			log.error("UnknowModule:" + pack.getModule() + ",CMD=" + pack.getCMD() + ",from=" + from + ",conn=" + conn
 					+ ",destTO=" + destTO);
 			if (pack.isSync()) {
 				handler.onFinished(

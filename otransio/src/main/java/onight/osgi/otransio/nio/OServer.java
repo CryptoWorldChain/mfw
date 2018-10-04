@@ -53,6 +53,7 @@ public class OServer {
 		transport.setWorkerThreadPoolConfig(wtpc);
 		transport.setIOStrategy(LeaderFollowerNIOStrategy.getInstance());
 		transport.setTcpNoDelay(true);
+		transport.setKeepAlive(true);
 		transport.setOptimizedForMultiplexing(true);
 		try {
 			// binding transport to start listen on certain host and port
