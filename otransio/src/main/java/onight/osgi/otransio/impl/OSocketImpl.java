@@ -97,7 +97,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	transient OutgoingSessionManager osm;
 	// transient ThreadPoolExecutor localPool;
 
-	transient ConcurrentHashMap<String, PacketQueue> queueBybcuid = new ConcurrentHashMap<>();
+//	transient ConcurrentHashMap<String, PacketQueue> queueBybcuid = new ConcurrentHashMap<>();
 	transient LocalMessageProcessor localProcessor = new LocalMessageProcessor();
 
 	public String getHostName() {
@@ -308,19 +308,20 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	public synchronized void tryDropConnection(String packNameOrId) {
 		mss.dropSession(packNameOrId, true);
-		PacketQueue queue = queueBybcuid.remove(packNameOrId);
-		if (queue != null) {
-			queue.setStop(true);
-		}
+//		PacketQueue queue = queueBybcuid.remove(packNameOrId);
+//		if (queue != null) {
+//			queue.setStop(true);
+//		}
 	}
 
 	public synchronized void renameSession(String oldname, String newname) {
 		if (!StringUtils.equals(oldname, newname)) {
+			log.error("renameSession:"+oldname+"==>"+newname);
 			mss.renameSession(oldname, newname);
-			PacketQueue queue = queueBybcuid.remove(oldname);
-			if (queue != null) {
-				queueBybcuid.put(newname, queue);
-			}
+//			PacketQueue queue = queueBybcuid.remove(oldname);
+//			if (queue != null) {
+//				queueBybcuid.put(newname, queue);
+//			}
 		}
 	}
 

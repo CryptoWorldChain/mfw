@@ -40,7 +40,7 @@ public class RemoteModuleSession extends PSession {
 //	AtomicLong recvCounter = new AtomicLong(0);
 
 	AtomicLong counter = new AtomicLong(0);
-
+	
 	PacketQueue writerQ;
 	final String rand = "r_" + String.format("%05d", (int) (Math.random() * 100000)) + "_";
 
@@ -52,10 +52,11 @@ public class RemoteModuleSession extends PSession {
 	private String genPackID() {
 		return rand + "_" + System.currentTimeMillis() + "_" + counter.incrementAndGet();
 	}
-	public String getJsonStr() {
+	public String getJsonStr(String key) {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{\"remoteid\":\"").append(nodeInfo.getNodeName()).append("\"");
 		sb.append(",\"alias\":\"").append(connsPool.getSubnodeURI()).append("\"");
+		sb.append(",\"key\":\"").append(key).append("\"");
 		sb.append(",\"channels\":").append(connsPool.size());
 //		sb.append(",\"recvcc\":").append(recvCounter.get()).append("");
 //		sb.append(",\"sentcc\":").append(sendCounter.get()).append("");
@@ -82,9 +83,10 @@ public class RemoteModuleSession extends PSession {
 		sb.append("}");
 		return sb.toString();
 	}
-	public String getQueueJsonStr() {
+	public String getQueueJsonStr(String key) {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{\"bcuid\":\"").append(nodeInfo.getNodeName()).append("\"");
+		sb.append(",\"key\":\"").append(key).append("\"");
 		sb.append(",\"uri\":\"").append(nodeInfo.getURI()).append("\"");
 		sb.append(",\"alias\":\"").append(connsPool.getSubnodeURI()).append("\"");
 		sb.append(",\"addr\":\"").append(nodeInfo.getAddr()).append("\"");

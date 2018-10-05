@@ -1,6 +1,7 @@
 package onight.osgi.otransio.sm;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
@@ -9,7 +10,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.lang3.StringUtils;
 
 import lombok.Data;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.impl.NodeInfo;
@@ -131,7 +131,7 @@ public class MSessionSets {
 			if (i > 0)
 				sb.append(",");
 			if (kv.getValue() instanceof RemoteModuleSession) {
-				sb.append(((RemoteModuleSession) kv.getValue()).getQueueJsonStr());
+				sb.append(((RemoteModuleSession) kv.getValue()).getQueueJsonStr(kv.getKey()));
 				i++;
 			} else {
 			}
@@ -157,7 +157,7 @@ public class MSessionSets {
 			if (i > 0)
 				sb.append(",");
 			if (kv.getValue() instanceof RemoteModuleSession) {
-				sb.append(((RemoteModuleSession) kv.getValue()).getJsonStr());
+				sb.append(((RemoteModuleSession) kv.getValue()).getJsonStr(kv.getKey()));
 				i++;
 			} else {
 			}
@@ -181,13 +181,36 @@ public class MSessionSets {
 		return sessionByNodeName.get(name);
 	}
 
+	public synchronized void updateOrPutSession(NodeInfo node, RemoteModuleSession session) {
+		String oldname = null;
+		for (Map.Entry<String, PSession> kv : sessionByNodeName.entrySet()) {
+			if (kv.getValue() instanceof RemoteModuleSession) {
+				RemoteModuleSession lps = (RemoteModuleSession) kv.getValue();
+				if (lps.nodeInfo.getURI().equals(node.getURI())&&!node.getNodeName().equals(kv.getKey())) {
+					//
+					log.error("updateSession to new::" + kv.getKey() + "==>" + node.getNodeName());
+					oldname=kv.getKey();
+					break;
+				}
+			}
+		}
+		if(oldname!=null){
+			PSession oldsession = sessionByNodeName.remove(oldname);
+			log.error("remove oldsession:"+oldsession+"===>"+session);
+			sessionByNodeName.put(node.getNodeName(), session);
+		}else{
+			sessionByNodeName.put(node.getNodeName(), session);
+		}
+	}
+
 	public synchronized RemoteModuleSession addRemoteSession(NodeInfo node, CKConnPool ckpool) {
 		PSession psession = sessionByNodeName.get(node.getNodeName());
 		RemoteModuleSession session = null;
 		if (psession == null) {
-			String uri=node.getURI();
-			session=sessionByURI.get(uri);
-			if(session!=null){
+			String uri = node.getURI();
+			session = sessionByURI.get(uri);
+			if (session != null) {
+				updateOrPutSession(node, session);
 				return session;
 			}
 			session = new RemoteModuleSession(node, this, ckpool);
@@ -230,15 +253,21 @@ public class MSessionSets {
 			log.error("dropSession:" + name + ",sendDD=" + sendDDNode);
 			PSession session = sessionByNodeName.remove(name);
 			osm.rmNetPool(name);
-			try {
-				throw new RuntimeException("log drop:" + name);
-			} catch (RuntimeException t) {
-				log.error("drop session,", t);
-			}
 			if (session != null) {
-				dropCounter.incrementAndGet();
 				if (session instanceof RemoteModuleSession) {
-					((RemoteModuleSession) session).destroy(sendDDNode);
+					RemoteModuleSession rms = (RemoteModuleSession) session;
+					if (StringUtils.equals(rms.getNodeInfo().getAddr(), rmb.getNodeInfo().getAddr())
+							&& rms.getNodeInfo().getPort() == rmb.getNodeInfo().getPort()) {
+						log.error("drop local session:" + rms.getNodeInfo().getURI());
+					} else {
+						dropCounter.incrementAndGet();
+						try {
+							throw new RuntimeException("log drop:" + name);
+						} catch (RuntimeException t) {
+							log.error("drop session,", t);
+						}
+					}
+					rms.destroy(sendDDNode);
 				}
 			}
 

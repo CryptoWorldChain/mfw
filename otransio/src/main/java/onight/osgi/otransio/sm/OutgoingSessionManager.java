@@ -127,7 +127,7 @@ public class OutgoingSessionManager {
 		}
 		RemoteModuleSession pms = mss.getSessionByURI().get(node.getURI());
 		if (pms != null) {
-			mss.getSessionByNodeName().put(node.getNodeName(),pms);
+			mss.updateOrPutSession(node, pms);
 			return pms;
 		}
 		CKConnPool pool = addNetPool(node.getNodeName(), node.getAddr() + ":" + node.getPort(), 0, 0);
