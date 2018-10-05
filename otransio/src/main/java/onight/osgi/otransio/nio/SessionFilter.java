@@ -97,7 +97,7 @@ public class SessionFilter extends BaseFilter {
 						if (conn.isOpen()) {
 							conn.write(vpacket);
 						} else {
-							String packfrom = vpacket.getExtStrProp(OSocketImpl.PACK_FROM);
+							String packfrom = pack.getExtStrProp(OSocketImpl.PACK_FROM);
 							// log.debug("get Pack callback from :" + packfrom);
 							vpacket.putHeader(OSocketImpl.PACK_TO, packfrom);
 							vpacket.getFixHead().setSync(false);
@@ -127,6 +127,7 @@ public class SessionFilter extends BaseFilter {
 
 				@Override
 				public void onFailed(Exception error) {
+					log.error("sync callback error:"+pack,error);
 					conn.write(PacketHelper.toPBErrorReturn(pack, error.getLocalizedMessage(), error.getMessage()));
 				}
 			};

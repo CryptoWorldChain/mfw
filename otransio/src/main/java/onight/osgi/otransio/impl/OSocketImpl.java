@@ -222,7 +222,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				log.debug("response from = " + ofrom + ",oto=" + oto + ",opackid=" + opackid);
 				future_handler.onFinished(pack);
 			} else {
-				log.warn("unknow ack:" + expackid + ",packid=" + pack.getExtProp(mss.getPackIDKey()));
+				log.error("unknow ack:" + expackid + ",packid=" + pack.getExtProp(mss.getPackIDKey()));
 				// handler.onFinished(PacketHelper.toPBReturn(pack, new
 				// LoopPackBody(mss.getPackIDKey(), pack)));
 			}

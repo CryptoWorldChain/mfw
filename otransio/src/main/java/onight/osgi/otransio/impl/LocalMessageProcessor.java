@@ -53,6 +53,7 @@ public class LocalMessageProcessor {
 				ms.onPacket(pack, handler);
 			} catch (Exception e) {
 				log.debug("error in runing local onPacket:" + e.getMessage(), e);
+				handler.onFailed(e);
 			} finally {
 				if (future != null) {
 					future.result("F");
