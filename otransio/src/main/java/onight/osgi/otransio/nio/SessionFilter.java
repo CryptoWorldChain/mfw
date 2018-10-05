@@ -88,6 +88,8 @@ public class SessionFilter extends BaseFilter {
 		CompleteHandler handler = null;
 		if (pack.isSync() && !pack.isResp()) {// 需要等待回应的
 			final Connection conn = ctx.getConnection();
+			final String packfrom = pack.getExtStrProp(OSocketImpl.PACK_FROM);
+
 			handler = new CompleteHandler() {
 				@Override
 				public void onFinished(FramePacket vpacket) {
@@ -95,9 +97,9 @@ public class SessionFilter extends BaseFilter {
 					vpacket.getExtHead().genBytes();
 					try {
 						if (conn.isOpen()) {
+							vpacket.putHeader(OSocketImpl.PACK_FROM, oimpl.getMss().getRmb().getNodeInfo().getNodeName());
 							conn.write(vpacket);
 						} else {
-							String packfrom = pack.getExtStrProp(OSocketImpl.PACK_FROM);
 							// log.debug("get Pack callback from :" + packfrom);
 							vpacket.putHeader(OSocketImpl.PACK_TO, packfrom);
 							vpacket.getFixHead().setSync(false);

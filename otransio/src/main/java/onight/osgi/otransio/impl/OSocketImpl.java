@@ -97,7 +97,8 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	transient OutgoingSessionManager osm;
 	// transient ThreadPoolExecutor localPool;
 
-//	transient ConcurrentHashMap<String, PacketQueue> queueBybcuid = new ConcurrentHashMap<>();
+	// transient ConcurrentHashMap<String, PacketQueue> queueBybcuid = new
+	// ConcurrentHashMap<>();
 	transient LocalMessageProcessor localProcessor = new LocalMessageProcessor();
 
 	public String getHostName() {
@@ -219,10 +220,15 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
 				Object ofrom = pack.getExtHead().remove(OSocketImpl.PACK_FROM);
 				Object oto = pack.getExtHead().remove(OSocketImpl.PACK_TO);
-				log.debug("response from = " + ofrom + ",oto=" + oto + ",opackid=" + opackid);
+				log.error("response from = " + ofrom + ",oto=" + oto + ",opackid=" + opackid + ",gcmd="
+						+ pack.getGlobalCMD() + ",conn=" + conn + ",pack=" + pack);
 				future_handler.onFinished(pack);
 			} else {
-				log.error("unknow ack:" + expackid + ",packid=" + pack.getExtProp(mss.getPackIDKey()));
+				if (pack.getBody() != null && pack.getBody().length > 0) {
+					Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
+					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getGlobalCMD() + ",conn=" + conn + ",pack="
+							+ pack);
+				}
 				// handler.onFinished(PacketHelper.toPBReturn(pack, new
 				// LoopPackBody(mss.getPackIDKey(), pack)));
 			}
@@ -272,12 +278,12 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					LocalModuleSession lms = mss.getLocalsessionByModule().get(pack.getModule());
 					localProcessor.route2Local(pack, handler, lms);
 				} else {
-					if (conn != null && destTO != null) {//change node bcuid
+					if (conn != null && destTO != null) {// change node bcuid
 						if (connectBCUID.isSet(conn)) {
 							String orgbcuid = connectBCUID.get(conn);
 							if (!StringUtils.equals(orgbcuid, destTO)) {
-								log.error(
-										"connection my change pack_from:" + orgbcuid + "==>" + destTO + ",conn=" + conn);
+								log.error("connection my change pack_from:" + orgbcuid + "==>" + destTO + ",conn="
+										+ conn);
 								connectBCUID.set(conn, destTO);
 								rms.addConnection(conn);
 								PSession oldms = mss.byNodeName(orgbcuid);
@@ -286,7 +292,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 									((RemoteModuleSession) oldms).removeConnection(conn);
 								}
 							}
-						}else{
+						} else {
 							connectBCUID.set(conn, destTO);
 						}
 					}
@@ -308,20 +314,20 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	public synchronized void tryDropConnection(String packNameOrId) {
 		mss.dropSession(packNameOrId, true);
-//		PacketQueue queue = queueBybcuid.remove(packNameOrId);
-//		if (queue != null) {
-//			queue.setStop(true);
-//		}
+		// PacketQueue queue = queueBybcuid.remove(packNameOrId);
+		// if (queue != null) {
+		// queue.setStop(true);
+		// }
 	}
 
 	public synchronized void renameSession(String oldname, String newname) {
 		if (!StringUtils.equals(oldname, newname)) {
-			log.error("renameSession:"+oldname+"==>"+newname);
+			log.error("renameSession:" + oldname + "==>" + newname);
 			mss.renameSession(oldname, newname);
-//			PacketQueue queue = queueBybcuid.remove(oldname);
-//			if (queue != null) {
-//				queueBybcuid.put(newname, queue);
-//			}
+			// PacketQueue queue = queueBybcuid.remove(oldname);
+			// if (queue != null) {
+			// queueBybcuid.put(newname, queue);
+			// }
 		}
 	}
 
