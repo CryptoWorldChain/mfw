@@ -184,7 +184,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					// rms.getWriterQ().resendBacklogs();
 				} else {
 					try {
-						osm.createOutgoingSSByURI(rmb.getNodeInfo(), node_from);
+						osm.createOutgoingSSByURI(rmb.getNodeInfo());
 					} catch (NoneServerException e) {
 					}
 				}
@@ -249,7 +249,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 									log.debug("get Local new Connection:" + uri + ":name=" + destTO + ",from=" + from);
 								} else {
 									log.debug("creating new Connection:" + uri + ":name=" + destTO + ",from=" + from);
-									ms = osm.createOutgoingSSByURI(node, from);
+									ms = osm.createOutgoingSSByURI(node);
 								}
 							} catch (Exception e) {
 								log.error("route ERROR:" + e.getMessage(), e);
@@ -272,13 +272,13 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 					LocalModuleSession lms = mss.getLocalsessionByModule().get(pack.getModule());
 					localProcessor.route2Local(pack, handler, lms);
 				} else {
-					if (conn != null && from != null) {
+					if (conn != null && destTO != null) {//change node bcuid
 						if (connectBCUID.isSet(conn)) {
 							String orgbcuid = connectBCUID.get(conn);
-							if (!StringUtils.equals(orgbcuid, from)) {
+							if (!StringUtils.equals(orgbcuid, destTO)) {
 								log.error(
-										"connection my change pack_from:" + orgbcuid + "==>" + from + ",conn=" + conn);
-								connectBCUID.set(conn, from);
+										"connection my change pack_from:" + orgbcuid + "==>" + destTO + ",conn=" + conn);
+								connectBCUID.set(conn, destTO);
 								rms.addConnection(conn);
 								PSession oldms = mss.byNodeName(orgbcuid);
 								if (oldms instanceof RemoteModuleSession) {
@@ -286,7 +286,8 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 									((RemoteModuleSession) oldms).removeConnection(conn);
 								}
 							}
-
+						}else{
+							connectBCUID.set(conn, destTO);
 						}
 					}
 

@@ -84,7 +84,8 @@ public class RemoteModuleSession extends PSession {
 	}
 	public String getQueueJsonStr() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("{\"remoteid\":\"").append(nodeInfo.getNodeName()).append("\"");
+		sb.append("{\"bcuid\":\"").append(nodeInfo.getNodeName()).append("\"");
+		sb.append(",\"uri\":\"").append(nodeInfo.getURI()).append("\"");
 		sb.append(",\"alias\":\"").append(connsPool.getSubnodeURI()).append("\"");
 		sb.append(",\"addr\":\"").append(nodeInfo.getAddr()).append("\"");
 		sb.append(",\"port\":\"").append(nodeInfo.getPort()).append("\"");

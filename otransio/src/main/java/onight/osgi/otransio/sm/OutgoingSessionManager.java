@@ -118,7 +118,7 @@ public class OutgoingSessionManager {
 		this.ready = true;
 	}
 
-	public synchronized RemoteModuleSession createOutgoingSSByURI(NodeInfo node, String from_bcuid)
+	public synchronized RemoteModuleSession createOutgoingSSByURI(NodeInfo node)
 			throws NoneServerException {
 		PSession ms = mss.byNodeName(node.getNodeName());
 		if (ms != null && ms instanceof RemoteModuleSession) {
@@ -127,12 +127,11 @@ public class OutgoingSessionManager {
 		}
 		RemoteModuleSession pms = mss.getSessionByURI().get(node.getURI());
 		if (pms != null) {
-			mss.getSessionByNodeName().put(from_bcuid,pms);
+			mss.getSessionByNodeName().put(node.getNodeName(),pms);
 			return pms;
 		}
 		CKConnPool pool = addNetPool(node.getNodeName(), node.getAddr() + ":" + node.getPort(), 0, 0);
-		pool.setNameid(from_bcuid);
-		return createOutgoingSS(node, pool,from_bcuid);
+		return createOutgoingSS(node, pool);
 	}
 
 	protected final Attribute<RemoteModuleSession> osmStore = Grizzly.DEFAULT_ATTRIBUTE_BUILDER
@@ -195,13 +194,13 @@ public class OutgoingSessionManager {
 	// return rms;
 	// }
 
-	public synchronized RemoteModuleSession createOutgoingSS(NodeInfo node, CKConnPool ckpool,String bcuid)
+	public synchronized RemoteModuleSession createOutgoingSS(NodeInfo node, CKConnPool ckpool)
 			throws NoneServerException {
 		PSession ms = mss.byNodeName(node.getNodeName());
 		if (ms != null) {
 			log.warn("Override Existing Remote nodeIdx=" + node.getNodeName() + ",ms=" + ms);
 		}
-		RemoteModuleSession rms = mss.addRemoteSession(node, ckpool,bcuid);
+		RemoteModuleSession rms = mss.addRemoteSession(node, ckpool);
 
 		return rms;
 	}

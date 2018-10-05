@@ -181,7 +181,7 @@ public class MSessionSets {
 		return sessionByNodeName.get(name);
 	}
 
-	public synchronized RemoteModuleSession addRemoteSession(NodeInfo node, CKConnPool ckpool,String bcuid) {
+	public synchronized RemoteModuleSession addRemoteSession(NodeInfo node, CKConnPool ckpool) {
 		PSession psession = sessionByNodeName.get(node.getNodeName());
 		RemoteModuleSession session = null;
 		if (psession == null) {
@@ -192,7 +192,7 @@ public class MSessionSets {
 			}
 			session = new RemoteModuleSession(node, this, ckpool);
 			psession = session;
-			sessionByNodeName.put(bcuid, psession);
+			sessionByNodeName.put(node.getNodeName(), psession);
 			sessionByURI.put(uri, session);
 			// session.setConnsPool(ckpool);
 			// osm.ck.addCheckHealth(ckpool);
