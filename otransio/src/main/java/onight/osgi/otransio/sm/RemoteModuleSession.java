@@ -145,7 +145,7 @@ public class RemoteModuleSession extends PSession {
 				pack.getExtHead().append(OSocketImpl.PACK_TO+"_D", to_pack);
 			}
 			mss.packMaps.put(packid, handler);
-			log.error("sendSyncPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
+//			log.error("sendSyncPack:packid=" + packid + ",maps.size=" + mss.packMaps.size());
 		} else {
 			rehandler = handler;
 		}

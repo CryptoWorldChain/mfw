@@ -75,6 +75,7 @@ public class MSessionSets {
 	OutgoingSessionManager osm;
 
 	HashMap<String, PSession> sessionByNodeName = new HashMap<>();
+	HashMap<String, RemoteModuleSession> sessionByURI = new HashMap<>();
 
 	HashMap<String, LocalModuleSession> localsessionByModule = new HashMap<>();
 
@@ -180,13 +181,19 @@ public class MSessionSets {
 		return sessionByNodeName.get(name);
 	}
 
-	public synchronized RemoteModuleSession addRemoteSession(NodeInfo node, CKConnPool ckpool) {
+	public synchronized RemoteModuleSession addRemoteSession(NodeInfo node, CKConnPool ckpool,String bcuid) {
 		PSession psession = sessionByNodeName.get(node.getNodeName());
 		RemoteModuleSession session = null;
 		if (psession == null) {
+			String uri=node.getURI();
+			session=sessionByURI.get(uri);
+			if(session!=null){
+				return session;
+			}
 			session = new RemoteModuleSession(node, this, ckpool);
 			psession = session;
-			sessionByNodeName.put(node.getNodeName(), psession);
+			sessionByNodeName.put(bcuid, psession);
+			sessionByURI.put(uri, session);
 			// session.setConnsPool(ckpool);
 			// osm.ck.addCheckHealth(ckpool);
 		} //

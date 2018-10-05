@@ -247,10 +247,8 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 										&& node.getPort() == NodeHelper.getCurrNodeListenOutPort()) {
 									ms = mss.getLocalsessionByModule().get(pack.getModule());
 									log.debug("get Local new Connection:" + uri + ":name=" + destTO + ",from=" + from);
-
 								} else {
 									log.debug("creating new Connection:" + uri + ":name=" + destTO + ",from=" + from);
-
 									ms = osm.createOutgoingSSByURI(node, from);
 								}
 							} catch (Exception e) {
@@ -316,10 +314,12 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	}
 
 	public synchronized void renameSession(String oldname, String newname) {
-		mss.renameSession(oldname, newname);
-		PacketQueue queue = queueBybcuid.remove(oldname);
-		if (queue != null) {
-			queueBybcuid.put(newname, queue);
+		if (!StringUtils.equals(oldname, newname)) {
+			mss.renameSession(oldname, newname);
+			PacketQueue queue = queueBybcuid.remove(oldname);
+			if (queue != null) {
+				queueBybcuid.put(newname, queue);
+			}
 		}
 	}
 

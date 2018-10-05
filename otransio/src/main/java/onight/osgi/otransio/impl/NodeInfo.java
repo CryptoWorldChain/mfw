@@ -23,6 +23,9 @@ public class NodeInfo {
 
 	String uname = nodeName + "://" + addr + ":" + port;
 
+	public String getURI(){
+		return addr+":"+port;
+	}
 	// int nodeIdx = NodeHelper.getCurrNodeIdx();
 	public static NodeInfo fromName(String nodeuid, Connection<?> conn) {
 		InetSocketAddress addr = (InetSocketAddress) conn.getPeerAddress();
