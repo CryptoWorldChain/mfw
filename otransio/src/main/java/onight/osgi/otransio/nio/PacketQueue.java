@@ -219,11 +219,10 @@ public class PacketQueue implements Runnable {
 //						log.error("TTT-remove not open connection:pool=" + pool.getActiveObjs().size() + "/"
 //								+ pool.size() + ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name
 //								+ ",conn=" + conn);
-
 						ckpool.removeObject(conn);
 					}
 					log.error("TTT-Create one more connection:pool=" + pool.getActiveObjs().size() + "/" + pool.size()
-							+ ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name);
+							+ ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name+",conn="+conn);
 					conn = ckpool.ensureConnection();// try to create new one
 				}
 				if (conn != null && conn.isOpen()) {
