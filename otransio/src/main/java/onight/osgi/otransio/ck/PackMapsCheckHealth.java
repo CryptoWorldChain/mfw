@@ -32,7 +32,7 @@ public class PackMapsCheckHealth implements Runnable {
 					if (times.length > 2) {
 						long startTime = Long.parseLong(times[times.length - 2]);
 						if (System.currentTimeMillis() - startTime > mss.getResendTimeOutMS()) {
-							log.debug("remove timeout sync pack:" + key + ",past["
+							log.error("remove timeout sync pack:" + key + ",past["
 									+ (System.currentTimeMillis() - startTime) + "]");
 							rmkeys.add(key);
 						}

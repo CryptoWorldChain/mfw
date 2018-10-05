@@ -45,10 +45,10 @@ public class CheckHealth {
 	public synchronized void addCheckHealth(final Connection conn) {
 		if (conn == null)
 			return;
-		if (lastCheckHealthMS.isSet(conn.getAttributes())) {
+		if (lastCheckHealthMS.isSet(conn)) {
 			return;
 		}
-		lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
+		lastCheckHealthMS.set(conn, System.currentTimeMillis());
 
 		exec.scheduleWithFixedDelay(new Runnable() {
 			@Override
@@ -59,11 +59,12 @@ public class CheckHealth {
 								+ ",reason=" + conn.getCloseReason().getType() + ":"
 								+ conn.getCloseReason().getCause());
 						conn.close();
-						lastCheckHealthMS.remove(conn);
 						exec.remove(this);
+						lastCheckHealthMS.remove(conn);
 					} else {
-						if (!lastCheckHealthMS.isSet(conn.getAttributes())
-								|| lastCheckHealthMS.get(conn.getAttributes()) - System.currentTimeMillis() > delay
+						Long lastUpdate =  lastCheckHealthMS.get(conn);
+						if (lastUpdate==null
+								|| lastUpdate - System.currentTimeMillis() > delay
 										* 1000) {
 							FramePacket hbpack = new FramePacket();
 							FixHeader header = new FixHeader();
@@ -77,7 +78,7 @@ public class CheckHealth {
 							hbpack.putHeader(OSocketImpl.PACK_FROM, mss.getRmb().getNodeInfo().getNodeName());
 
 							conn.write(hbpack);
-							lastCheckHealthMS.set(conn.getAttributes(), System.currentTimeMillis());
+							lastCheckHealthMS.set(conn, System.currentTimeMillis());
 							// log.trace("!!CheckHealth TO:" +
 							// conn.getPeerAddress() + ",From=" +
 							// conn.getLocalAddress()
