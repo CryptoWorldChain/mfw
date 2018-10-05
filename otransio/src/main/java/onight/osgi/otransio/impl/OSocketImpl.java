@@ -224,10 +224,12 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 						+ pack.getGlobalCMD() + ",conn=" + conn + ",pack=" + pack);
 				future_handler.onFinished(pack);
 			} else {
+				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
 				if (pack.getBody() != null && pack.getBody().length > 0) {
-					Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
 					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getGlobalCMD() + ",conn=" + conn + ",pack="
 							+ pack);
+				}else{
+					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getGlobalCMD() + ",conn=" + conn);
 				}
 				// handler.onFinished(PacketHelper.toPBReturn(pack, new
 				// LoopPackBody(mss.getPackIDKey(), pack)));
