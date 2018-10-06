@@ -324,7 +324,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	public synchronized void renameSession(String oldname, String newname) {
 		if (!StringUtils.equals(oldname, newname)) {
-			log.error("renameSession:" + oldname + "==>" + newname);
+			log.debug("renameSession:" + oldname + "==>" + newname);
 			mss.renameSession(oldname, newname);
 			// PacketQueue queue = queueBybcuid.remove(oldname);
 			// if (queue != null) {

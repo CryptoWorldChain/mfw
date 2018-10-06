@@ -188,7 +188,7 @@ public class MSessionSets {
 				RemoteModuleSession lps = (RemoteModuleSession) kv.getValue();
 				if (lps.nodeInfo.getURI().equals(node.getURI())&&!node.getNodeName().equals(kv.getKey())) {
 					//
-					log.error("updateSession to new::" + kv.getKey() + "==>" + node.getNodeName());
+					log.debug("updateSession to new::" + kv.getKey() + "==>" + node.getNodeName());
 					oldname=kv.getKey();
 					break;
 				}
@@ -196,7 +196,7 @@ public class MSessionSets {
 		}
 		if(oldname!=null){
 			PSession oldsession = sessionByNodeName.remove(oldname);
-			log.error("remove oldsession:"+oldsession+"===>"+session);
+			log.debug("remove oldsession:"+oldsession+"===>"+session);
 			sessionByNodeName.put(node.getNodeName(), session);
 		}else{
 			sessionByNodeName.put(node.getNodeName(), session);
