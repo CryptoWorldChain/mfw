@@ -37,7 +37,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	int max;
 	boolean stop = false;
 	String subnodeURI = "";
-//	String from_bcuid = "";
+	// String from_bcuid = "";
 
 	ArrayList<NodeInfo> subNodes = new ArrayList<>();
 
@@ -94,16 +94,23 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 
 	public Connection<?> ensureConnection() throws MessageException {
 		Connection<?> conn = null;
-		while ((conn = borrow()) != null) {
-			if (conn.isOpen()) {
+		int trytimes = getActiveObjs().size();
+		for (int i = 0; i < trytimes; i++) {
+			conn = borrow();
+			if (conn == null) {
+				log.error("get a null conn:" + getActiveObjs().size() + ",try=" + trytimes);
+			}
+			else if(conn.isOpen()){
 				return conn;
-			} else {
-				removeObject(conn);
+			}else{
+				log.error("remove close connection:"+conn+",size=F" + getActiveObjs().size() + ",try=" + trytimes);
 			}
 		}
 		conn = createOneConnection(1, 10);
 		if (conn != null) {
 			mss.getOsm().getCk().addCheckHealth(conn);
+		}else{
+			log.error("cannot get more Connection:cursize=" + size() + ",max=" + max);
 		}
 		return conn;
 	}

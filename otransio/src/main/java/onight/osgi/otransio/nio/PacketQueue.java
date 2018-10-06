@@ -188,8 +188,8 @@ public class PacketQueue implements Runnable {
 					tryDirectSendPacket(pio_queue, pioPool, "pio");
 					failedGetConnection++;
 					log.error("TT1-no more connection for " + name + ",failedcc=" + failedGetConnection + ",pool="
-							+ ckpool.getActiveObjs().size() + "/" + ckpool.size() + ",queuesize=[" + green_queue.size()
-							+ "," + pio_queue.size() + "," + queue.size() + "]");
+							+ ckpool.getActiveObjs().size() + "/" + ckpool.size() + ",conn=" + conn + ",queuesize=["
+							+ green_queue.size() + "," + pio_queue.size() + "," + queue.size() + "]");
 				}
 
 			} catch (Throwable t) {
@@ -208,21 +208,24 @@ public class PacketQueue implements Runnable {
 		PacketWriter writer = null;
 		try {
 			Thread.currentThread().setName("tryDirectSendPacket--" + queuename);
-//			log.error("TTT-tryDirectSendPacket:pool=" + pool.getActiveObjs().size() + "/" + pool.size() + ",queuesize="
-//					+ queue.size() + ",queuename=" + queuename + ",@" + name);
+			// log.error("TTT-tryDirectSendPacket:pool=" +
+			// pool.getActiveObjs().size() + "/" + pool.size() + ",queuesize="
+			// + queue.size() + ",queuename=" + queuename + ",@" + name);
 			long start = System.currentTimeMillis();
 			PacketTuple fp = queue.poll();
 			if (fp != null) {
 				Connection conn = pool.borrow();
 				if (conn == null || !conn.isOpen()) {
 					if (conn != null) {
-//						log.error("TTT-remove not open connection:pool=" + pool.getActiveObjs().size() + "/"
-//								+ pool.size() + ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name
-//								+ ",conn=" + conn);
+						// log.error("TTT-remove not open connection:pool=" +
+						// pool.getActiveObjs().size() + "/"
+						// + pool.size() + ",queuesize=" + queue.size() +
+						// ",queuename=" + queuename + ",@" + name
+						// + ",conn=" + conn);
 						ckpool.removeObject(conn);
 					}
 					log.error("TTT-Create one more connection:pool=" + pool.getActiveObjs().size() + "/" + pool.size()
-							+ ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name+",conn="+conn);
+							+ ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name + ",conn=" + conn);
 					conn = ckpool.ensureConnection();// try to create new one
 				}
 				if (conn != null && conn.isOpen()) {
@@ -231,20 +234,26 @@ public class PacketQueue implements Runnable {
 					ensurePacketID(packet, fp);
 					writer.arrays.add(fp);
 					writer.run();
-//					log.error("TTT-DirectSendPacket " + queuename + " packet:queuesize=" + queue.size() + ",connsize="
-//							+ pool.getActiveObjs().size() + "/" + pool.size() + ",cost="
-//							+ (System.currentTimeMillis() - start) + ",@" + name);
+					// log.error("TTT-DirectSendPacket " + queuename + "
+					// packet:queuesize=" + queue.size() + ",connsize="
+					// + pool.getActiveObjs().size() + "/" + pool.size() +
+					// ",cost="
+					// + (System.currentTimeMillis() - start) + ",@" + name);
 				} else {
 					if (conn != null) {
-//						log.error("TTT-remove not open connection:pool=" + pool.getActiveObjs().size() + "/"
-//								+ pool.size() + ",queuesize=" + queue.size() + ",queuename=" + queuename + ",@" + name
-//								+ ",conn=" + conn);
+						// log.error("TTT-remove not open connection:pool=" +
+						// pool.getActiveObjs().size() + "/"
+						// + pool.size() + ",queuesize=" + queue.size() +
+						// ",queuename=" + queuename + ",@" + name
+						// + ",conn=" + conn);
 
 						ckpool.removeObject(conn);
 					}
 					queue.offer(fp);
-//					log.error("TTT-no more connection for " + queuename + " packet:queuesize=" + queue.size()
-//							+ ",connsize=" + pool.getActiveObjs().size() + "/" + pool.size() + ",@" + name);
+					// log.error("TTT-no more connection for " + queuename + "
+					// packet:queuesize=" + queue.size()
+					// + ",connsize=" + pool.getActiveObjs().size() + "/" +
+					// pool.size() + ",@" + name);
 				}
 			}
 		} catch (Throwable e) {
