@@ -106,7 +106,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				log.error("remove close connection:"+conn+",size=F" + getActiveObjs().size() + ",try=" + trytimes);
 			}
 			try {
-				Thread.sleep(10);
+				Thread.sleep(1);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

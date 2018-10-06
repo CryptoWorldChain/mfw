@@ -107,7 +107,7 @@ public class OTransSender extends FutureSender {
 
 	@Override
 	public void setCurrentNodeName(String name) {
-		log.error("setCurrentNodeName=="+name+",oldname="+osock.mss.getRmb().getNodeInfo().nodeName);
+		log.debug("setCurrentNodeName=="+name+",oldname="+osock.mss.getRmb().getNodeInfo().nodeName);
 		osock.mss.getRmb().getNodeInfo().setNodeName(name);
 	}
 
