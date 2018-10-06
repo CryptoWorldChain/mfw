@@ -69,8 +69,10 @@ public class SessionFilter extends BaseFilter {
 				} else {
 					FramePacket resp = PacketHelper.toPBReturn(pack, null);
 					resp.getFixHead().setSync(false);
+					resp.getFixHead().setCmd("ECH");
+					resp.getFixHead().setModule("O**");
 					resp.getFixHead().setResp(true);
-					resp.getFixHead().setPrio((byte) '9');
+					resp.getFixHead().setPrio(pack.getFixHead().getPrio());
 					resp.putHeader(PacketQueue.PACK_RESEND_ID, packid);
 					ctx.write(resp);
 				}
