@@ -20,10 +20,12 @@ import onight.osgi.otransio.sm.RemoteModuleSession;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.async.NilCompleteHandler;
 import onight.tfw.otransio.api.PacketHelper;
+import onight.tfw.otransio.api.beans.ExtHeader;
 import onight.tfw.otransio.api.beans.FixHeader;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.session.PSession;
 import onight.tfw.outils.conf.PropHelper;
+import onight.tfw.outils.serialize.SerializerFactory;
 
 public class SessionFilter extends BaseFilter {
 	Logger log = LoggerFactory.getLogger(SessionFilter.class);
@@ -57,20 +59,20 @@ public class SessionFilter extends BaseFilter {
 					+ "]ms sent@=" + sendtime + " resp=" + header.isResp() + ",sync=" + header.isSync() + " local="
 					+ ctx.getConnection().getLocalAddress() + " peer=" + ctx.getConnection().getPeerAddress());
 		}
-		if (GCMD_ECHOS.equals(pack.getModuleAndCMD())) {
-			String packid = pack.getExtStrProp(PacketQueue.PACK_RESEND_ID);
-			log.error("get echo for packid==>" + packid);
-			PacketTuple pt = oimpl.getMss().getResendMap().remove(packid);
-			if (pt != null) {
-				pt.setResponsed(true);
-			}
-			return ctx.getInvokeAction();
-		}
-
 		if (pack.getFixHead().getPrio() == '8' || pack.getFixHead().getPrio() == '9') {
 			String packid = pack.getExtStrProp(PacketQueue.PACK_RESEND_ID);
 			if (packid != null) {
-				FramePacket resp = PacketHelper.toPBReturn(pack, null);
+				if (GCMD_ECHOS.equals(pack.getModuleAndCMD())) {
+					log.error("get echo for packid==>" + packid);
+					PacketTuple pt = oimpl.getMss().getResendMap().remove(packid);
+					if (pt != null) {
+						pt.setResponsed(true);
+					}
+					return ctx.getInvokeAction();
+				}
+				FramePacket resp = new FramePacket();//PacketHelper.toPBReturn(pack, null);
+				resp.setFixHead(new FixHeader());
+				resp.setExtHead(new ExtHeader());
 				resp.getFixHead().setSync(false);
 				resp.getFixHead().setCmd("ECH");
 				resp.getFixHead().setModule("O**");

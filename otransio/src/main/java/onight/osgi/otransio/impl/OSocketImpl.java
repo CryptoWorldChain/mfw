@@ -228,7 +228,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				if (pack.getBody() != null && pack.getBody().length > 0) {
 					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn + ",pack="
 							+ pack);
-				}else{
+				} else {
 					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn);
 				}
 				// handler.onFinished(PacketHelper.toPBReturn(pack, new
@@ -304,8 +304,8 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			}
 		} else {
 			// 没有找到对应的消息
-			log.error("UnknowModule:" + pack.getModule() + ",CMD=" + pack.getCMD() + ",from=" + from + ",conn=" + conn
-					+ ",destTO=" + destTO);
+			log.error("UnknowModule:" + pack.getModule() + ",CMD=" + pack.getCMD() + ",gcmd=" + pack.getModuleAndCMD()
+					+ ",from=" + from + ",conn=" + conn + ",destTO=" + destTO);
 			if (pack.isSync()) {
 				handler.onFinished(
 						PacketHelper.toPBReturn(pack, new UnknowModuleBody(pack.getModule() + ",to=" + destTO, pack)));
