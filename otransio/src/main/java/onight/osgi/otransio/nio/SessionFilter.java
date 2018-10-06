@@ -107,7 +107,7 @@ public class SessionFilter extends BaseFilter {
 					vpacket.getFixHead().setResp(true);
 					try {
 						if (conn.isOpen()) {
-							log.error("sync message response to conn=" + conn + ",bcuid=" + packfrom + ",packgcmd="
+							log.debug("sync message response to conn=" + conn + ",bcuid=" + packfrom + ",packgcmd="
 									+ vpacket.getModuleAndCMD() + "/" + pack.getModuleAndCMD());
 							vpacket.putHeader(OSocketImpl.PACK_FROM,
 									oimpl.getMss().getRmb().getNodeInfo().getNodeName());
