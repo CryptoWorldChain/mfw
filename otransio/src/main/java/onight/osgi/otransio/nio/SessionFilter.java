@@ -57,24 +57,26 @@ public class SessionFilter extends BaseFilter {
 					+ "]ms sent@=" + sendtime + " resp=" + header.isResp() + ",sync=" + header.isSync() + " local="
 					+ ctx.getConnection().getLocalAddress() + " peer=" + ctx.getConnection().getPeerAddress());
 		}
+		if (GCMD_ECHOS.equals(pack.getModuleAndCMD())) {
+			String packid = pack.getExtStrProp(PacketQueue.PACK_RESEND_ID);
+			log.error("get echo for packid==>" + packid);
+			PacketTuple pt = oimpl.getMss().getResendMap().remove(packid);
+			if (pt != null) {
+				pt.setResponsed(true);
+			}
+			return ctx.getInvokeAction();
+		}
 
 		if (pack.getFixHead().getPrio() == '8' || pack.getFixHead().getPrio() == '9') {
 			String packid = pack.getExtStrProp(PacketQueue.PACK_RESEND_ID);
 			if (packid != null) {
-				if (GCMD_ECHOS.equals(pack.getModuleAndCMD())) {
-					log.error("get echo for packid==>" + packid);
-					PacketTuple pt = oimpl.getMss().getResendMap().remove(packid);
-					if (pt != null) {
-						pt.setResponsed(true);
-					}
-					return ctx.getInvokeAction();
-				}
 				FramePacket resp = PacketHelper.toPBReturn(pack, null);
 				resp.getFixHead().setSync(false);
 				resp.getFixHead().setCmd("ECH");
 				resp.getFixHead().setModule("O**");
 				resp.getFixHead().setResp(true);
-				resp.getFixHead().setPrio(pack.getFixHead().getPrio());
+				resp.getFixHead().setPrio((byte)'9');
+				resp.getFixHead().genBytes();
 				resp.putHeader(PacketQueue.PACK_RESEND_ID, packid);
 				log.error("send echo for packid==>" + packid + ",gcmd=" + pack.getModuleAndCMD() + ",resp.gcmd="
 						+ resp.getModuleAndCMD());
