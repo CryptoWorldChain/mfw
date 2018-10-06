@@ -45,7 +45,7 @@ public class SessionFilter extends BaseFilter {
 			return ctx.getInvokeAction();
 		}
 		// long start = System.currentTimeMillis();
-		// // log.trace("[Actor]: " + pack.getGlobalCMD() + ", FROM: " +
+		// // log.trace("[Actor]: " + pack.getModuleAndCMD() + ", FROM: " +
 		// // ctx.getConnection().getPeerAddress() + " HEAD: "
 		// // + pack.getFixHead() + ",oimpl=" + oimpl);String sendtime =
 		// (String) ext.get(Encoder.LOG_TIME_SENT);
@@ -57,25 +57,28 @@ public class SessionFilter extends BaseFilter {
 					+ "]ms sent@=" + sendtime + " resp=" + header.isResp() + ",sync=" + header.isSync() + " local="
 					+ ctx.getConnection().getLocalAddress() + " peer=" + ctx.getConnection().getPeerAddress());
 		}
+
 		if (pack.getFixHead().getPrio() == '8' || pack.getFixHead().getPrio() == '9') {
 			String packid = pack.getExtStrProp(PacketQueue.PACK_RESEND_ID);
 			if (packid != null) {
-				if (GCMD_ECHOS.equals(pack.getGlobalCMD())) {
+				if (GCMD_ECHOS.equals(pack.getModuleAndCMD())) {
+					log.error("get echo for packid==>" + packid);
 					PacketTuple pt = oimpl.getMss().getResendMap().remove(packid);
 					if (pt != null) {
 						pt.setResponsed(true);
 					}
 					return ctx.getInvokeAction();
-				} else {
-					FramePacket resp = PacketHelper.toPBReturn(pack, null);
-					resp.getFixHead().setSync(false);
-					resp.getFixHead().setCmd("ECH");
-					resp.getFixHead().setModule("O**");
-					resp.getFixHead().setResp(true);
-					resp.getFixHead().setPrio(pack.getFixHead().getPrio());
-					resp.putHeader(PacketQueue.PACK_RESEND_ID, packid);
-					ctx.write(resp);
 				}
+				FramePacket resp = PacketHelper.toPBReturn(pack, null);
+				resp.getFixHead().setSync(false);
+				resp.getFixHead().setCmd("ECH");
+				resp.getFixHead().setModule("O**");
+				resp.getFixHead().setResp(true);
+				resp.getFixHead().setPrio(pack.getFixHead().getPrio());
+				resp.putHeader(PacketQueue.PACK_RESEND_ID, packid);
+				log.error("send echo for packid==>" + packid + ",gcmd=" + pack.getModuleAndCMD() + ",resp.gcmd="
+						+ resp.getModuleAndCMD());
+				ctx.write(resp);
 				if (oimpl.getMss().getDuplicateCheckMap().containsKey(packid)) {
 					log.debug("duplicate message:{}", packid);
 					return ctx.getInvokeAction();
@@ -101,13 +104,13 @@ public class SessionFilter extends BaseFilter {
 					try {
 						if (conn.isOpen()) {
 							log.error("sync message response to conn=" + conn + ",bcuid=" + packfrom + ",packgcmd="
-									+ vpacket.getGlobalCMD() + "/" + pack.getGlobalCMD());
+									+ vpacket.getModuleAndCMD() + "/" + pack.getModuleAndCMD());
 							vpacket.putHeader(OSocketImpl.PACK_FROM,
 									oimpl.getMss().getRmb().getNodeInfo().getNodeName());
 							conn.write(vpacket);
 						} else {
 							log.error("sync message response to new conn=" + conn + ",bcuid=" + packfrom + ",packgcmd="
-									+ vpacket.getGlobalCMD() + "/" + pack.getGlobalCMD());
+									+ vpacket.getModuleAndCMD() + "/" + pack.getModuleAndCMD());
 							// log.debug("get Pack callback from :" + packfrom);
 							vpacket.putHeader(OSocketImpl.PACK_TO, packfrom);
 							vpacket.getFixHead().setSync(false);
@@ -117,7 +120,7 @@ public class SessionFilter extends BaseFilter {
 								RemoteModuleSession rms = (RemoteModuleSession) session;
 								rms.getWriterQ().offer(vpacket, null);
 							} else {
-								log.error("drop response packet:" + pack.getGlobalCMD() + ",packfrom=" + packfrom);
+								log.error("drop response packet:" + pack.getModuleAndCMD() + ",packfrom=" + packfrom);
 							}
 						}
 						//

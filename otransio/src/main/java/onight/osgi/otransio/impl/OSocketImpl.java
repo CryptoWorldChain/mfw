@@ -163,7 +163,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	}
 
 	public void onPacket(FramePacket pack, final CompleteHandler handler, Connection<?> conn) throws TransIOException {
-		if (PackHeader.REMOTE_LOGIN.equals(pack.getGlobalCMD()) && conn != null) {// 来自远端的登录
+		if (PackHeader.REMOTE_LOGIN.equals(pack.getModuleAndCMD()) && conn != null) {// 来自远端的登录
 			RemoteModuleBean rmb = pack.parseBO(RemoteModuleBean.class);
 			String node_from = pack.getExtStrProp(PACK_FROM);
 			if (StringUtils.isBlank(node_from)) {
@@ -194,11 +194,11 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				log.debug("unknow node id_from:" + node_from);
 			}
 			// conn.write(mss.getLocalModulesPacketBack());
-		} else if (DROP_CONN.equals(pack.getGlobalCMD())) {// 来自远端的模块信息返回
+		} else if (DROP_CONN.equals(pack.getModuleAndCMD())) {// 来自远端的模块信息返回
 			log.error("get drop connection message");
 			osm.dropSessionByRemote(conn);
 			conn.closeSilently();
-		} else if (PackHeader.CMD_HB.equals(pack.getGlobalCMD())) {// 来自远端的心跳线
+		} else if (PackHeader.CMD_HB.equals(pack.getModuleAndCMD())) {// 来自远端的心跳线
 			log.trace("[HB] From " + conn.getPeerAddress() + " , to " + conn.getLocalAddress());
 		} else {
 			routePacket(pack, handler, conn);
@@ -221,15 +221,15 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				Object ofrom = pack.getExtHead().remove(OSocketImpl.PACK_FROM);
 				Object oto = pack.getExtHead().remove(OSocketImpl.PACK_TO);
 				log.error("response from = " + ofrom + ",oto=" + oto + ",opackid=" + opackid + ",gcmd="
-						+ pack.getGlobalCMD() + ",conn=" + conn + ",pack=" + pack);
+						+ pack.getModuleAndCMD() + ",conn=" + conn + ",pack=" + pack);
 				future_handler.onFinished(pack);
 			} else {
 				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
 				if (pack.getBody() != null && pack.getBody().length > 0) {
-					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getGlobalCMD() + ",conn=" + conn + ",pack="
+					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn + ",pack="
 							+ pack);
 				}else{
-					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getGlobalCMD() + ",conn=" + conn);
+					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn);
 				}
 				// handler.onFinished(PacketHelper.toPBReturn(pack, new
 				// LoopPackBody(mss.getPackIDKey(), pack)));

@@ -45,7 +45,7 @@ public class OTransSender extends FutureSender {
 				}
 			});
 			FramePacket ret = future.get(timeoutMS, TimeUnit.MILLISECONDS);
-			log.debug("send "+fp.getGlobalCMD()+" bodysize["+fp.getFixHead().getBodysize()+"]b cost["+(System.currentTimeMillis()-starttime)+"]ms resp="+fp.isResp()+",sync="+fp.isSync());
+			log.debug("send "+fp.getModuleAndCMD()+" bodysize["+fp.getFixHead().getBodysize()+"]b cost["+(System.currentTimeMillis()-starttime)+"]ms resp="+fp.isResp()+",sync="+fp.isSync());
 			return ret;
 		} catch (InterruptedException e) {
 			log.warn("send InterruptedException:cost:" + (System.currentTimeMillis()-starttime)+":"+fp, e);
