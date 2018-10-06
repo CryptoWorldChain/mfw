@@ -98,12 +98,17 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		for (int i = 0; i < trytimes; i++) {
 			conn = borrow();
 			if (conn == null) {
-				log.error("get a null conn:" + getActiveObjs().size() + ",try=" + trytimes);
+			//	log.error("get a null conn:" + getActiveObjs().size() + ",try=" + trytimes);
 			}
 			else if(conn.isOpen()){
 				return conn;
 			}else{
 				log.error("remove close connection:"+conn+",size=F" + getActiveObjs().size() + ",try=" + trytimes);
+			}
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 		conn = createOneConnection(1, 10);
