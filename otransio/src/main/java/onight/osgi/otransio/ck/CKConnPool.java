@@ -94,7 +94,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 
 	public Connection<?> ensureConnection() throws MessageException {
 		Connection<?> conn = null;
-		int trytimes = getActiveObjs().size();
+		int trytimes = size();
 		for (int i = 0; i < trytimes; i++) {
 			conn = borrow();
 			if (conn == null) {
@@ -110,7 +110,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		if (conn != null) {
 			mss.getOsm().getCk().addCheckHealth(conn);
 		}else{
-			log.error("cannot get more Connection:cursize=" + size() + ",max=" + max);
+			log.error("cannot get more Connection:cursize=" + size() + ",max=" + max+",try="+trytimes);
 		}
 		return conn;
 	}
@@ -190,5 +190,6 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		}
 		return null;
 	}
+
 
 }
