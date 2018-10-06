@@ -95,6 +95,7 @@ public class SessionFilter extends BaseFilter {
 				public void onFinished(FramePacket vpacket) {
 					vpacket.getExtHead().reset();
 					vpacket.getExtHead().genBytes();
+					vpacket.getFixHead().setResp(true);
 					try {
 						if (conn.isOpen()) {
 							log.error("sync message response to conn=" + conn + ",bcuid=" + packfrom + ",packgcmd="
