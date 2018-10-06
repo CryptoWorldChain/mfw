@@ -172,8 +172,8 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				rmb.getNodeInfo().setNodeName(node_from);
 			}
 			connectBCUID.set(conn, node_from);
-			log.error("Get New Login Connection From:" + rmb.getNodeInfo().getUname() + ",nodeid=" + node_from
-					+ ",conn=" + conn);
+//			log.debug("Get New Login Connection From:" + rmb.getNodeInfo().getUname() + ",nodeid=" + node_from
+//					+ ",conn=" + conn);
 			if (node_from != null) {
 				PSession session = mss.byNodeName(node_from);
 				if (session != null && session instanceof RemoteModuleSession) {
@@ -220,8 +220,8 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
 				Object ofrom = pack.getExtHead().remove(OSocketImpl.PACK_FROM);
 				Object oto = pack.getExtHead().remove(OSocketImpl.PACK_TO);
-				log.error("response from = " + ofrom + ",oto=" + oto + ",opackid=" + opackid + ",gcmd="
-						+ pack.getModuleAndCMD() + ",conn=" + conn + ",pack=" + pack);
+//				log.error("response from = " + ofrom + ",oto=" + oto + ",opackid=" + opackid + ",gcmd="
+//						+ pack.getModuleAndCMD() + ",conn=" + conn + ",pack=" + pack);
 				future_handler.onFinished(pack);
 			} else {
 				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());

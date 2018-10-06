@@ -63,7 +63,7 @@ public class SessionFilter extends BaseFilter {
 			String packid = pack.getExtStrProp(PacketQueue.PACK_RESEND_ID);
 			if (packid != null) {
 				if (GCMD_ECHOS.equals(pack.getModuleAndCMD())) {
-					log.error("get echo for packid==>" + packid);
+//					log.error("get echo for packid==>" + packid);
 					PacketTuple pt = oimpl.getMss().getResendMap().remove(packid);
 					if (pt != null) {
 						pt.setResponsed(true);
@@ -80,8 +80,8 @@ public class SessionFilter extends BaseFilter {
 				resp.getFixHead().setPrio((byte)'9');
 				resp.getFixHead().genBytes();
 				resp.putHeader(PacketQueue.PACK_RESEND_ID, packid);
-				log.error("send echo for packid==>" + packid + ",gcmd=" + pack.getModuleAndCMD() + ",resp.gcmd="
-						+ resp.getModuleAndCMD());
+//				log.error("send echo for packid==>" + packid + ",gcmd=" + pack.getModuleAndCMD() + ",resp.gcmd="
+//						+ resp.getModuleAndCMD());
 				ctx.write(resp);
 				if (oimpl.getMss().getDuplicateCheckMap().containsKey(packid)) {
 					log.debug("duplicate message:{}", packid);
