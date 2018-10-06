@@ -97,9 +97,14 @@ public class SessionFilter extends BaseFilter {
 					vpacket.getExtHead().genBytes();
 					try {
 						if (conn.isOpen()) {
-							vpacket.putHeader(OSocketImpl.PACK_FROM, oimpl.getMss().getRmb().getNodeInfo().getNodeName());
+							log.error("sync message response to conn=" + conn + ",bcuid=" + packfrom + ",packgcmd="
+									+ vpacket.getGlobalCMD() + "/" + pack.getGlobalCMD());
+							vpacket.putHeader(OSocketImpl.PACK_FROM,
+									oimpl.getMss().getRmb().getNodeInfo().getNodeName());
 							conn.write(vpacket);
 						} else {
+							log.error("sync message response to new conn=" + conn + ",bcuid=" + packfrom + ",packgcmd="
+									+ vpacket.getGlobalCMD() + "/" + pack.getGlobalCMD());
 							// log.debug("get Pack callback from :" + packfrom);
 							vpacket.putHeader(OSocketImpl.PACK_TO, packfrom);
 							vpacket.getFixHead().setSync(false);
@@ -107,17 +112,9 @@ public class SessionFilter extends BaseFilter {
 							PSession session = oimpl.getMss().byNodeName(packfrom);
 							if (session != null && session instanceof RemoteModuleSession) {
 								RemoteModuleSession rms = (RemoteModuleSession) session;
-								rms.onPacket(vpacket, new CompleteHandler() {
-									@Override
-									public void onFinished(FramePacket arg0) {
-									}
-
-									@Override
-									public void onFailed(Exception arg0) {
-									}
-								});
+								rms.getWriterQ().offer(vpacket, null);
 							} else {
-								log.debug("drop response packet:" + pack.getGlobalCMD() + ",packfrom=" + packfrom);
+								log.error("drop response packet:" + pack.getGlobalCMD() + ",packfrom=" + packfrom);
 							}
 						}
 						//
@@ -129,7 +126,7 @@ public class SessionFilter extends BaseFilter {
 
 				@Override
 				public void onFailed(Exception error) {
-					log.error("sync callback error:"+pack,error);
+					log.error("sync callback error:" + pack, error);
 					conn.write(PacketHelper.toPBErrorReturn(pack, error.getLocalizedMessage(), error.getMessage()));
 				}
 			};

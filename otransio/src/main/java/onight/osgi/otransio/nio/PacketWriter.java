@@ -31,12 +31,13 @@ public class PacketWriter implements Runnable {
 				for (PacketTuple pw : arrays) {
 					queue.offer(pw.pack, pw.handler);
 				}
-			}
-			for (PacketTuple pt : arrays) {
-				if (!pt.isResponsed() || !pt.isWrited()) {
-					pt.setWriteTime(writeTime);
-					conn.write(pt.pack);
-					pt.setWrited(true);
+			} else {
+				for (PacketTuple pt : arrays) {
+					if (!pt.isResponsed() || !pt.isWrited()) {
+						pt.setWriteTime(writeTime);
+						conn.write(pt.pack);
+						pt.setWrited(true);
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -48,14 +49,16 @@ public class PacketWriter implements Runnable {
 						if (pw.rewriteTimes < 5) {
 							queue.offer(pw.pack, pw.handler);
 						} else {
-							pw.handler.onFailed(e);
+							if (pw.handler != null) {
+								pw.handler.onFailed(e);
+							}
 						}
 					}
 				}
 			} else {
 				log.error("getSend Actor Error:" + e.getMessage() + ",arrays.size=" + arrays.size(), e);
 				for (PacketTuple pw : arrays) {
-					if (!pw.isWrited()) {
+					if (!pw.isWrited() && pw.handler != null) {
 						pw.handler.onFailed(e);
 					}
 				}
