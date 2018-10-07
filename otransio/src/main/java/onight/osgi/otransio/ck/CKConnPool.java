@@ -98,12 +98,12 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		for (int i = 0; i < trytimes; i++) {
 			conn = borrow();
 			if (conn == null) {
-			//	log.error("get a null conn:" + getActiveObjs().size() + ",try=" + trytimes);
-			}
-			else if(conn.isOpen()){
+				// log.error("get a null conn:" + getActiveObjs().size() +
+				// ",try=" + trytimes);
+			} else if (conn.isOpen()) {
 				return conn;
-			}else{
-				log.error("remove close connection:"+conn+",size=F" + getActiveObjs().size() + ",try=" + trytimes);
+			} else {
+				log.error("remove close connection:" + conn + ",size=F" + getActiveObjs().size() + ",try=" + trytimes);
 			}
 			try {
 				Thread.sleep(1);
@@ -114,8 +114,9 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		conn = createOneConnection(1, 10);
 		if (conn != null) {
 			mss.getOsm().getCk().addCheckHealth(conn);
-		}else{
-			log.error("cannot get more Connection:cursize=" + size() + ",max=" + max+",try="+trytimes);
+		} else if (size() > 0) {
+			log.error("cannot get more Connection:cursize=" + size() + ",max=" + max + ",try=" + trytimes + ",nameid="
+					+ nameid + ",ip=" + ip + ",port=" + port);
 		}
 		return conn;
 	}
@@ -195,6 +196,5 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 		}
 		return null;
 	}
-
 
 }
