@@ -64,7 +64,7 @@ public class CheckHealth {
 					} else {
 						Long lastUpdate =  lastCheckHealthMS.get(conn);
 						if (lastUpdate==null
-								|| lastUpdate - System.currentTimeMillis() > delay
+								|| System.currentTimeMillis() - lastUpdate  > delay
 										* 1000) {
 							FramePacket hbpack = new FramePacket();
 							FixHeader header = new FixHeader();
