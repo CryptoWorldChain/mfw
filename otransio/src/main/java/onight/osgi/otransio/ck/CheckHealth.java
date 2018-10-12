@@ -54,15 +54,21 @@ public class CheckHealth {
 			@Override
 			public void run() {
 				try {
+					Long lastUpdate =  lastCheckHealthMS.get(conn);
+					if(lastUpdate==null){
+						lastUpdate = 0L;
+					}
 					if (!conn.isOpen()) {
 						log.error("connetion is not open:" + conn.getLocalAddress() + ",peer=" + conn.getPeerAddress()
 								+ ",reason=" + conn.getCloseReason().getType() + ":"
-								+ conn.getCloseReason().getCause());
+								+ conn.getCloseReason().getCause()+",lastUpdated="+(System.currentTimeMillis()-lastUpdate)
+								+",delay="+delay);
+						
 						conn.close();
 						exec.remove(this);
 						lastCheckHealthMS.remove(conn);
 					} else {
-						Long lastUpdate =  lastCheckHealthMS.get(conn);
+						
 						if (lastUpdate==null
 								|| System.currentTimeMillis() - lastUpdate  > delay
 										* 1000) {
