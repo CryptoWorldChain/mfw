@@ -39,6 +39,7 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 	}
 
 	public void clean(AttributeStorage storage) {
+		log.error("clean storage:"+storage);
 		headerStore.remove(storage);
 		lastCheckHealthMS.remove(storage);
 		blankHeaderCount.remove(storage);

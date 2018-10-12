@@ -35,7 +35,7 @@ public class CheckHealth {
 		exec = new ScheduledThreadPoolExecutor(corePool);
 		this.delay = Math.max(5, delay);
 
-		lastCheckHealthMS = attributeBuilder.createAttribute("Decoder.CheckHealth");
+		lastCheckHealthMS = attributeBuilder.createAttribute("hbt.CheckHealth");
 		this.mss = mss;
 
 	}
@@ -48,30 +48,28 @@ public class CheckHealth {
 		if (lastCheckHealthMS.isSet(conn)) {
 			return;
 		}
-		lastCheckHealthMS.set(conn, System.currentTimeMillis());
-
+		lastCheckHealthMS.set(conn, Long.valueOf(System.currentTimeMillis()));
+		log.error("addcheck health conn@" + conn + ",time=" + lastCheckHealthMS.get(conn));
 		exec.scheduleWithFixedDelay(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					Long lastUpdate =  lastCheckHealthMS.get(conn);
-					if(lastUpdate==null){
+					Long lastUpdate = lastCheckHealthMS.get(conn);
+					if (lastUpdate == null) {
+						log.error("cannot get check health conn@" + conn);
 						lastUpdate = 0L;
 					}
 					if (!conn.isOpen()) {
 						log.error("connetion is not open:" + conn.getLocalAddress() + ",peer=" + conn.getPeerAddress()
-								+ ",reason=" + conn.getCloseReason().getType() + ":"
-								+ conn.getCloseReason().getCause()+",lastUpdated="+(System.currentTimeMillis()-lastUpdate)
-								+",delay="+delay);
-						
+								+ ",reason=" + conn.getCloseReason().getType() + ":" + conn.getCloseReason().getCause()
+								+ ",lastUpdated=" + (System.currentTimeMillis() - lastUpdate) + ",delay=" + delay);
+
 						conn.close();
 						exec.remove(this);
 						lastCheckHealthMS.remove(conn);
 					} else {
-						
-						if (lastUpdate==null
-								|| System.currentTimeMillis() - lastUpdate  > delay
-										* 1000) {
+
+						if (lastUpdate == null || System.currentTimeMillis() - lastUpdate > delay * 1000) {
 							FramePacket hbpack = new FramePacket();
 							FixHeader header = new FixHeader();
 							header.setCmd(PackHeader.CMD_HB.substring(0, 3));
