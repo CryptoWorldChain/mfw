@@ -39,9 +39,9 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 	}
 
 	public void clean(AttributeStorage storage) {
-		log.error("clean storage:"+storage);
+//		log.error("clean storage:"+storage);
 		headerStore.remove(storage);
-		lastCheckHealthMS.remove(storage);
+//		lastCheckHealthMS.remove(storage);
 		blankHeaderCount.remove(storage);
 		firstByte.remove(storage);
 	}
@@ -72,6 +72,7 @@ public class Decoder extends AbstractTransformer<Buffer, FramePacket> {
 				if (ll.addAndGet(blankcount) >= MAX_BLANK_COUNT) {
 					log.error("too many blank bytes {}", ll.get());
 					clean(storage);
+					
 					throw new TransformationException("too many blank bytes");
 				}
 			}

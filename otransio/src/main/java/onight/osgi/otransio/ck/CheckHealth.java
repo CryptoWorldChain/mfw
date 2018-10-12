@@ -35,7 +35,7 @@ public class CheckHealth {
 		exec = new ScheduledThreadPoolExecutor(corePool);
 		this.delay = Math.max(5, delay);
 
-		lastCheckHealthMS = attributeBuilder.createAttribute("hbt.CheckHealth");
+		lastCheckHealthMS = attributeBuilder.createAttribute("Decoder.CheckHealth");
 		this.mss = mss;
 
 	}

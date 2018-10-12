@@ -18,7 +18,7 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 	Logger log = LoggerFactory.getLogger(Encoder.class);
 
 	protected final Attribute<Long> lastCheckHealthMS = Grizzly.DEFAULT_ATTRIBUTE_BUILDER
-			.createAttribute("encoder.CheckHealth");
+			.createAttribute("Decoder.CheckHealth");
 
 	public static String LOG_TIME_SENT = "T__LOG_SENT";
 
@@ -37,7 +37,7 @@ public class Encoder extends AbstractTransformer<FramePacket, Buffer> {
 
 	@Override
 	public void release(AttributeStorage storage) {
-		lastCheckHealthMS.remove(storage);
+//		lastCheckHealthMS.remove(storage);
 		super.release(storage);
 	}
 
