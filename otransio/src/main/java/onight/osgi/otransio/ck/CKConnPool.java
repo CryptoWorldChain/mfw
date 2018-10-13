@@ -122,6 +122,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 	}
 
 	public synchronized Connection createOneConnection(int maxtries, int waitms) {
+		boolean isConnectionRefused = false;
 		for (int i = 0; i < maxtries && size() < max; i++) {
 			try {
 				final Connection conn = client.getConnection(ip, port);
@@ -158,6 +159,7 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 				// return createOneConnectionBySubNode(maxtries);
 			} catch (ExecutionException ce) {
 				// java.net.ConnectException: Connection refused
+				isConnectionRefused = true;
 				log.debug("ExecutionException=" + ip + ":" + port + ",name=" + nameid, ce);
 				break;
 				// return createOneConnectionBySubNode(maxtries);
@@ -167,10 +169,18 @@ public class CKConnPool extends ReusefulLoopPool<Connection> {
 			}
 		}
 		if (waitms <= 0) {
-			log.error("cannot get more Connection:cursize=" + size() + ",max=" + max+",ip="+ip + ",port=" + port+",name="+nameid);
-			try {
-				Thread.sleep(100);
-			} catch (Exception e) {
+			if (!isConnectionRefused) {
+				log.error("cannot get more Connection:cursize=" + size() + ",max=" + max + ",ip=" + ip + ",port=" + port
+						+ ",name=" + nameid);
+				try {
+					Thread.sleep(100);
+				} catch (Exception e) {
+				}
+			}else{
+				try {
+					Thread.sleep(1000);
+				} catch (Exception e) {
+				}
 			}
 			return null;
 		}
