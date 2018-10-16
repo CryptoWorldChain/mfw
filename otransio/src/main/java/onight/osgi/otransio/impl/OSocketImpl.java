@@ -230,7 +230,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
 				if (pack.getBody() != null && pack.getBody().length > 0) {
 					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn + ",pack="
-							+ pack);
+							+ pack.getExtHead());
 				} else {
 					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn);
 				}
@@ -272,7 +272,8 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			}
 		} else {// re
 			if (pack.isResp() && conn != null) {
-				log.error("pack respone to unknow :"+pack.getCMD()+""+pack.getModule()+","+pack.getExtHead()+",bodysize="+pack.getFixHead().getBodysize());
+				log.error("pack respone to unknow :" + pack.getCMD() + "" + pack.getModule() + "," + pack.getExtHead()
+						+ ",bodysize=" + pack.getFixHead().getBodysize());
 			}
 			ms = mss.getLocalsessionByModule().get(pack.getModule());
 		}
