@@ -186,19 +186,19 @@ public class MSessionSets {
 		for (Map.Entry<String, PSession> kv : sessionByNodeName.entrySet()) {
 			if (kv.getValue() instanceof RemoteModuleSession) {
 				RemoteModuleSession lps = (RemoteModuleSession) kv.getValue();
-				if (lps.nodeInfo.getURI().equals(node.getURI())&&!node.getNodeName().equals(kv.getKey())) {
+				if (lps.nodeInfo.getURI().equals(node.getURI()) && !node.getNodeName().equals(kv.getKey())) {
 					//
 					log.debug("updateSession to new::" + kv.getKey() + "==>" + node.getNodeName());
-					oldname=kv.getKey();
+					oldname = kv.getKey();
 					break;
 				}
 			}
 		}
-		if(oldname!=null){
+		if (oldname != null) {
 			PSession oldsession = sessionByNodeName.remove(oldname);
-			log.debug("remove oldsession:"+oldsession+"===>"+session);
+			log.debug("remove oldsession:" + oldsession + "===>" + session);
 			sessionByNodeName.put(node.getNodeName(), session);
-		}else{
+		} else {
 			sessionByNodeName.put(node.getNodeName(), session);
 		}
 	}
@@ -206,10 +206,17 @@ public class MSessionSets {
 	public synchronized RemoteModuleSession addRemoteSession(NodeInfo node, CKConnPool ckpool) {
 		PSession psession = sessionByNodeName.get(node.getNodeName());
 		RemoteModuleSession session = null;
+		if (psession != null && psession instanceof RemoteModuleSession) {
+			session = (RemoteModuleSession) psession;
+			if (session.getWriterQ() != null && session.getWriterQ().isStop()) {
+				session = null;
+				psession = null;
+			}
+		}
 		if (psession == null) {
 			String uri = node.getURI();
 			session = sessionByURI.get(uri);
-			if (session != null) {
+			if (session != null && !session.getWriterQ().isStop()) {
 				updateOrPutSession(node, session);
 				return session;
 			}
@@ -256,6 +263,9 @@ public class MSessionSets {
 			if (session != null) {
 				if (session instanceof RemoteModuleSession) {
 					RemoteModuleSession rms = (RemoteModuleSession) session;
+					if (rms.nodeInfo != null && rms.nodeInfo.getURI() != null) {
+						sessionByURI.remove(rms.nodeInfo.getURI());
+					}
 					if (StringUtils.equals(rms.getNodeInfo().getAddr(), rmb.getNodeInfo().getAddr())
 							&& rms.getNodeInfo().getPort() == rmb.getNodeInfo().getPort()) {
 						log.error("drop local session:" + rms.getNodeInfo().getURI());
