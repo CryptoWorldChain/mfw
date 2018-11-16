@@ -51,4 +51,28 @@ public class QSender extends FutureSender {
 		qService.sendMessage(fp.getGlobalCMD(), PacketHelper.toTransBytes(fp));
 	}
 
+	@Override
+	public void changeNodeName(String arg0, String arg1) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setCurrentNodeName(String arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setDestURI(String arg0, String arg1) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void tryDropConnection(String arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

@@ -14,13 +14,14 @@ import org.apache.felix.ipojo.annotations.Instantiate;
 import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.ServiceProperty;
 import org.apache.felix.ipojo.annotations.Validate;
+import org.asynchttpclient.AsyncCompletionHandler;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.BoundRequestBuilder;
+import org.asynchttpclient.Response;
 
 import com.google.protobuf.Message;
-import com.ning.http.client.AsyncCompletionHandler;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.AsyncHttpClient.BoundRequestBuilder;
-import com.ning.http.client.cookie.Cookie;
 
+import io.netty.handler.codec.http.cookie.DefaultCookie;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.async.CallBack;
@@ -128,7 +129,9 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 			for (Entry<String, Object> pair : pack.getExtHead().getHiddenkvs().entrySet()) {
 				if (pair.getKey().startsWith(PackHeader.EXT_HIDDEN) && !pair.getKey().startsWith(PackHeader.EXT_IGNORE_RESPONSE)) {
 					try {
-						builder.addCookie(new Cookie(pair.getKey(), "" + pair.getValue(), true, null, "/", Long.MAX_VALUE, false, false));
+						DefaultCookie c=new DefaultCookie(pair.getKey(), "" + pair.getValue());
+						builder.addCookie(c);
+//								, true, null, "/", Long.MAX_VALUE, false, false));
 						// addCookie(res, pair.getKey(), pair.getValue());
 					} catch (Exception e) {
 						log.debug("add cookie fail:", e);
@@ -140,7 +143,7 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 			if (cookies != null && cookies.size() > 0) {
 				for (Entry<String, Object> pair : cookies.entrySet()) {
 					try {
-						builder.addCookie(new Cookie(pair.getKey(), "" + pair.getValue(), true, null, "/", Long.MAX_VALUE, false, false));
+						builder.addCookie(new DefaultCookie(pair.getKey(), "" + pair.getValue()));//, true, null, "/", Long.MAX_VALUE, false, false));
 					} catch (Exception e) {
 						log.debug("add cookie fail:", e);
 					}
@@ -202,7 +205,7 @@ public class HttpSender extends FutureSender implements ActorService, IPacketSen
 				}
 
 				@Override
-				public FramePacket onCompleted(com.ning.http.client.Response response) throws Exception {
+				public FramePacket onCompleted(Response response) throws Exception {
 					ret.setBody(response.getResponseBodyAsBytes());
 					log.debug("ret:" + new String(ret.getBody(), "UTF-8").trim());
 					cb.onSuccess(ret);

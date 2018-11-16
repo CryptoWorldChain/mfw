@@ -1,11 +1,11 @@
 
-version = '3.0.2'
+version = '4.0.0'
 
 dependencies {
 
 	includeInJar 'org.mousio:etcd4j:2.13.0'
-	includeInJar 'org.apache.httpcomponents:httpclient:4.5.2'
-	includeInJar 'org.apache.httpcomponents:httpmime:4.5.2'
+	includeInJar 'org.apache.httpcomponents:httpclient:4.5.6'
+	includeInJar 'org.apache.httpcomponents:httpmime:4.5.6'
 	
 }
 

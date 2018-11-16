@@ -376,13 +376,5 @@ trait SimpleDAO[T] extends AsyncDB {
       execListSub(fs(i), c)
   }
 
-  def execInBatch(fs: List[QueryResult])(implicit executionContext: ExecutionContext): Future[QueryResult] = {
-
-    pool.use({
-      _.inTransaction({ c =>
-        execList(fs, 0, c)
-      })
-    })(executionContext)
-  }
 }
 

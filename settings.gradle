@@ -11,8 +11,8 @@ include 'redisimpl'
 
 include 'oparam:bdbimpl'
 include 'otransio'
-include 'glock'
-
+//include 'glock'
+//
 include 'scheduler'
 include 'sm:sm-api'
 include 'sm:sm-redisimpl'

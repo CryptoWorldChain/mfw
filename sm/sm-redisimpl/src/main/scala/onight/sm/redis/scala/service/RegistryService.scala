@@ -29,9 +29,7 @@ import onight.sm.Ssm.PBCommand
 import onight.tfw.outils.conf.PropHelper
 import onight.sm.Ssm.PBSSORet
 import scala.collection.JavaConversions._
-import org.ethereum.crypto.ECKey
 import java.security.SecureRandom
-import org.spongycastle.util.encoders.Hex
 
 @NActorProvider
 object RegistryActor extends SessionModules[PBSSO] {
@@ -90,15 +88,6 @@ object RegistryService extends OLog with PBUtils with LService[PBSSO] {
           Some(1));
         
         val ran=new SecureRandom();
-        //ran.generateSeed(System.currentTimeMillis().asInstanceOf[Int])
-        val eckey = new ECKey(ran);
-        log.debug("new eckey:"+eckey);
-        log.debug("pub:"+Hex.toHexString(eckey.getPubKey));
-        log.debug("pri:"+Hex.toHexString(eckey.getPrivKeyBytes));
-        log.debug("nodeid:"+Hex.toHexString(eckey.getNodeId));
-        //log.debug("address":+eckey.getAddress());//+",pki="+eckey.getPrivKeyBytes()+",pub="+eckey.getPubKey());
-        log.debug("Register DB:" + pbo.getUserName + ",nn::"+Hex.toHexString(eckey.getPubKey))
-        eckey.getNodeId
         val ff = MysqlDAOs.ALoginUserDAO.insertSelective(example)
         ff onSuccess {
           case result @ _ => {

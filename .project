@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>oparam</name>
+	<name>zippo</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -30,7 +30,7 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>1517718034770</id>
+			<id>1542355911899</id>
 			<name></name>
 			<type>26</type>
 			<matcher>
@@ -38,11 +38,11 @@
 				<arguments>
 					<matcher>
 						<id>org.eclipse.ui.ide.multiFilter</id>
-						<arguments>1.0-projectRelativePath-equals-true-false-glock</arguments>
+						<arguments>1.0-projectRelativePath-equals-true-false-oapi</arguments>
 					</matcher>
 					<matcher>
 						<id>org.eclipse.ui.ide.multiFilter</id>
-						<arguments>1.0-projectRelativePath-equals-true-false-oapi</arguments>
+						<arguments>1.0-projectRelativePath-equals-true-false-oparam</arguments>
 					</matcher>
 					<matcher>
 						<id>org.eclipse.ui.ide.multiFilter</id>
@@ -79,10 +79,6 @@
 					<matcher>
 						<id>org.eclipse.ui.ide.multiFilter</id>
 						<arguments>1.0-projectRelativePath-equals-true-false-senders</arguments>
-					</matcher>
-					<matcher>
-						<id>org.eclipse.ui.ide.multiFilter</id>
-						<arguments>1.0-projectRelativePath-equals-true-false-sm</arguments>
 					</matcher>
 				</arguments>
 			</matcher>

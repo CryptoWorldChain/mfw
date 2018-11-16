@@ -16,20 +16,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import lombok.Getter;
-import lombok.val;
-import lombok.extern.slf4j.Slf4j;
-import onight.tfw.ntrans.api.exception.MessageException;
-import onight.tfw.ntrans.api.exception.TimeOutMessageException;
-import onight.tfw.orouter.api.IQClient;
-import onight.tfw.orouter.api.IRecievier;
-import onight.tfw.orouter.api.NoneQService;
-import onight.tfw.orouter.api.QService;
-import onight.tfw.otransio.api.PSender;
-import onight.tfw.otransio.api.PSenderService;
-import onight.tfw.outils.conf.PropHelper;
-import onight.tfw.outils.serialize.SerializerUtil;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.felix.ipojo.annotations.Bind;
 import org.apache.felix.ipojo.annotations.Component;
@@ -39,7 +25,6 @@ import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.Unbind;
 import org.apache.felix.ipojo.annotations.Validate;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
@@ -52,6 +37,19 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import com.rabbitmq.client.AMQP.Queue.DeclareOk;
 import com.rabbitmq.client.Channel;
+
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import onight.tfw.ntrans.api.exception.MessageException;
+import onight.tfw.ntrans.api.exception.TimeOutMessageException;
+import onight.tfw.orouter.api.IQClient;
+import onight.tfw.orouter.api.IRecievier;
+import onight.tfw.orouter.api.NoneQService;
+import onight.tfw.orouter.api.QService;
+import onight.tfw.otransio.api.PSender;
+import onight.tfw.otransio.api.PSenderService;
+import onight.tfw.outils.conf.PropHelper;
+import onight.tfw.outils.serialize.SerializerUtil;
 
 /**
  * 管理队列的
@@ -225,7 +223,7 @@ public class ExQueueManager implements QService {
 		int id = System.identityHashCode(invokerObj);
 		List<QueueConsumer> qcs = consumerByProxyHashID.get(id);
 		if (qcs != null && qcs.size() > 0) {
-			val names = new HashSet<String>();
+			HashSet names = new HashSet<String>();
 			for (QueueConsumer qc : qcs) {
 				names.add(qc.getQueueName());
 				qc.setStop(true);

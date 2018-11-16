@@ -1,22 +1,29 @@
 
-version='3.3.2'
+version='4.0.0'
+
+//group = 'onight.osgi'
+
+//buildscript {
+//	repositories { maven { url "http://172.18.80.22:8081/nexus/content/groups/public/" } }
+//
+//	dependencies {
+//		classpath "onight.osgi:zpp-gradle_1.8:3.3.0"
+//		if(project.name!='oapi_1.8'&&project.name!='oapi') {
+////			classpath ("org.fc.zippo:org.fc.zippo.oapi_1.8:4.0.0")
+//		}
+//		//classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.1'
+//	}
+//}
+//
+//
+//apply plugin: 'zippo'
+
 
 dependencies {
-	compile 'javax.servlet:javax.servlet-api:3.1.0'
-	//compile 'com.github.jnr:jnr-posix:3.0.38'
-	compile 'com.fasterxml.uuid:java-uuid-generator:3.1.4'
-/*	compile 'org.apache.avro:avro:1.7.7'
-	compile "org.apache.commons:commons-lang3:3.5"
-	compile 'org.typelevel:scala-library:2.11.8'
-//	includeInJar 'com.esotericsoftware.kryo:kryo:2.24.0'
-	includeInJar 'com.googlecode.protobuf-java-format:protobuf-java-format:1.4'
-	compile 'com.google.protobuf:protobuf-java:3.2.0'
-	includeInJar  'org.projectlombok:lombok:1.16.14'
-	compile 'org.ow2.spec.osgi:ow2-httpservice-1.2-spec:1.0.0'
-	compile 'org.slf4j:slf4j-api:1.7.7'
-	compile 'org.apache.felix:org.apache.felix.ipojo.annotations:1.12.1'
-	compile 'commons-codec:commons-codec:1.10'
-	testCompile 'junit:junit:4.12'*/
+	
+	compile 'javax.servlet:javax.servlet-api:4.0.1'
+	compile 'com.fasterxml.uuid:java-uuid-generator:3.1.5'
+
 }
 
 jar {

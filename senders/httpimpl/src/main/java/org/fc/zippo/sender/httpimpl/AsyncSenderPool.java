@@ -1,5 +1,8 @@
 package org.fc.zippo.sender.httpimpl;
 
+import static org.asynchttpclient.Dsl.asyncHttpClient;
+import static org.asynchttpclient.Dsl.config;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,8 +18,9 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.AsyncHttpClientConfig;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.SslEngineFactory;
+import org.asynchttpclient.netty.ssl.JsseSslEngineFactory;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.outils.conf.PropHelper;
@@ -65,18 +69,18 @@ public class AsyncSenderPool {
 
 		KeyManager[] keyManagers = kmf.getKeyManagers();
 		SecureRandom secureRandom = new SecureRandom();
+
 		SSLContext sslContext = SSLContext.getInstance("TLS");
 		sslContext.init(keyManagers, tmf.getTrustManagers(), secureRandom);
-		AsyncHttpClientConfig.Builder configbuilder = new AsyncHttpClientConfig.Builder();
-		configbuilder.setSSLContext(sslContext);
-		return new AsyncHttpClient(configbuilder.build());
+		SslEngineFactory factory = new JsseSslEngineFactory(sslContext);
+		return asyncHttpClient(config().setSslEngineFactory(factory));
 	}
 
 	public AsyncHttpClient getAyncClientBy(String strurl) {
 		try {
 			URL url = new URL(strurl);
 			String urlhead = url.getProtocol() + "://" + url.getHost() + ":" + url.getPort();
-			if(url.getPort()==-1||url.getPort()==80){
+			if (url.getPort() == -1 || url.getPort() == 80) {
 				urlhead = url.getProtocol() + "://" + url.getHost();
 			}
 
@@ -92,7 +96,7 @@ public class AsyncSenderPool {
 				if (url.getProtocol().endsWith("s")) {// context https
 					ret = createSSLClient(urlhead);
 				} else {
-					ret = new AsyncHttpClient();
+					ret = asyncHttpClient();
 				}
 				clientByHostPort.put(urlhead, ret);
 			}

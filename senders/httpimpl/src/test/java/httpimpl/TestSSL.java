@@ -1,5 +1,8 @@
 package httpimpl;
 
+import static org.asynchttpclient.Dsl.asyncHttpClient;
+import static org.asynchttpclient.Dsl.config;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,11 +21,12 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.apache.commons.lang3.StringUtils;
-
-import com.ning.http.client.AsyncCompletionHandler;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.AsyncHttpClient.BoundRequestBuilder;
-import com.ning.http.client.AsyncHttpClientConfig;
+import org.asynchttpclient.AsyncCompletionHandler;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.BoundRequestBuilder;
+import org.asynchttpclient.Response;
+import org.asynchttpclient.SslEngineFactory;
+import org.asynchttpclient.netty.ssl.JsseSslEngineFactory;
 
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.otransio.api.beans.FramePacket;
@@ -67,9 +71,14 @@ public class TestSSL {
 			SSLContext sslContext = SSLContext.getInstance("TLS");
 			System.out.println("tm==" + tm);
 			sslContext.init(keyManagers, tm, secureRandom);
-			AsyncHttpClientConfig.Builder configbuilder = new AsyncHttpClientConfig.Builder();
-			configbuilder.setSSLContext(sslContext);
-			final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(configbuilder.build());
+			
+			SslEngineFactory factory = new JsseSslEngineFactory(sslContext);
+
+			final AsyncHttpClient asyncHttpClient= asyncHttpClient(config().setSslEngineFactory(factory));
+			
+//			AsyncHttpClientConfig.Builder configbuilder = new AsyncHttpClientConfig.Builder();
+//			configbuilder.setSSLContext(sslContext);
+//			final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(configbuilder.build());
 
 			BoundRequestBuilder builder = asyncHttpClient.preparePost("https://58.247.119.27/sh-cupi/restFul/getToken");
 			builder.addFormParam("loginId", "bjweijing_test");
@@ -87,7 +96,7 @@ public class TestSSL {
 				}
 
 				@Override
-				public FramePacket onCompleted(com.ning.http.client.Response response) throws Exception {
+				public FramePacket onCompleted(Response response) throws Exception {
 					log.debug("ret:" + new String(response.getResponseBodyAsBytes(), "UTF-8"));
 					HashMap<String, String> retobj = new HashMap<>();
 					retobj = JsonSerializer.getInstance().deserialize(response.getResponseBodyAsBytes(), retobj.getClass());
@@ -130,7 +139,7 @@ public class TestSSL {
 			}
 
 			@Override
-			public FramePacket onCompleted(com.ning.http.client.Response response) throws Exception {
+			public FramePacket onCompleted(Response response) throws Exception {
 				log.debug("ret:" + new String(response.getResponseBodyAsBytes(), "UTF-8"));
 				HashMap<String, String> retobj = new HashMap<>();
 				retobj = JsonSerializer.getInstance().deserialize(response.getResponseBodyAsBytes(), retobj.getClass());
@@ -164,7 +173,7 @@ public class TestSSL {
 			}
 
 			@Override
-			public FramePacket onCompleted(com.ning.http.client.Response response) throws Exception {
+			public FramePacket onCompleted(Response response) throws Exception {
 				log.debug("ret:" + new String(response.getResponseBodyAsBytes(), "UTF-8"));
 				HashMap<String, String> retobj = new HashMap<>();
 				retobj = JsonSerializer.getInstance().deserialize(response.getResponseBodyAsBytes(), retobj.getClass());

@@ -1,5 +1,5 @@
 
-version = '3.0.0'
+version = '4.0.0'
 
 sourceSets {
 	main {
@@ -12,8 +12,8 @@ sourceSets {
 	}
 }
 dependencies {
-	 includeInJar 'org.springframework.amqp:spring-rabbit:1.7.1.RELEASE'
-	 includeInJar 'com.rabbitmq:amqp-client:4.1.0'
+	 includeInJar 'org.springframework.amqp:spring-rabbit:2.0.0.RELEASE'
+	 includeInJar 'com.rabbitmq:amqp-client:5.5.0'
 //	 testCompile 'junit:junit:4.12'
 	
 }

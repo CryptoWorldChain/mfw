@@ -21,8 +21,6 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
-
 import lombok.Data;
 import lombok.val;
 import lombok.extern.slf4j.Slf4j;
@@ -75,8 +73,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public int insert(Object record) {
 		try {
 			return dao.insert(localBean(record));
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (SQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (DuplicateKeyException e) {
@@ -100,8 +98,8 @@ public class ORDBDataService extends SerializedDomainDao {
 			} else {
 				return null;
 			}
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
 			if (e.getMessage().contains("MySQLIntegrityConstraintViolationException")) {
 				throw new JPADuplicateIDException(e);
@@ -114,8 +112,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public int insertSelective(Object record) {
 		try {
 			return dao.insertSelective(localBean(record));
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (SQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (DuplicateKeyException e) {
@@ -133,8 +131,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public int batchInsert(List<Object> records) {
 		try {
 			return dao.batchInsert(localBean2List(records));
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (SQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (DuplicateKeyException e) {
@@ -152,8 +150,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public int batchUpdate(List<Object> records) {	
 		try {
 			return dao.batchUpdate(localBean2List(records));
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
 			if (e.getMessage() != null && (e.getMessage().contains("MySQLIntegrityConstraintViolationException")
 					|| e.getMessage().contains("SQLIntegrityConstraintViolationException") || e.getMessage().contains("ORA-00001: unique constraint"))) {
@@ -168,8 +166,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public int batchDelete(List<Object> records) {
 		try {
 			return dao.batchDelete(localBean2List(records));
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
 			if (e.getMessage().contains("MySQLIntegrityConstraintViolationException")) {
 				throw new JPADuplicateIDException(e);
@@ -197,8 +195,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public int updateByExampleSelective(Object record, Object example) {
 		try {
 			return dao.updateByExampleSelective(localBean(record), localExample(example));
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
 			if (e.getMessage().contains("MySQLIntegrityConstraintViolationException")) {
 				throw new JPADuplicateIDException(e);
@@ -211,8 +209,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public int updateByExample(Object record, Object example) {
 		try {
 			return dao.updateByExample(localBean(record), localExample(example));
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
 			if (e.getMessage().contains("MySQLIntegrityConstraintViolationException")) {
 				throw new JPADuplicateIDException(e);
@@ -225,8 +223,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public int updateByPrimaryKeySelective(Object record) {
 		try {
 			return dao.updateByPrimaryKeySelective(localBean(record));
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
 			if (e.getMessage().contains("MySQLIntegrityConstraintViolationException")) {
 				throw new JPADuplicateIDException(e);
@@ -239,8 +237,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public int updateByPrimaryKey(Object record) {
 		try {
 			return dao.updateByPrimaryKey(localBean(record));
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
 			if (e.getMessage().contains("MySQLIntegrityConstraintViolationException")) {
 				throw new JPADuplicateIDException(e);
@@ -258,8 +256,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public void deleteAll() {
 		try {
 			dao.deleteAll();
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (Exception e) {
 			throw new JPAException(e.getMessage());
 		}
@@ -405,8 +403,8 @@ public class ORDBDataService extends SerializedDomainDao {
 	public Object insertIfNoExist(Object entity) throws JPAException {
 		try {
 			return dao.insert(localBean(entity));
-		} catch (MySQLIntegrityConstraintViolationException e) {
-			throw new JPADuplicateIDException(e);
+//		} catch (MySQLIntegrityConstraintViolationException e) {
+//			throw new JPADuplicateIDException(e);
 		} catch (SQLIntegrityConstraintViolationException e) {
 			throw new JPADuplicateIDException(e);
 		} catch (DuplicateKeyException e) {

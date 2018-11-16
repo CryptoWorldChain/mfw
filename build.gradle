@@ -1,16 +1,14 @@
 
 buildscript {
-	repositories { maven { url "http://192.168.10.208:8081/nexus/content/groups/fc/"
-		} }
+	repositories { maven { url "http://172.18.80.22:8081/nexus/content/groups/public/" } }
 
-	dependencies { 
-	classpath "onight.osgi:zpp-gradle:3.2.0"
-			if(project.name!='oapi') {
-
-			classpath ("org.fc.zippo:org.fc.zippo.oapi:3.2.0")
+	dependencies {
+		classpath "onight.osgi:zpp-gradle_1.8:3.3.0"
+		if(project.name!='oapi_1.8'&&project.name!='oapi') {
+//			classpath ("org.fc.zippo:org.fc.zippo.oapi_1.8:4.0.0")
 		}
-	//classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.1' 
-	 }
+		//classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.1'
+	}
 }
 
 
@@ -21,39 +19,51 @@ apply plugin: 'zippo'
 subprojects {
 	project.group='org.fc.zippo'
 	apply plugin: 'eclipse-wtp'
-/*
-	repositories {
-		maven {url "http://192.168.10.208:8081/nexus/content/groups/fc/"}
-	}
-	buildscript{
-		repositories { maven { url "https://plugins.gradle.org/m2/"  } }
-		dependencies { classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.1'  }
-	}
-	*/
 	
+	/*
+	 repositories {
+	 maven {url "http://192.168.10.208:8081/nexus/content/groups/fc/"}
+	 }
+	 buildscript{
+	 repositories { maven { url "https://plugins.gradle.org/m2/"  } }
+	 dependencies { classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.1'  }
+	 }
+	 */
+
 	
+	buildscript {
+		repositories { maven { url "http://172.18.80.22:8081/nexus/content/groups/public/" } }
+	
+		dependencies {
+			classpath "onight.osgi:zpp-gradle_1.8:3.3.0"
+			if(project.name!='oapi_1.8'&&project.name!='oapi') {
+				classpath ("org.fc.zippo:org.fc.zippo.oapi:4.0.0")
+			}
+			//classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.1'
+		}
+	}
+	
+
 	apply plugin: 'zippo'
 
 
 	dependencies {
-		if(project.name!='oapi') {
+		if(project.name!='oapi_1.8'&&project.name!='oapi') {
 			//			compile project(":oapi")
-			compile ("org.fc.zippo:org.fc.zippo.oapi:3.3.1")
+			compile ("org.fc.zippo:org.fc.zippo.oapi:4.0.0")
 
 		}
-		
-		
-		/*
 
-		compile 'org.projectlombok:lombok:1.16.14'
-		compile 'org.apache.commons:commons-lang3:3.5'
-		compile 'org.slf4j:slf4j-api:1.7.24'
-		testCompile 'junit:junit:4.12'
-		compile 'org.apache.felix:org.apache.felix.ipojo.annotations:1.12.1'
-		*/
+		/*
+		 compile 'org.projectlombok:lombok:1.16.14'
+		 compile 'org.apache.commons:commons-lang3:3.5'
+		 compile 'org.slf4j:slf4j-api:1.7.24'
+		 testCompile 'junit:junit:4.12'
+		 compile 'org.apache.felix:org.apache.felix.ipojo.annotations:1.12.1'
+		 */
 	}
 
-	version = '3.2.0'
+	version = '4.0.0'
 
 	jar { manifest.attributes provider: 'org.fc.zippo' }
 }

@@ -1,5 +1,5 @@
 
-version = '3.0.0'
+version = '4.0.0'
 repositories{
 	maven{ url "http://dl.bintray.com/ethereum/maven/"}
 }
@@ -7,10 +7,10 @@ repositories{
 dependencies {
 	//	 testCompile 'junit:junit:4.12'
 	includeInJar "javax.transaction:jta:1.1"
-	compile 'com.google.guava:guava:19.0'
-	includeInJar 'org.ethereum:ethereumj-core:1.4.3-RELEASE'
-	includeInJar ('org.scalikejdbc:scalikejdbc_2.11:2.5.1') { exclude module: "scala-library" }
-	includeInJar ("com.github.mauricio:mysql-async_2.11:0.2.21"){ exclude module: "scala-library" } 
+	compile 'com.google.guava:guava:27.0-jre'
+//	includeInJar 'org.ethereum:ethereumj-core:1.4.3-RELEASE'
+	includeInJar ('org.scalikejdbc:scalikejdbc_2.12:3.3.1') { exclude module: "scala-library" }
+	includeInJar ("com.github.mauricio:mysql-async_2.12:0.2.21"){ exclude module: "scala-library" } 
 	includeInJar files('libs/ojdbc6.jar','libs/mysql-connector-java-5.1.37.jar')
 }
 

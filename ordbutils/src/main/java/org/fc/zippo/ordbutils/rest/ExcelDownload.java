@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.BorderFormatting;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -27,11 +28,13 @@ import org.apache.poi.ss.usermodel.ConditionalFormattingRule;
 import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.Drawing;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.PatternFormatting;
 import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.SheetConditionalFormatting;
+import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.fc.zippo.ordbutils.bean.DbCondi;
@@ -164,8 +167,8 @@ public class ExcelDownload extends DirectOutputStreamException {
 			// tfont.setFontName("Courier New");
 			CellStyle tstyle = wb.createCellStyle();
 			tstyle.setFont(tfont);
-			tstyle.setAlignment(CellStyle.ALIGN_CENTER);
-			tstyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+			tstyle.setAlignment(HorizontalAlignment.CENTER);
+			tstyle.setVerticalAlignment(VerticalAlignment.CENTER);
 			headstyle = tstyle;
 		}
 		tcell.setCellStyle(headstyle);
@@ -186,8 +189,8 @@ public class ExcelDownload extends DirectOutputStreamException {
 			// Fonts are set into a style so create a new one to use.
 			CellStyle tstyle = wb.createCellStyle();
 			tstyle.setFont(tfont);
-			tstyle.setAlignment(CellStyle.ALIGN_RIGHT);
-			tstyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+			tstyle.setAlignment(HorizontalAlignment.CENTER);
+			tstyle.setVerticalAlignment(VerticalAlignment.CENTER);
 			subheadstyle = tstyle;
 			// Create a cell and put a value in it.
 		}
@@ -335,8 +338,8 @@ public class ExcelDownload extends DirectOutputStreamException {
 			tfont.setFontHeightInPoints((short) 16);
 			CellStyle tstyle = wb.createCellStyle();
 			tstyle.setFont(tfont);
-			tstyle.setAlignment(CellStyle.ALIGN_RIGHT);
-			tstyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
+			tstyle.setAlignment(HorizontalAlignment.CENTER);
+			tstyle.setVerticalAlignment(VerticalAlignment.CENTER);
 			sumstyle = tstyle;
 		}
 		celltail.setCellStyle(sumstyle);
@@ -360,10 +363,10 @@ public class ExcelDownload extends DirectOutputStreamException {
 		ConditionalFormattingRule rule1 = sheetCF.createConditionalFormattingRule(ComparisonOperator.NOT_EQUAL, "111111110");
 
 		BorderFormatting bordFmt = rule1.createBorderFormatting();
-		bordFmt.setBorderBottom(BorderFormatting.BORDER_THIN);
-		bordFmt.setBorderTop(BorderFormatting.BORDER_THIN);
-		bordFmt.setBorderLeft(BorderFormatting.BORDER_THIN);
-		bordFmt.setBorderRight(BorderFormatting.BORDER_THIN);
+		bordFmt.setBorderBottom(BorderStyle.THIN);
+		bordFmt.setBorderTop(BorderStyle.THIN);
+		bordFmt.setBorderLeft(BorderStyle.THIN);
+		bordFmt.setBorderRight(BorderStyle.THIN);
 
 		PatternFormatting patternFmt = rule1.createPatternFormatting();
 

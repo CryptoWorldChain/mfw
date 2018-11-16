@@ -1,18 +1,11 @@
-buildscript { dependencies { classpath "onight.osgi:zpp-gradle:3.0.0" 
 
-classpath "org.fc.zippo:org.fc.zippo.oapi:3.3.0" 
-
-} }
-
-version = '3.3.0'
+version = '4.0.0'
 
 
 group = "org.fc.zippo.sender"
 
 dependencies {
-	includeInJar  'com.ning:async-http-client:1.9.40'
-	compile  "org.fc.zippo:org.fc.zippo.oapi:3.3.0"
-
+	includeInJar  'org.asynchttpclient:async-http-client:2.6.0'
 }
 
 jar {
