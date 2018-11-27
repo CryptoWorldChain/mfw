@@ -71,7 +71,7 @@ public class OutgoingSessionManager {
 		ck.getExec().scheduleWithFixedDelay(pmch, 60, 60, TimeUnit.SECONDS);
 	}
 
-	public synchronized void rmNetPool(String nodeName) {
+	public void rmNetPool(String nodeName) {
 		CKConnPool pool = nodePool.destroyPool(nodeName);// unknow modules
 		if (pool != null) {
 			pool.setStop(true);
@@ -81,57 +81,60 @@ public class OutgoingSessionManager {
 
 	}
 
-	public synchronized CKConnPool addNetPool(String nodeName, String addrport, int coreconn, int maxconn)
+	public CKConnPool addNetPool(String nodeName, String addrport, int coreconn, int maxconn)
 			throws NoneServerException {
 		if (addrport == null)
 			throw new NoneServerException("addrPort is null");
-		String addrports[] = addrport.split(":");
-		if (addrports.length != 2)
-			throw new NoneServerException("addrports format error try 'host:port' :" + addrport);
+		synchronized ((addrport + "").intern()) {
+			String addrports[] = addrport.split(":");
+			if (addrports.length != 2)
+				throw new NoneServerException("addrports format error try 'host:port' :" + addrport);
 
-		try {
-			String addr = addrports[0].trim();
-			int port = Integer.parseInt(addrports[1].trim());
-			String key = "otrans.servers.node." + nodeName;
-			int core = coreconn;
-			if (core == 0) {
-				core = params.get(key + ".core", params.get("otrans.servers.default.core", 3));
+			try {
+				String addr = addrports[0].trim();
+				int port = Integer.parseInt(addrports[1].trim());
+				String key = "otrans.servers.node." + nodeName;
+				int core = coreconn;
+				if (core == 0) {
+					core = params.get(key + ".core", params.get("otrans.servers.default.core", 3));
+				}
+				int max = maxconn;
+				if (max == 0) {
+					max = params.get(key + ".max", params.get("otrans.servers.default.max", 10));
+				}
+				CKConnPool pool = nodePool.getPool(nodeName);// unknow modules
+				if (pool == null) {
+					pool = nodePool.addPool(client, nodeName, addr, port, core, max, mss);
+					ck.addCheckHealth(nodePool, pool);
+				}
+				return pool;
+			} catch (Exception e) {
+				throw new NoneServerException("add net pool error :" + e.getMessage(), e);
 			}
-			int max = maxconn;
-			if (max == 0) {
-				max = params.get(key + ".max", params.get("otrans.servers.default.max", 10));
-			}
-			CKConnPool pool = nodePool.getPool(nodeName);// unknow modules
-			if (pool == null) {
-				pool = nodePool.addPool(client, nodeName, addr, port, core, max, mss);
-				ck.addCheckHealth(nodePool, pool);
-			}
-			return pool;
-		} catch (Exception e) {
-			throw new NoneServerException("add net pool error :" + e.getMessage(), e);
+
 		}
 
 	}
 
-	public synchronized void init() {
-
+	public void init() {
 		this.ready = true;
 	}
 
-	public synchronized RemoteModuleSession createOutgoingSSByURI(NodeInfo node)
-			throws NoneServerException {
-		PSession ms = mss.byNodeName(node.getNodeName());
-		if (ms != null && ms instanceof RemoteModuleSession) {
-			RemoteModuleSession pms = (RemoteModuleSession) ms;
-			return pms;
+	public RemoteModuleSession createOutgoingSSByURI(NodeInfo node) throws NoneServerException {
+		synchronized ((node.getURI() + "").intern()) {
+			PSession ms = mss.byNodeName(node.getNodeName());
+			if (ms != null && ms instanceof RemoteModuleSession) {
+				RemoteModuleSession pms = (RemoteModuleSession) ms;
+				return pms;
+			}
+			RemoteModuleSession pms = mss.getSessionByURI().get(node.getURI());
+			if (pms != null) {
+				mss.updateOrPutSession(node, pms);
+				return pms;
+			}
+			CKConnPool pool = addNetPool(node.getNodeName(), node.getAddr() + ":" + node.getPort(), 0, 0);
+			return createOutgoingSS(node, pool);
 		}
-		RemoteModuleSession pms = mss.getSessionByURI().get(node.getURI());
-		if (pms != null) {
-			mss.updateOrPutSession(node, pms);
-			return pms;
-		}
-		CKConnPool pool = addNetPool(node.getNodeName(), node.getAddr() + ":" + node.getPort(), 0, 0);
-		return createOutgoingSS(node, pool);
 	}
 
 	protected final Attribute<RemoteModuleSession> osmStore = Grizzly.DEFAULT_ATTRIBUTE_BUILDER
@@ -194,15 +197,16 @@ public class OutgoingSessionManager {
 	// return rms;
 	// }
 
-	public synchronized RemoteModuleSession createOutgoingSS(NodeInfo node, CKConnPool ckpool)
-			throws NoneServerException {
-		PSession ms = mss.byNodeName(node.getNodeName());
-		if (ms != null) {
-			log.warn("Override Existing Remote nodeIdx=" + node.getNodeName() + ",ms=" + ms);
-		}
-		RemoteModuleSession rms = mss.addRemoteSession(node, ckpool);
+	public RemoteModuleSession createOutgoingSS(NodeInfo node, CKConnPool ckpool) throws NoneServerException {
+		synchronized ((node.getURI() + "").intern()) {
+			PSession ms = mss.byNodeName(node.getNodeName());
+			if (ms != null) {
+				log.warn("Override Existing Remote nodeIdx=" + node.getNodeName() + ",ms=" + ms);
+			}
+			RemoteModuleSession rms = mss.addRemoteSession(node, ckpool);
 
-		return rms;
+			return rms;
+		}
 	}
 
 	public void wallLocalModule() {

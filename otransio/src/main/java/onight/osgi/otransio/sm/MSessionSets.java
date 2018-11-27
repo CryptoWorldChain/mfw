@@ -104,7 +104,6 @@ public class MSessionSets {
 
 	RemoteModuleBean rmb = new RemoteModuleBean();
 
-
 	public String getSimpleJsonInfo() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{");
@@ -116,8 +115,10 @@ public class MSessionSets {
 		sb.append(",\"send\":").append(sendCounter.get());
 		sb.append(",\"sent\":").append(sentCounter.get());
 		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount() + "/" + exec.getPoolSize()).append("\"");
-		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize()).append("\"");
-		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize()).append("\"");
+		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize())
+				.append("\"");
+		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize())
+				.append("\"");
 		sb.append(",\"pioresendsize\":").append(resendMap.size());
 		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
 		sb.append(",\"packchecksize\":").append(packMaps.size());
@@ -131,7 +132,7 @@ public class MSessionSets {
 		sb.append("}");
 		return sb.toString();
 	}
-	
+
 	public String getJsonInfo() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{");
@@ -143,8 +144,10 @@ public class MSessionSets {
 		sb.append(",\"send\":").append(sendCounter.get());
 		sb.append(",\"sent\":").append(sentCounter.get());
 		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount() + "/" + exec.getPoolSize()).append("\"");
-		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize()).append("\"");
-		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize()).append("\"");
+		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize())
+				.append("\"");
+		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize())
+				.append("\"");
 		sb.append(",\"pioresendsize\":").append(resendMap.size());
 		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
 		sb.append(",\"packchecksize\":").append(packMaps.size());
@@ -209,54 +212,57 @@ public class MSessionSets {
 		return sessionByNodeName.get(name);
 	}
 
-	public synchronized void updateOrPutSession(NodeInfo node, RemoteModuleSession session) {
-		String oldname = null;
-		for (Map.Entry<String, PSession> kv : sessionByNodeName.entrySet()) {
-			if (kv.getValue() instanceof RemoteModuleSession) {
-				RemoteModuleSession lps = (RemoteModuleSession) kv.getValue();
-				if (lps.nodeInfo.getURI().equals(node.getURI()) && !node.getNodeName().equals(kv.getKey())) {
-					//
-					log.debug("updateSession to new::" + kv.getKey() + "==>" + node.getNodeName());
-					oldname = kv.getKey();
-					break;
+	public void updateOrPutSession(NodeInfo node, RemoteModuleSession session) {
+		synchronized ((node.getURI() + "").intern()) {
+			String oldname = null;
+			for (Map.Entry<String, PSession> kv : sessionByNodeName.entrySet()) {
+				if (kv.getValue() instanceof RemoteModuleSession) {
+					RemoteModuleSession lps = (RemoteModuleSession) kv.getValue();
+					if (lps.nodeInfo.getURI().equals(node.getURI()) && !node.getNodeName().equals(kv.getKey())) {
+						//
+						log.debug("updateSession to new::" + kv.getKey() + "==>" + node.getNodeName());
+						oldname = kv.getKey();
+						break;
+					}
 				}
 			}
-		}
-		if (oldname != null) {
-			PSession oldsession = sessionByNodeName.remove(oldname);
-			log.debug("remove oldsession:" + oldsession + "===>" + session);
-			sessionByNodeName.put(node.getNodeName(), session);
-		} else {
-			sessionByNodeName.put(node.getNodeName(), session);
+			if (oldname != null) {
+				PSession oldsession = sessionByNodeName.remove(oldname);
+				log.debug("remove oldsession:" + oldsession + "===>" + session);
+				sessionByNodeName.put(node.getNodeName(), session);
+			} else {
+				sessionByNodeName.put(node.getNodeName(), session);
+			}
 		}
 	}
 
-	public synchronized RemoteModuleSession addRemoteSession(NodeInfo node, CKConnPool ckpool) {
-		PSession psession = sessionByNodeName.get(node.getNodeName());
-		RemoteModuleSession session = null;
-		if (psession != null && psession instanceof RemoteModuleSession) {
-			session = (RemoteModuleSession) psession;
-			if (session.getWriterQ() != null && session.getWriterQ().isStop()) {
-				session = null;
-				psession = null;
+	public RemoteModuleSession addRemoteSession(NodeInfo node, CKConnPool ckpool) {
+		synchronized ((node.getURI() + "").intern()) {
+			PSession psession = sessionByNodeName.get(node.getNodeName());
+			RemoteModuleSession session = null;
+			if (psession != null && psession instanceof RemoteModuleSession) {
+				session = (RemoteModuleSession) psession;
+				if (session.getWriterQ() != null && session.getWriterQ().isStop()) {
+					session = null;
+					psession = null;
+				}
 			}
+			if (psession == null) {
+				String uri = node.getURI();
+				session = sessionByURI.get(uri);
+				if (session != null && !session.getWriterQ().isStop()) {
+					updateOrPutSession(node, session);
+					return session;
+				}
+				session = new RemoteModuleSession(node, this, ckpool);
+				psession = session;
+				sessionByNodeName.put(node.getNodeName(), psession);
+				sessionByURI.put(uri, session);
+				// session.setConnsPool(ckpool);
+				// osm.ck.addCheckHealth(ckpool);
+			} //
+			return session;
 		}
-		if (psession == null) {
-			String uri = node.getURI();
-			session = sessionByURI.get(uri);
-			if (session != null && !session.getWriterQ().isStop()) {
-				updateOrPutSession(node, session);
-				return session;
-			}
-			session = new RemoteModuleSession(node, this, ckpool);
-			psession = session;
-			sessionByNodeName.put(node.getNodeName(), psession);
-			sessionByURI.put(uri, session);
-			// session.setConnsPool(ckpool);
-			// osm.ck.addCheckHealth(ckpool);
-		} //
-		return session;
-
 	}
 
 	public FramePacket getLocalModulesPacket() {
@@ -273,7 +279,7 @@ public class MSessionSets {
 		return ret;
 	}
 
-	public synchronized LocalModuleSession addLocalMoudle(String module) {
+	public  LocalModuleSession addLocalMoudle(String module) {
 		// localSessionsByModule.put(session.getModule(), session);
 		LocalModuleSession lms = localsessionByModule.get(module);
 		if (lms == null) {
@@ -283,7 +289,7 @@ public class MSessionSets {
 		return lms;
 	}
 
-	public synchronized void dropSession(String name, boolean sendDDNode) {
+	public void dropSession(String name, boolean sendDDNode) {
 		if (StringUtils.isNotBlank(name)) {
 			log.error("dropSession:" + name + ",sendDD=" + sendDDNode);
 			PSession session = sessionByNodeName.remove(name);
@@ -300,15 +306,16 @@ public class MSessionSets {
 					} else {
 						dropCounter.incrementAndGet();
 						try {
-							String remoteinfo=":"+rmb.getNodeInfo();
-							if(rmb.getNodeInfo()!=null){
-								remoteinfo=":uri="+rms.nodeInfo.getURI()+",name="+rmb.getNodeInfo().getNodeName()+",addr="+rmb.getNodeInfo().getAddr()
-										+":"+rmb.getNodeInfo().getPort();
+							String remoteinfo = ":" + rmb.getNodeInfo();
+							if (rmb.getNodeInfo() != null) {
+								remoteinfo = ":uri=" + rms.nodeInfo.getURI() + ",name="
+										+ rmb.getNodeInfo().getNodeName() + ",addr=" + rmb.getNodeInfo().getAddr() + ":"
+										+ rmb.getNodeInfo().getPort();
 							}
 							throw new RuntimeException(
 									"remote=" + name + ",sendDD=" + sendDDNode + ",info=" + remoteinfo);
 						} catch (RuntimeException t) {
-							log.error("drop session:"+t.getMessage(), t);
+							log.error("drop session:" + t.getMessage(), t);
 						}
 					}
 					rms.destroy(sendDDNode);
@@ -318,7 +325,7 @@ public class MSessionSets {
 		}
 	}
 
-	public synchronized void renameSession(String oldname, String newname) {
+	public void renameSession(String oldname, String newname) {
 		if (StringUtils.isNotBlank(oldname) && StringUtils.isNotBlank(newname)
 				&& !StringUtils.equals(oldname, newname)) {
 			PSession session = sessionByNodeName.get(oldname);

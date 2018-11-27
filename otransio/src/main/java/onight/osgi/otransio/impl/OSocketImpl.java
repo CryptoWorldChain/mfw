@@ -251,7 +251,10 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			ms = mss.byNodeName(destTO);
 			if (ms == null) {// not found
 				String uri = pack.getExtStrProp(PACK_URI);
-				synchronized (destTO.intern()) {
+				if (uri == null) {
+					uri = destTO;
+				}
+				synchronized (uri.intern()) {
 					ms = mss.byNodeName(destTO);
 					if (ms == null) {// second entry
 						if (StringUtils.isNotBlank(uri)) {
