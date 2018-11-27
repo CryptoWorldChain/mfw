@@ -104,6 +104,34 @@ public class MSessionSets {
 
 	RemoteModuleBean rmb = new RemoteModuleBean();
 
+
+	public String getSimpleJsonInfo() {
+		StringBuffer sb = new StringBuffer();
+		sb.append("{");
+		sb.append("\"name\":\"").append(rmb.getNodeInfo().getNodeName()).append("\"");
+		sb.append(",\"addr\":\"").append(rmb.getNodeInfo().getAddr()).append(":").append(rmb.getNodeInfo().getPort())
+				.append("\"");
+		int i = 0;
+		sb.append(",\"recv\":").append(recvCounter.get());
+		sb.append(",\"send\":").append(sendCounter.get());
+		sb.append(",\"sent\":").append(sentCounter.get());
+		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount() + "/" + exec.getPoolSize()).append("\"");
+		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize()).append("\"");
+		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize()).append("\"");
+		sb.append(",\"pioresendsize\":").append(resendMap.size());
+		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
+		sb.append(",\"packchecksize\":").append(packMaps.size());
+		sb.append(",\"resendtimes\":").append(resendTimes.get());
+		sb.append(",\"resendpacktimes\":").append(resendPacketTimes.get());
+		// sb.append(",\"allS\":").append(allSCounter.get());
+		sb.append(",\"drop\":").append(dropCounter.get());
+		sb.append(",\"dupl\":").append(duplCounter.get());
+		sb.append(",\"queuesize=\":").append(sessionByNodeName.size());
+		// sb.append(",\"osm\":").append(osm.getJsonInfo());
+		sb.append("}");
+		return sb.toString();
+	}
+	
 	public String getJsonInfo() {
 		StringBuffer sb = new StringBuffer();
 		sb.append("{");
@@ -138,7 +166,7 @@ public class MSessionSets {
 
 		}
 		sb.append("]");
-		sb.append(",\"modules\":[");
+		sb.append(",\"modules\":\"");
 		i = 0;
 		for (Entry<String, LocalModuleSession> kv : localsessionByModule.entrySet()) {
 			if (kv.getKey().length() > 0) {
@@ -146,7 +174,7 @@ public class MSessionSets {
 					if (i > 0)
 						sb.append(",");
 					i++;
-					sb.append("\"").append(kv.getKey()).append(cmd).append("\"");
+					sb.append(kv.getKey()).append(cmd);
 				}
 			}
 		}

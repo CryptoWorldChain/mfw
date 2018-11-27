@@ -231,9 +231,11 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
 				if (pack.getBody() != null && pack.getBody().length > 0) {
 					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn + ",kvs="
-							+ pack.getExtHead().getVkvs()+",h="+pack.getExtHead().getHiddenkvs() + ",timepost=" + getPackTimeout(expackid));
+							+ pack.getExtHead().getVkvs() + ",h=" + pack.getExtHead().getHiddenkvs() + ",timepost="
+							+ getPackTimeout(expackid));
 				} else {
-					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn+ ",timepost=" + getPackTimeout(expackid));
+					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn
+							+ ",timepost=" + getPackTimeout(expackid));
 				}
 				// handler.onFinished(PacketHelper.toPBReturn(pack, new
 				// LoopPackBody(mss.getPackIDKey(), pack)));
@@ -364,19 +366,23 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	public void doSomething(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		resp.setCharacterEncoding("UTF-8");
 		resp.setHeader("Content-type", "application/json;charset=UTF-8");
-		resp.getWriter().write(mss.getJsonInfo());
+		if (req.getServletPath().endsWith("rhr")) {
+			resp.getWriter().write(mss.getSimpleJsonInfo());
+		} else {
+			resp.getWriter().write(mss.getJsonInfo());
+		}
 	}
 
 	@Override
 	public String[] getWebPaths() {
-		return new String[] { "/nio/stat" };
+		return new String[] { "/nio/stat", "/nio/rhr" };
 	}
 
 	public static String getPackTimeout(String key) {
 		String times[] = key.split("_");
 		if (times.length > 2) {
 			long startTime = Long.parseLong(times[times.length - 2]);
-			return  ""+(System.currentTimeMillis() - startTime) ;
+			return "" + (System.currentTimeMillis() - startTime);
 		}
 		return "--not_time_pack--";
 	}
