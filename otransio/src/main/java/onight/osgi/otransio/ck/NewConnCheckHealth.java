@@ -58,10 +58,10 @@ public class NewConnCheckHealth {
 			@Override
 			public void onClosed(Closeable closeable, ICloseType type) throws IOException {
 				if (conn.getCloseReason() != null) {
-					log.error("connection on Closed " + conn + ",reason=" + conn.getCloseReason().getType() + ":"
+					log.debug("connection on Closed " + conn + ",reason=" + conn.getCloseReason().getType() + ":"
 							+ conn.getCloseReason().getCause());
 				} else {
-					log.error("connection on Closed " + conn + ",reason=" + conn.getCloseReason());
+					log.debug("connection on Closed " + conn + ",reason=" + conn.getCloseReason());
 				}
 				fconns.remove(conn);
 				removeConnection(conn, ip);
@@ -93,7 +93,7 @@ public class NewConnCheckHealth {
 				if (conn != null && conn.isOpen()) {
 					// exec.remove(this);
 					if (conn.getAttributes().getAttribute(CONN_AUTH_INFO) == null) {
-						log.error("drop connection because no auth");
+						log.error("drop connection because no auth:"+conn.getPeerAddress());
 						conn.close();
 					}
 				}

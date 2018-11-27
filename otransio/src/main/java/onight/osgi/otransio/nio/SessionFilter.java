@@ -174,10 +174,10 @@ public class SessionFilter extends BaseFilter {
 	public NextAction handleClose(FilterChainContext ctx) throws IOException {
 		if (ctx.getConnection().getCloseReason() != null) {
 			Connection conn = ctx.getConnection();
-			log.error("close connection:" + ctx.getConnection().getPeerAddress() + ",reason="
+			log.debug("close connection:" + ctx.getConnection().getPeerAddress() + ",reason="
 					+ conn.getCloseReason().getType() + ":" + conn.getCloseReason().getCause());
 		} else {
-			log.error("close connection:" + ctx.getConnection().getPeerAddress() + ",closereson="
+			log.debug("close connection:" + ctx.getConnection().getPeerAddress() + ",closereson="
 					+ ctx.getConnection().getCloseReason());
 		}
 		return ctx.getInvokeAction();
