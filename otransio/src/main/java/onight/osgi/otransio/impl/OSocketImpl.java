@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -29,9 +28,8 @@ import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.ck.NewConnCheckHealth;
 import onight.osgi.otransio.exception.NoneServerException;
 import onight.osgi.otransio.exception.TransIOException;
-import onight.osgi.otransio.exception.UnAuthorizedConnectionException;
 import onight.osgi.otransio.nio.OServer;
-import onight.osgi.otransio.nio.PacketQueue;
+import onight.osgi.otransio.nio.PacketTuple;
 import onight.osgi.otransio.sm.MSessionSets;
 import onight.osgi.otransio.sm.OutgoingSessionManager;
 import onight.osgi.otransio.sm.RemoteModuleBean;
@@ -216,23 +214,26 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 		if (pack.isResp() && pack.getExtHead().isExist(mss.getPackIDKey())) {
 			// 检查是否为响应包
 			String expackid = pack.getExtStrProp(mss.getPackIDKey());
-			CompleteHandler future_handler = mss.getPackMaps().remove(expackid);
-			if (future_handler != null) {
-				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
-				Object ofrom = pack.getExtHead().remove(OSocketImpl.PACK_FROM);
-				Object oto = pack.getExtHead().remove(OSocketImpl.PACK_TO);
+			PacketTuple pt = mss.getPackMaps().remove(expackid);
+			if (pt != null) {
+				// Object opackid =
+				// pack.getExtHead().remove(mss.getPackIDKey());
+				// Object ofrom =
+				// pack.getExtHead().remove(OSocketImpl.PACK_FROM);
+				// Object oto = pack.getExtHead().remove(OSocketImpl.PACK_TO);
 				// log.error("response from = " + ofrom + ",oto=" + oto +
 				// ",opackid=" + opackid + ",gcmd="
 				// + pack.getModuleAndCMD() + ",conn=" + conn + ",pack=" +
 				// pack);
-				future_handler.onFinished(pack);
+				pt.getHandler().onFinished(pack);
+				mss.getPackPool().retobj(pt);
 			} else {
 				Object opackid = pack.getExtHead().remove(mss.getPackIDKey());
 				if (pack.getBody() != null && pack.getBody().length > 0) {
-					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn + ",pack="
-							+ pack.getExtHead());
+					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn + ",kvs="
+							+ pack.getExtHead().getVkvs()+",h="+pack.getExtHead().getHiddenkvs() + ",timepost=" + getPackTimeout(expackid));
 				} else {
-					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn);
+					log.error("unknow ack:" + opackid + ",gcmd=" + pack.getModuleAndCMD() + ",conn=" + conn+ ",timepost=" + getPackTimeout(expackid));
 				}
 				// handler.onFinished(PacketHelper.toPBReturn(pack, new
 				// LoopPackBody(mss.getPackIDKey(), pack)));
@@ -369,6 +370,15 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	@Override
 	public String[] getWebPaths() {
 		return new String[] { "/nio/stat" };
+	}
+
+	public static String getPackTimeout(String key) {
+		String times[] = key.split("_");
+		if (times.length > 2) {
+			long startTime = Long.parseLong(times[times.length - 2]);
+			return  ""+(System.currentTimeMillis() - startTime) ;
+		}
+		return "--not_time_pack--";
 	}
 
 }

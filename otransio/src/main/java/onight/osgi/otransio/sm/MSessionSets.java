@@ -79,7 +79,7 @@ public class MSessionSets {
 
 	HashMap<String, LocalModuleSession> localsessionByModule = new HashMap<>();
 
-	ConcurrentHashMap<String, CompleteHandler> packMaps = new ConcurrentHashMap<>();
+	ConcurrentHashMap<String, PacketTuple> packMaps = new ConcurrentHashMap<>();
 
 	// Cache<String, CompleteHandler> packMapsCache =
 	// CacheBuilder.newBuilder().expireAfterWrite(120, TimeUnit.SECONDS)
@@ -114,9 +114,9 @@ public class MSessionSets {
 		sb.append(",\"recv\":").append(recvCounter.get());
 		sb.append(",\"send\":").append(sendCounter.get());
 		sb.append(",\"sent\":").append(sentCounter.get());
-		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount() + "/" + exec.getPoolSize());
-		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize());
-		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize());
+		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount() + "/" + exec.getPoolSize()).append("\"");
+		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize()).append("\"");
+		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize()).append("\"");
 		sb.append(",\"pioresendsize\":").append(resendMap.size());
 		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
 		sb.append(",\"packchecksize\":").append(packMaps.size());
@@ -272,9 +272,15 @@ public class MSessionSets {
 					} else {
 						dropCounter.incrementAndGet();
 						try {
-							throw new RuntimeException("log drop:" + name);
+							String remoteinfo=":"+rmb.getNodeInfo();
+							if(rmb.getNodeInfo()!=null){
+								remoteinfo=":uri="+rms.nodeInfo.getURI()+",name="+rmb.getNodeInfo().getNodeName()+",addr="+rmb.getNodeInfo().getAddr()
+										+":"+rmb.getNodeInfo().getPort();
+							}
+							throw new RuntimeException(
+									"remote=" + name + ",sendDD=" + sendDDNode + ",info=" + remoteinfo);
 						} catch (RuntimeException t) {
-							log.error("drop session,", t);
+							log.error("drop session:"+t.getMessage(), t);
 						}
 					}
 					rms.destroy(sendDDNode);
