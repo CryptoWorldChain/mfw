@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package org.fc.zippo.scheduler.pbgens;
+
+enum PModule {
+	DDC = 0; //Dispatching and Directing Center
+};
+enum PCommand {
+	RHR = 0;//心跳检测
+};
+
+
+message PSThreadsInfo{
+	repeated string gcmds = 1;
+}
+
