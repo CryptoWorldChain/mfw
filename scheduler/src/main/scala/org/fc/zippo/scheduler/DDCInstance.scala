@@ -26,8 +26,9 @@ object DDCInstance extends OLog {
   val daemonsWTC = new ScheduledThreadPoolExecutor(DDCConfig.DAEMON_WORKER_THREAD_COUNT);
   val defaultWTC = new ForkJoinPool(DDCConfig.DEFAULT_WORKER_THREAD_COUNT);
   val defaultQ = new LinkedBlockingQueue[Worker]
-  val specQ = new ConcurrentHashMap[String, LinkedBlockingQueue[Worker]];
-  val specDPW = new ConcurrentHashMap[String, (Iterable[DDCDispatcher], ForkJoinPool)];
+  val specQDW = new ConcurrentHashMap[String, (LinkedBlockingQueue[Worker], Iterable[DDCDispatcher], ForkJoinPool)];
+  val specQ = new ConcurrentHashMap[String, (String, LinkedBlockingQueue[Worker])];
+
   val running = new AtomicBoolean(true);
 
   def init() {
@@ -36,30 +37,26 @@ object DDCInstance extends OLog {
     for (i <- 1 to DDCConfig.DEFAULT_DISPATCHER_COUNT) {
       new Thread(new DDCDispatcher("default(" + i + ")", defaultQ, defaultWTC)).start()
     }
-    //init specify actors
-    DDCConfig.spectActors().map { x =>
-      val gcmd = x._1
+    //init specify dispatcher -- thread pools 
+    DDCConfig.specDispatchers().map { x =>
+      val dcname = x._1
       val ddc = x._2;
       val wc = x._3;
-      //drop exist
-      val existQ = specQ.get(gcmd)
-      if (existQ != null) {
-        existQ.clear();
-      }
-      val existDP = specDPW.get(gcmd)
-      if (existDP != null) {
-        existDP._1.map { dp => dp.running.set(false) }
-        existDP._2.shutdown();
-      }
-      //create new one
       val newQ = new LinkedBlockingQueue[Worker]
       val newWTC = new ForkJoinPool(wc);
       val incr = new AtomicInteger(0);
-      val newDP = Array.fill(ddc)(0).map { x => new DDCDispatcher(gcmd + "(" + incr.incrementAndGet() + ")", newQ, newWTC); }
+      val newDP = Array.fill(ddc)(0).map { x => new DDCDispatcher(dcname + "(" + incr.incrementAndGet() + ")", newQ, newWTC); }
       newDP.map { f => new Thread(f).start() }
-      specQ.put(gcmd, newQ)
-      specDPW.put(gcmd, (newDP, newWTC))
+      specQDW.put(dcname, (newQ, newDP, newWTC))
+    }
 
+    DDCConfig.spectActors().map { x =>
+      val gcmd = x._1;
+      val dcname = x._2;
+      val dqw = specQDW.get(dcname)
+      if (dqw != null) {
+        specQ.put(gcmd, (dcname, dqw._1))
+      }
     }
   }
 
@@ -70,14 +67,12 @@ object DDCInstance extends OLog {
     daemonsWTC.scheduleWithFixedDelay(run, initialDelay, period, TimeUnit.SECONDS)
   }
 
-  def registActor(gcmd: String, sm: SessionModules[Message]) {
-
-  }
   def post(pack: FramePacket, pbo: Message, handler: CompleteHandler, sm: SessionModules[Message]) = {
-    if (defaultQ.size() < DDCConfig.DEFAULT_WORKER_QUEUE_MAXSIZE) {
-      defaultQ.offer(WorkerObjectPool.borrow(pack, pbo, handler, sm));
+    val (dname, q) = specQ.getOrDefault(pack.getModuleAndCMD, ("default", defaultQ))
+    if (q.size() < DDCConfig.DEFAULT_WORKER_QUEUE_MAXSIZE) {
+      q.offer(WorkerObjectPool.borrow(pack.getModuleAndCMD, pack, pbo, handler, sm, dname));
     } else {
-      log.error("drop actor exec for pool size exceed:" + defaultQ.size() + "==>" + DDCConfig.DEFAULT_WORKER_QUEUE_MAXSIZE);
+      log.error("drop actor exec for pool size exceed:" + q.size() + "==>" + DDCConfig.DEFAULT_WORKER_QUEUE_MAXSIZE);
     }
   }
 
@@ -85,5 +80,19 @@ object DDCInstance extends OLog {
     running.set(false)
     daemonsWTC.shutdown();
     defaultWTC.shutdown()
+    val nullWorker = new SessionModules[Message] {
+      override def onPBPacket(pack: FramePacket, pbo: Message, handler: CompleteHandler) = {
+      }
+    };
+    defaultQ.offer(WorkerObjectPool.borrow("quit", null, null, null, nullWorker, "default"))
+    specQDW.map(f =>
+      {
+        val q = f._2._1;
+        val d = f._2._2;
+        val w = f._2._3;
+        q.offer(WorkerObjectPool.borrow("quit", null, null, null, nullWorker, "default"));
+        d.map { x => x.running.set(false) }
+        w.shutdown();
+      })
   }
 }
