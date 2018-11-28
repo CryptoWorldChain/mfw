@@ -1,6 +1,6 @@
 package org.fc.zippo.scheduler.test
 
-import org.fc.zippo.scheduler.SStartup
+import org.fc.zippo.scheduler.ZippoDDC
 import onight.tfw.otransio.api.beans.FramePacket
 import onight.tfw.otransio.api.PacketHelper
 import org.fc.zippo.scheduler.pbgens.Schedule.PSThreadsInfo
@@ -12,7 +12,7 @@ import java.util.concurrent.CountDownLatch
 object Test1 {
 
   def main(args: Array[String]): Unit = {
-    val ddc = new SStartup()
+    val ddc = new ZippoDDC()
     ddc.init()
     val pack = PacketHelper.genASyncPBPack("JIN", "DOB", "hello");
     val pack2 = PacketHelper.genASyncPBPack("TRAN", "SIO", "hello");

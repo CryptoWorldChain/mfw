@@ -11,16 +11,21 @@ import onight.oapi.scala.traits.OLog
 import onight.osgi.annotation.NActorProvider
 import onight.tfw.otransio.api.beans.FramePacket
 import onight.tfw.async.CompleteHandler
+import org.apache.felix.ipojo.annotations.Component
+import onight.osgi.annotation.iPojoBean
+import org.apache.felix.ipojo.annotations.Instantiate
+import org.apache.felix.ipojo.annotations.Provides
+import onight.tfw.ntrans.api.ActorService
 
 abstract class PMDDC[T <: Message] extends SessionModules[T] with OLog {
   override def getModule: String = PModule.DDC.name()
 }
 
 @NActorProvider
-class SStartup extends PMDDC[Message] {
-
+@Instantiate(name = "zippo.ddc")
+@Provides(specifications = Array(classOf[ActorService]), strategy = "SINGLETON")
+class ZippoDDC extends PMDDC[Message] {
   override def getCmds: Array[String] = Array("SSS");
-
   @Validate
   def init() {
     //abc
