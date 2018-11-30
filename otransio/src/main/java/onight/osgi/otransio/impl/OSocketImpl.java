@@ -93,6 +93,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	public OSocketImpl(BundleContext context) {
 		this.context = context;
 		params = new PropHelper(context);
+		mss = new MSessionSets(OSocketImpl.this,params);
 	}
 
 	@Getter
@@ -120,8 +121,6 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	@Validate
 	public void start() {
-		mss = new MSessionSets(OSocketImpl.this,params);
-
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
