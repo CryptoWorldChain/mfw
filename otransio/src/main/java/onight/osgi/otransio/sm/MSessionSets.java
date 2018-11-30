@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.lang3.StringUtils;
@@ -13,10 +12,10 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.osgi.otransio.ck.CKConnPool;
 import onight.osgi.otransio.impl.NodeInfo;
+import onight.osgi.otransio.impl.OSocketImpl;
 import onight.osgi.otransio.nio.PacketTuple;
 import onight.osgi.otransio.util.PacketTuplePool;
 import onight.osgi.otransio.util.PacketWriterPool;
-import onight.tfw.async.CompleteHandler;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.FramePacket;
@@ -40,9 +39,9 @@ public class MSessionSets {
 	ConcurrentHashMap<String, PacketTuple> resendMap = new ConcurrentHashMap<>();
 	ConcurrentHashMap<String, Long> duplicateCheckMap = new ConcurrentHashMap<>();
 	int max_packet_buffer = 10;
-	ForkJoinPool exec;
-	ForkJoinPool readerexec;
-	ForkJoinPool writerexec;
+//	ForkJoinPool exec;
+//	ForkJoinPool readerexec;
+//	ForkJoinPool writerexec;
 
 	int resendBufferSize = 100000;
 	int resendTimeOutMS = 60000;
@@ -50,10 +49,11 @@ public class MSessionSets {
 	int resendTryTimes = 5;
 	AtomicLong resendTimes = new AtomicLong(0);
 	AtomicLong resendPacketTimes = new AtomicLong(0);
-
-	public MSessionSets(PropHelper params) {
+	OSocketImpl osocket;
+	public MSessionSets(OSocketImpl osocket,PropHelper params) {
 		packIDKey = UUIDGenerator.generate() + ".SID";
 		this.params = params;
+		this.osocket = osocket;
 		resendBufferSize = params.get("org.zippo.otransio.resend.buffer.size", 100000);
 		resendTimeOutMS = params.get("org.zippo.otransio.resend.timeoutms", 60000);
 		resendTimeMS = params.get("org.zippo.otransio.resend.timems", 3000);
@@ -64,12 +64,12 @@ public class MSessionSets {
 		// params.get("org.zippo.otransio.write_thread_count", 10);
 		packPool = new PacketTuplePool(params.get("org.zippo.otransio.maxpackbuffer", 10000));
 		writerPool = new PacketWriterPool(params.get("org.zippo.otransio.maxwriterbuffer", 1000));
-		exec = new ForkJoinPool(
-				params.get("org.zippo.otransio.exec.parrel", java.lang.Runtime.getRuntime().availableProcessors() * 2));
-		writerexec = new ForkJoinPool(params.get("org.zippo.otransio.writerexec.parrel",
-				java.lang.Runtime.getRuntime().availableProcessors() * 2));
-		readerexec = new ForkJoinPool(params.get("org.zippo.otransio.readerexec.parrel",
-				java.lang.Runtime.getRuntime().availableProcessors() * 2));
+//		exec = new ForkJoinPool(
+//				params.get("org.zippo.otransio.exec.parrel", java.lang.Runtime.getRuntime().availableProcessors() * 2));
+//		writerexec = new ForkJoinPool(params.get("org.zippo.otransio.writerexec.parrel",
+//				java.lang.Runtime.getRuntime().availableProcessors() * 2));
+//		readerexec = new ForkJoinPool(params.get("org.zippo.otransio.readerexec.parrel",
+//				java.lang.Runtime.getRuntime().availableProcessors() * 2));
 	}
 
 	OutgoingSessionManager osm;
@@ -114,11 +114,11 @@ public class MSessionSets {
 		sb.append(",\"recv\":").append(recvCounter.get());
 		sb.append(",\"send\":").append(sendCounter.get());
 		sb.append(",\"sent\":").append(sentCounter.get());
-		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount() + "/" + exec.getPoolSize()).append("\"");
-		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize())
-				.append("\"");
-		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize())
-				.append("\"");
+//		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount() + "/" + exec.getPoolSize()).append("\"");
+//		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize())
+//				.append("\"");
+//		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize())
+//				.append("\"");
 		sb.append(",\"pioresendsize\":").append(resendMap.size());
 		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
 		sb.append(",\"packchecksize\":").append(packMaps.size());
@@ -143,11 +143,11 @@ public class MSessionSets {
 		sb.append(",\"recv\":").append(recvCounter.get());
 		sb.append(",\"send\":").append(sendCounter.get());
 		sb.append(",\"sent\":").append(sentCounter.get());
-		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount() + "/" + exec.getPoolSize()).append("\"");
-		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize())
-				.append("\"");
-		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize())
-				.append("\"");
+//		sb.append(",\"execpool\":\"").append(exec.getActiveThreadCount() + "/" + exec.getPoolSize()).append("\"");
+//		sb.append(",\"readerexecpool\":\"").append(readerexec.getActiveThreadCount() + "/" + readerexec.getPoolSize())
+//				.append("\"");
+//		sb.append(",\"writerexecpool\":\"").append(writerexec.getActiveThreadCount() + "/" + writerexec.getPoolSize())
+//				.append("\"");
 		sb.append(",\"pioresendsize\":").append(resendMap.size());
 		sb.append(",\"pioduplicatesize\":").append(duplicateCheckMap.size());
 		sb.append(",\"packchecksize\":").append(packMaps.size());

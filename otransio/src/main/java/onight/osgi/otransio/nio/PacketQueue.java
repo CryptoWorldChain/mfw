@@ -151,6 +151,7 @@ public class PacketQueue implements Runnable {
 		}
 
 		conn = null;
+		int failedwait = 0;
 		while (!isStop) {
 			// do {
 			try {
@@ -183,13 +184,20 @@ public class PacketQueue implements Runnable {
 						subexec.execute(writer);
 						writer = null;
 					}
+					failedwait = 0;
 				} else {
 					tryDirectSendPacket(green_queue, greenPool, "green");
 					tryDirectSendPacket(pio_queue, pioPool, "pio");
+					failedwait++;
+					if (failedwait > 5) {
+						Thread.sleep(2000);// wait for connection
+						failedwait = 0;
+					}
 					failedGetConnection++;
-					log.error("TT1-no more connection for " + name + ",failedcc=" + failedGetConnection + ",pool="
-							+ ckpool.getActiveObjs().size() + "/" + ckpool.size() + ",conn=" + conn + ",queuesize=["
-							+ green_queue.size() + "," + pio_queue.size() + "," + queue.size() + "]");
+					log.warn("TT1-no more connection for " + name + ",failedcc=" + failedGetConnection + ",failedwait="
+							+ failedwait + ",pool=" + ckpool.getActiveObjs().size() + "/" + ckpool.size() + ",conn="
+							+ conn + ",queuesize=[" + green_queue.size() + "," + pio_queue.size() + "," + queue.size()
+							+ "]");
 				}
 
 			} catch (Throwable t) {

@@ -62,11 +62,11 @@ public  interface DomainDaoSupport {
 
 	*//**
 	 * 
-	 * @param exec
+	 * @param sch
 	 * @return
 	 * @throws JPAException
 	 *//*
-	Object doInTransaction(TransactionExecutor exec) throws JPAException;
+	Object doInTransaction(TransactionExecutor sch) throws JPAException;
 
 	*//**
 	 * 不存在是插入进去

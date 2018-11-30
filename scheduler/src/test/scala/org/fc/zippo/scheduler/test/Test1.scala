@@ -8,12 +8,16 @@ import onight.oapi.scala.commons.SessionModules
 import com.google.protobuf.Message
 import onight.tfw.async.CompleteHandler
 import java.util.concurrent.CountDownLatch
+import com.googlecode.protobuf.format.util.HexUtils
+import org.apache.commons.codec.binary.Hex
 
 object Test1 {
 
   def main(args: Array[String]): Unit = {
     val ddc = new ZippoDDC()
     ddc.init()
+    val tx = new String(Hex.decodeHex("47555344".toCharArray()))
+    println("tx="+tx)
     val pack = PacketHelper.genASyncPBPack("JIN", "DOB", "hello");
     val pack2 = PacketHelper.genASyncPBPack("TRAN", "SIO", "hello");
     val pbo = PSThreadsInfo.newBuilder().addGcmds("JINDOB").build()
@@ -28,14 +32,14 @@ object Test1 {
     }
     val start = System.currentTimeMillis();
     for (i <- 1 to n) {
-      ddc.post(pack, pbo, null, sm)
-      ddc.post(pack2, pbo, null, sm)
+      ddc.post(pack,  null, sm)
+      ddc.post(pack2,  null, sm)
     }
     println("cost.1=" + (System.currentTimeMillis() - start));
     cdl.await()
     println("cost.2=" + (System.currentTimeMillis() - start));
 
-    ddc.destory();
+    ddc.destroy();
     println("END!")
 
   }

@@ -51,11 +51,16 @@ public class OServer {
 		ThreadPoolConfig wtpc = ThreadPoolConfig.defaultConfig();
 		wtpc.setCorePoolSize(params.get("otrans.worker.core", 10)).setMaxPoolSize(params.get("otrans.worker.max", 100));
 		transport.setWorkerThreadPoolConfig(wtpc);
+		
+		transport.setKernelThreadPool(listener.getDispatcher().getExecutorService("otransio.server.kernel"));
+		transport.setWorkerThreadPool(listener.getDispatcher().getExecutorService("otransio.server.workers"));
+
+		
 		transport.setIOStrategy(LeaderFollowerNIOStrategy.getInstance());
 		transport.setTcpNoDelay(true);
 		transport.setKeepAlive(true);
 		transport.setOptimizedForMultiplexing(true);
-		transport.setClientSocketSoTimeout(60*1000);
+		transport.setClientSocketSoTimeout(params.get("otransio.client.sotimeout", 10));
 		try {
 			// binding transport to start listen on certain host and port
 			int oport = NodeHelper.getCurrNodeListenInPort();

@@ -17,6 +17,8 @@ import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.Unbind;
 import org.apache.felix.ipojo.annotations.Validate;
+import org.fc.zippo.dispatcher.ForkJoinDispatcher;
+import org.fc.zippo.dispatcher.IActorDispatcher;
 import org.glassfish.grizzly.Connection;
 import org.glassfish.grizzly.Grizzly;
 import org.glassfish.grizzly.attributes.Attribute;
@@ -37,6 +39,7 @@ import onight.osgi.otransio.sm.RemoteModuleSession;
 import onight.tfw.async.CompleteHandler;
 import onight.tfw.mservice.NodeHelper;
 import onight.tfw.ntrans.api.ActorService;
+import onight.tfw.ntrans.api.annotation.ActorRequire;
 import onight.tfw.otransio.api.MessageException;
 import onight.tfw.otransio.api.PSenderService;
 import onight.tfw.otransio.api.PackHeader;
@@ -72,16 +75,24 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	public static String DROP_CONN = "DROP**";
 
+	@ActorRequire(name = "zippo.ddc", scope = "global")
+	IActorDispatcher dispatcher = null;
+
+	public IActorDispatcher getDispatcher() {
+		return dispatcher;
+	}
+
+	public void setDispatcher(IActorDispatcher dispatcher) {
+		log.info("setDispatcher==" + dispatcher);
+		this.dispatcher = dispatcher;
+		localProcessor.dispatcher = dispatcher;
+	}
+
 	BundleContext context;
 
 	public OSocketImpl(BundleContext context) {
 		this.context = context;
 		params = new PropHelper(context);
-		mss = new MSessionSets(params);
-		osm = new OutgoingSessionManager(this, params, mss);
-		mss.setOsm(osm);
-		localProcessor.exec = mss.getReaderexec();
-		localProcessor.poolSize = params.get("org.zippo.otransio.maxrunnerbuffer", 1000);
 	}
 
 	@Getter
@@ -109,16 +120,21 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	@Validate
 	public void start() {
-		server.startServer(this, params);
+		mss = new MSessionSets(OSocketImpl.this,params);
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					/**
-					 * 等2秒主要是为了等注册
-					 */
+					while (dispatcher == null) {
+						Thread.sleep(2000);
+					}
 					log.info("transio startup:");
-					Thread.sleep(2000);
+					osm = new OutgoingSessionManager(OSocketImpl.this, params, mss);
+					mss.setOsm(osm);
+					localProcessor.poolSize = params.get("org.zippo.otransio.maxrunnerbuffer", 1000);
+					server.startServer(OSocketImpl.this, params);
+
 				} catch (InterruptedException e) {
 				}
 				// 建立外联服务
@@ -216,15 +232,6 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 			String expackid = pack.getExtStrProp(mss.getPackIDKey());
 			PacketTuple pt = mss.getPackMaps().remove(expackid);
 			if (pt != null) {
-				// Object opackid =
-				// pack.getExtHead().remove(mss.getPackIDKey());
-				// Object ofrom =
-				// pack.getExtHead().remove(OSocketImpl.PACK_FROM);
-				// Object oto = pack.getExtHead().remove(OSocketImpl.PACK_TO);
-				// log.error("response from = " + ofrom + ",oto=" + oto +
-				// ",opackid=" + opackid + ",gcmd="
-				// + pack.getModuleAndCMD() + ",conn=" + conn + ",pack=" +
-				// pack);
 				pt.getHandler().onFinished(pack);
 				mss.getPackPool().retobj(pt);
 			} else {
@@ -339,10 +346,6 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 		if (!StringUtils.equals(oldname, newname)) {
 			log.debug("renameSession:" + oldname + "==>" + newname);
 			mss.renameSession(oldname, newname);
-			// PacketQueue queue = queueBybcuid.remove(oldname);
-			// if (queue != null) {
-			// queueBybcuid.put(newname, queue);
-			// }
 		}
 	}
 
@@ -369,7 +372,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 	public void doSomething(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		resp.setCharacterEncoding("UTF-8");
 		resp.setHeader("Content-type", "application/json;charset=UTF-8");
-		if (req.getServletPath().endsWith("rhr")) {
+		if (req.getServletPath().endsWith("rhr") || req.getServletPath().endsWith("pbrhr.do")) {
 			resp.getWriter().write(mss.getSimpleJsonInfo());
 		} else {
 			resp.getWriter().write(mss.getJsonInfo());
@@ -378,7 +381,7 @@ public class OSocketImpl implements Serializable, ActorService, IActor {
 
 	@Override
 	public String[] getWebPaths() {
-		return new String[] { "/nio/stat", "/nio/rhr" };
+		return new String[] { "/nio/stat", "/nio/rhr", "/nio/pbrhr", "/nio/pbrhr.do" };
 	}
 
 	public static String getPackTimeout(String key) {

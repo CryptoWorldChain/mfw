@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.google.protobuf.Message;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.ntrans.api.PBActor;
 import onight.tfw.otransio.api.PackHeader;
@@ -23,7 +24,8 @@ import onight.tfw.outils.serialize.SerializerFactory;
 import onight.tfw.outils.serialize.SerializerUtil;
 
 @Slf4j
-public class ActorRunner implements Runnable {
+@Data
+public class ActorRunner extends PBActor<Message> implements Runnable {
 
 	FramePacket pack;
 	HttpServletResponse resp;
@@ -179,5 +181,23 @@ public class ActorRunner implements Runnable {
 				asyncContext.complete();
 			}
 		}
+	}
+
+	@Override
+	public void onPBPacket(FramePacket pack, Message pbo, CompleteHandler handler) {
+		try {
+			actor.doPacketWithFilter(pack, handler);
+		} catch (Exception e) {
+			log.debug("doweb error:", e);
+			try {
+				resp.getOutputStream().write(PacketHelper.toJsonBytes(PacketHelper.toPBErrorReturn(pack,
+						ExceptionBody.EC_SERVICE_EXCEPTION, "UNKNOW_ERROR:" + e.getMessage())));
+			} catch (IOException e1) {
+				// e1.printStackTrace();
+				log.debug("error response:", e);
+			} finally {
+				asyncContext.complete();
+			}
+		}		
 	}
 }

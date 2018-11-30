@@ -1,16 +1,17 @@
 package onight.osgi.otransio.impl;
 
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
+import org.fc.zippo.dispatcher.IActorDispatcher;
 import org.glassfish.grizzly.impl.FutureImpl;
 import org.glassfish.grizzly.utils.Futures;
+
+import com.google.protobuf.Message;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import onight.tfw.async.CompleteHandler;
-import onight.tfw.ntrans.api.FilterManager;
-import onight.tfw.ntrans.api.annotation.ActorRequire;
+import onight.tfw.ntrans.api.PBActor;
 import onight.tfw.otransio.api.beans.FramePacket;
 import onight.tfw.otransio.api.session.PSession;
 import onight.tfw.outils.pool.ReusefulLoopPool;
@@ -19,7 +20,8 @@ import onight.tfw.outils.pool.ReusefulLoopPool;
 @Data
 public class LocalMessageProcessor {
 
-	ForkJoinPool exec;
+	// ForkJoinPool exec;
+	IActorDispatcher dispatcher;
 	int poolSize = 1000;
 
 	class Runner implements Runnable {
@@ -41,14 +43,6 @@ public class LocalMessageProcessor {
 
 		@Override
 		public void run() {
-			// if (fm != null && pack != null) {
-			// try {
-			// fm.preRouteListner(null, pack, handler);
-			// } catch (Exception e) {
-			// log.error("error in prerouter message:" +
-			// pack.getModuleAndCMD());
-			// }
-			// }
 			try {
 				ms.onPacket(pack, handler);
 			} catch (Exception e) {
@@ -58,23 +52,13 @@ public class LocalMessageProcessor {
 				if (future != null) {
 					future.result("F");
 				}
-				// if (fm != null && pack != null) {
-				// try {
-				// fm.postRouteListner(null, pack, handler);
-				// } catch (Exception e) {
-				// log.error("error in prerouter message:" +
-				// pack.getModuleAndCMD() + ",erro=" + e.getMessage(),
-				// e);
-				// }
-				// }
-
 				if (runnerPool.size() < poolSize) {
 					this.reset(null, null, null, null);
 					runnerPool.retobj(this);
 				}
-
 			}
 		}
+
 	}
 
 	ReusefulLoopPool<Runner> runnerPool = new ReusefulLoopPool<>();
@@ -86,39 +70,20 @@ public class LocalMessageProcessor {
 			runner = new Runner();
 		}
 		if (pack.isSync()) {
-			long startTime = System.currentTimeMillis();
 			FutureImpl<String> future = Futures.createSafeFuture();
 			runner.reset(pack, handler, ms, future);
 			if (pack.getFixHead().getPrio() == '8' || pack.getFixHead().getPrio() == '9') {
-				long start = System.currentTimeMillis();
-				runner.run();
-				log.debug("sync pio run success: ,GCMD=" + pack.getFixHead().getCmd()
-						+ pack.getFixHead().getModule() + ",realcost=" + (System.currentTimeMillis() - start)
-						+ ",queue=" + exec.getQueuedTaskCount() + ",running=" + exec.getRunningThreadCount()
-						+ ",active=" + exec.getActiveThreadCount() + ",poolsize=" + runnerPool.size()
-						+ ",activepoolsize=" + runnerPool.getActiveObjs().size());
+				dispatcher.executeNow(runner.pack, runner);
 				runner = null;
 			} else {
-				exec.execute(runner);
-				try {
-					future.get(60, TimeUnit.SECONDS);
-				} catch (Throwable e) {
-					log.error("route Failed:" + e.getMessage() + ",GCMD=" + pack.getFixHead().getCmd()
-							+ pack.getFixHead().getModule() + ",realcost=" + (System.currentTimeMillis() - startTime)
-							+ ",queue=" + exec.getQueuedTaskCount() + ",execpoolsize=" + exec.getPoolSize()
-							+ ",active=" + exec.getActiveThreadCount() + ",poolsize=" + runnerPool.size()
-							+ ",activepoolsize=" + runnerPool.getActiveObjs().size(), e);
-					handler.onFailed(new RuntimeException(e));
-				}
+				dispatcher.postWithTimeout(runner.pack, runner, 60 * 1000, runner.handler);
 			}
 		} else {
 			runner.reset(pack, handler, ms, null);
-			if (pack.getFixHead().getPrio() == '9') {
-				// green
-				runner.run();
-				runner = null;
+			if (pack.getFixHead().getPrio() == '8' || pack.getFixHead().getPrio() == '9') {
+				dispatcher.executeNow(runner.pack, runner);
 			} else {
-				exec.execute(runner);
+				dispatcher.post(runner.pack, runner);
 			}
 		}
 	}

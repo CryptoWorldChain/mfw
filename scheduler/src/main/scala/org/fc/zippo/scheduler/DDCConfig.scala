@@ -7,6 +7,7 @@ object DDCConfig {
   val PREFIX = "org.zippo.ddc."
 
   val DAEMON_WORKER_THREAD_COUNT = prop.get(PREFIX + "daemon.actor.thread.count", Runtime.getRuntime().availableProcessors());
+  val TIMEOUT_CHECK_THREAD_COUNT = prop.get(PREFIX + "timeout.check.thread.count", Runtime.getRuntime().availableProcessors());
   val DEFAULT_WORKER_QUEUE_MAXSIZE = prop.get(PREFIX + "default.actor.queue.maxsize", 102400);
   val DEFAULT_WORKER_THREAD_COUNT = prop.get(PREFIX + "default.actor.thread.count", Runtime.getRuntime().availableProcessors() * 4);
   val DEFAULT_DISPATCHER_QUEUE_WAIT_MS = prop.get(PREFIX + "default.dispatcher.queue.wait.ms", 60000);

@@ -108,8 +108,10 @@ public class RemoteModuleSession extends PSession {
 		this.mss = mss;
 		this.nodeInfo = nodeInfo;
 		this.connsPool = ckpool;
-		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size, mss.writerexec, mss.packPool, mss.writerPool,
-				mss.resendMap, mss.getResendBufferSize());
+		;
+		writerQ = new PacketQueue(ckpool, mss.packet_buffer_size,
+				mss.getOsocket().getDispatcher().getExecutorService("transio.remote.writer"), mss.packPool,
+				mss.writerPool, mss.resendMap, mss.getResendBufferSize());
 	}
 
 	public RemoteModuleSession addConnection(Connection<?> conn) {
@@ -148,8 +150,8 @@ public class RemoteModuleSession extends PSession {
 			Object to_pack = pack.getExtHead().remove(OSocketImpl.PACK_TO);
 			if (to_pack != null) {
 				pack.getExtHead().append(OSocketImpl.PACK_TO + "_D", to_pack);
-			} 
-			mss.packMaps.put(packid,mss.getPackPool().borrowTuple(pack, handler, writerQ));
+			}
+			mss.packMaps.put(packid, mss.getPackPool().borrowTuple(pack, handler, writerQ));
 			// log.error("sendSyncPack:packid=" + packid + ",maps.size=" +
 			// mss.packMaps.size());
 		} else {

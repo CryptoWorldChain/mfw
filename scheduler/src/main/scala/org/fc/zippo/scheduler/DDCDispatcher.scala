@@ -7,14 +7,15 @@ import java.util.concurrent.TimeUnit
 import onight.oapi.scala.traits.OLog
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.LinkedBlockingDeque
 
-case class DDCDispatcher(name: String, q: LinkedBlockingQueue[Worker], threadPool: ForkJoinPool, running: AtomicBoolean = new AtomicBoolean(true)) extends Runnable with OLog {
+case class DDCDispatcher(name: String, q: LinkedBlockingDeque[Worker], threadPool: ForkJoinPool, running: AtomicBoolean = new AtomicBoolean(true)) extends Runnable with OLog {
 
   def run() {
     Thread.currentThread().setName("DDC-Dispatcher-" + name)
     var lastlogTime: Long = 0;
 
-    while (DDCInstance.running.get && running.get) {
+    while (running.get) {
       try {
         if (System.currentTimeMillis() - lastlogTime > DDCConfig.LOGINFO_DISPATCHER_TIMESEC) {
           log.info("DDC-Dispatcher:" + name + ",tp[A=" + threadPool.getActiveThreadCount + ",Q=" + threadPool.getQueuedTaskCount + ",C=" + threadPool.getPoolSize

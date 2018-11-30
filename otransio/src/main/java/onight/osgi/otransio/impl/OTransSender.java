@@ -45,19 +45,19 @@ public class OTransSender extends FutureSender {
 				}
 			});
 			FramePacket ret = future.get(timeoutMS, TimeUnit.MILLISECONDS);
-			log.debug("send "+fp.getModuleAndCMD()+" bodysize["+fp.getFixHead().getBodysize()+"]b cost["+(System.currentTimeMillis()-starttime)+"]ms resp="+fp.isResp()+",sync="+fp.isSync());
+//			log.debug("send "+fp.getModuleAndCMD()+" bodysize["+fp.getFixHead().getBodysize()+"]b cost["+(System.currentTimeMillis()-starttime)+"]ms resp="+fp.isResp()+",sync="+fp.isSync());
 			return ret;
 		} catch (InterruptedException e) {
-			log.warn("send InterruptedException:cost:" + (System.currentTimeMillis()-starttime)+":"+fp, e);
+			log.warn("send InterruptedException:cost:" + (System.currentTimeMillis()-starttime)+":"+fp.getExtHead(), e);
 			throw new MessageException(e);
 		} catch (ExecutionException e) {
-			log.warn("send ExecutionException:cost:"+ (System.currentTimeMillis()-starttime)+":" + fp, e);
+			log.warn("send ExecutionException:cost:"+ (System.currentTimeMillis()-starttime)+":" + fp.getExtHead(), e);
 			throw new MessageException(e);
 		} catch (TimeoutException e) {
-			log.warn("send TimeoutException:cost:"+ (System.currentTimeMillis()-starttime)+":" + fp, e);
+			log.warn("send TimeoutException:cost:"+ (System.currentTimeMillis()-starttime)+":" + fp.getExtHead(), e);
 			throw new MessageException(e);
 		} catch (Exception e) {
-			log.warn("send Exception"+ (System.currentTimeMillis()-starttime)+":" + fp, e);
+			log.warn("send Exception"+ (System.currentTimeMillis()-starttime)+":" + fp.getExtHead(), e);
 			throw new MessageException(e);
 		}
 	}

@@ -1,7 +1,13 @@
 package onight.osgi.otransio.nio;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -48,7 +54,10 @@ public class OClient {
 		transport.setKeepAlive(true);
 		transport = TCPNIOTransportBuilder.newInstance().build();
 		transport.setProcessor(filterChainBuilder.build());
-		transport.setClientSocketSoTimeout(60*1000);
+		transport.setClientSocketSoTimeout(params.get("otransio.client.sotimeout", 10));
+		transport.setKernelThreadPool(oimpl.getDispatcher().getExecutorService("otransio.client.kernel"));
+		transport.setWorkerThreadPool(oimpl.getDispatcher().getExecutorService("otransio.client.cworkers"));
+		
 		transport.setTcpNoDelay(true);
 		try {
 			transport.start();

@@ -61,7 +61,7 @@ public  interface ORMappingDao<T> extends DomainDaoSupport {
 
 	/**
 	 * 
-	 * @param exec
+	 * @param sch
 	 * @return
 	 * @throws JPAException
 	 */
