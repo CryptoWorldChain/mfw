@@ -89,6 +89,10 @@ class ZippoDDC extends PMDDC[Message] with IActorDispatcher {
   def getExecutorService(poolname: String): ExecutorService = {
     DDCInstance.getExecutorService(poolname)
   }
+  
+   def scheduleWithFixedDelay(run: Runnable, initialDelay: Long, period: Long, tu: TimeUnit) = {
+    DDCInstance.scheduleWithFixedDelay(run, initialDelay, period, tu)
+  }
 
 }
 

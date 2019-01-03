@@ -120,8 +120,15 @@ public class JPAStoreManager {
 			sb.append(".").append(v);
 			override_target = prop.get(sb.toString(), override_target);
 		}
-
 		return override_target;
+	}
+	public String getTargetOverride(String originTarget) {
+		if(!originTarget.endsWith("!"))
+		{
+			return prop.get("org.zippo.store.overrided."+originTarget, originTarget);
+		}else {
+			return originTarget;
+		}
 	}
 
 	@Bind(aggregate = true, optional = true)
@@ -177,7 +184,7 @@ public class JPAStoreManager {
 						ServiceSpec ss;
 						String target = getOverrideTarget(clazz, field);
 						if (StringUtils.isBlank(target)) {
-							target = anno.target();
+							target = getTargetOverride(anno.target());
 						}
 						if (StringUtils.isNotBlank(target) && target.indexOf('.') > 0) {
 							// sub class

@@ -18,6 +18,7 @@ import onight.tfw.ntrans.api.PBActor;
 import onight.tfw.ntrans.api.annotation.ActorRequire;
 import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.beans.FramePacket;
+import onight.tfw.outils.bean.ClassUtils;
 import onight.tfw.outils.conf.PropHelper;
 
 @Slf4j
@@ -56,7 +57,7 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 		if (act == null) {
 			act = new ActorRunner();
 		}
-		act.reset(pack, resp, asyncContext, this);
+		act.reset(pack, resp, asyncContext, this,ClassUtils.getFirstParameterizedClass(getClass()));
 		dispatcher.post(pack, act.getHandler(), act);// 用底层的统一的线程池处理
 		// dispatcher.post(act);//用底层的统一的线程池处理
 		// asyncContext.start(act);//用jettey线程池处理

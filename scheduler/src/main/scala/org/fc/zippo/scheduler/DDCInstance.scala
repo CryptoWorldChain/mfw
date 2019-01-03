@@ -101,7 +101,9 @@ object DDCInstance extends OLog {
   def scheduleWithFixedDelaySecond(run: Runnable, initialDelay: Long, period: Long) = {
     daemonsWTC.scheduleWithFixedDelay(run, initialDelay, period, TimeUnit.SECONDS)
   }
-
+ def scheduleWithFixedDelay(run: Runnable, initialDelay: Long, period: Long, tu: TimeUnit) = {
+    daemonsWTC.scheduleWithFixedDelay(run, initialDelay, period, tu)
+  }
   def post(pack: FramePacket, handler: CompleteHandler, sm: PBActor[Message]) = {
     val (dname, q) = if (specQ.containsKey(pack.getModuleAndCMD)) specQ.get(pack.getModuleAndCMD)
     else {

@@ -2,6 +2,7 @@
 package org.fc.zippo.dispatcher;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.google.protobuf.Message;
 
@@ -25,6 +26,7 @@ public interface IActorDispatcher {
 	public void postWithTimeout(FramePacket pack, CompleteHandler handler, PBActor<Message> sm, long timeoutMS);
 
 	public void scheduleWithFixedDelaySecond(Runnable run, long initialDelay, long period);
+	public void scheduleWithFixedDelay(Runnable run, long initialDelay, long period, TimeUnit timeunit);
 
 	public void destroy();
 

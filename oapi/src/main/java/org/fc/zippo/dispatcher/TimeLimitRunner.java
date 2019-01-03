@@ -5,9 +5,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import onight.tfw.async.CompleteHandler;
 
 @Data
+@Slf4j
 public abstract class TimeLimitRunner implements Runnable {
 
 	protected boolean finished = false;
@@ -21,6 +23,8 @@ public abstract class TimeLimitRunner implements Runnable {
 				runOnce();
 			}
 		} catch (Throwable t) {
+			log.error("error in run timelimit runner:",t);
+		} finally {
 			finished = true;
 		}
 	}

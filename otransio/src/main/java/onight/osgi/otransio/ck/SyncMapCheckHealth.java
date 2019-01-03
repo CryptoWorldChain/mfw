@@ -49,7 +49,7 @@ public class SyncMapCheckHealth implements Runnable {
 	@Override
 	public void run() {
 		try {
-			log.debug("Sync MapsCheckHealth:--START");
+//			log.debug("Sync MapsCheckHealth:--START");
 			Iterator<PacketTuple> it = mss.getResendMap().values().iterator();
 			long checkTime = System.currentTimeMillis();
 			List<String> removed = new ArrayList<>();
@@ -97,7 +97,7 @@ public class SyncMapCheckHealth implements Runnable {
 		}
 		removeDuplicateMap();
 		
-		log.debug("SyncMapsCheckHealth: -- END");
+//		log.debug("SyncMapsCheckHealth: -- END");
 	}
 
 }

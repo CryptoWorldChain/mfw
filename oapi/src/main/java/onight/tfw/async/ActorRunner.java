@@ -16,6 +16,7 @@ import onight.tfw.otransio.api.PackHeader;
 import onight.tfw.otransio.api.PacketHelper;
 import onight.tfw.otransio.api.beans.ExceptionBody;
 import onight.tfw.otransio.api.beans.FramePacket;
+import onight.tfw.outils.bean.ClassUtils;
 import onight.tfw.outils.bean.JsonPBFormat;
 import onight.tfw.outils.conf.PropHelper;
 import onight.tfw.outils.pool.ReusefulLoopPool;
@@ -31,15 +32,18 @@ public class ActorRunner extends PBActor<Message> implements Runnable {
 	HttpServletResponse resp;
 	AsyncContext asyncContext;
 	PBActor actor;
+	Class beanType;
 
 	public static int actorPoolSize = new PropHelper(null).get("org.zippo.jetty.actor.poolsize", 1000);
 	protected static ReusefulLoopPool<ActorRunner> actorPool = new ReusefulLoopPool<>();
 
-	public void reset(FramePacket pack, HttpServletResponse resp, AsyncContext asyncContext, PBActor actor) {
+	public <T extends Message> void reset(FramePacket pack, HttpServletResponse resp, AsyncContext asyncContext,
+			PBActor<T> actor,Class beanType) {
 		this.pack = pack;
 		this.resp = resp;
 		this.asyncContext = asyncContext;
 		this.actor = actor;
+		this.beanType = beanType;
 	}
 
 	protected ISerializer jsons = SerializerFactory.getSerializer(SerializerFactory.SERIALIZER_JSON);
@@ -198,6 +202,6 @@ public class ActorRunner extends PBActor<Message> implements Runnable {
 			} finally {
 				asyncContext.complete();
 			}
-		}		
+		}
 	}
 }
