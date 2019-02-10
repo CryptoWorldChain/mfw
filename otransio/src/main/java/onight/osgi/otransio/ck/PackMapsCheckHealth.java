@@ -53,13 +53,14 @@ public class PackMapsCheckHealth implements Runnable {
 			for (String key : rmkeys) {
 				PacketTuple pt = mss.getPackMaps().remove(key);
 				if (pt != null) {
-					mss.getPackPool().retobj(pt);
 					if (pt.getHandler() != null) {
 						try {
 							pt.getHandler().onFailed(new TimeoutException("pack send timeout"));
 						} catch (Exception e) {
 						}
 					}
+					mss.getPackPool().retobj(pt);
+
 				}
 			}
 		} catch (Exception e) {

@@ -135,21 +135,25 @@ public class PacketQueue implements Runnable {
 		if (isStop) {
 			return;
 		}
-		while (greenPool.size() < ckpool.getCore() / 4) {
+		int cc = 0;
+		while (greenPool.size() < ckpool.getCore() / 4 && !isStop && cc < 100) {
 			conn = ckpool.ensureConnection();
-			if (conn != null) {
+			if (conn != null && conn.isOpen()) {
 				greenPool.addObject(conn);
+			} else {
+				cc++;
 			}
 		}
 		conn = null;
-
-		while (pioPool.size() < ckpool.getCore() / 4) {
+		cc = 0;
+		while (pioPool.size() < ckpool.getCore() / 4 && !isStop && cc < 100) {
 			conn = ckpool.ensureConnection();
-			if (conn != null) {
+			if (conn != null&&conn.isOpen()) {
 				pioPool.addObject(conn);
+			} else {
+				cc++;
 			}
 		}
-
 		conn = null;
 		int failedwait = 0;
 		while (!isStop) {

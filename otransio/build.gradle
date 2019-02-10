@@ -11,7 +11,7 @@ dependencies {
 	compile 'org.apache.commons:commons-lang3:3.5'
 	testCompile 'junit:junit:4.8.2'
 }
-version = '3.5.0'
+version = '3.5.1'
 jar {
 	manifest{
 		//		attributes( 'Spring-Context': 'applicationContext-common.xml, applicationContext-beans.xml')
