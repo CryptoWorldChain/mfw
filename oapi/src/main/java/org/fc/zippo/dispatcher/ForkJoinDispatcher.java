@@ -27,10 +27,10 @@ public class ForkJoinDispatcher implements IActorDispatcher {
 	}
 
 	@Override
-	public void scheduleWithFixedDelay(Runnable run, long initialDelay, long period,TimeUnit tu) {
+	public void scheduleWithFixedDelay(Runnable run, long initialDelay, long period, TimeUnit tu) {
 		sch.scheduleWithFixedDelay(run, initialDelay, period, tu);
 	}
-	
+
 	@Override
 	public void post(final FramePacket pack, final CompleteHandler handler, final PBActor<Message> sm) {
 		defaultPool.execute(new Runnable() {
@@ -124,6 +124,11 @@ public class ForkJoinDispatcher implements IActorDispatcher {
 	@Override
 	public ExecutorService getExecutorService(String gcmd) {
 		return defaultPool;
+	}
+
+	@Override
+	public boolean isRunning() {
+		return !(sch.isShutdown()||sch.isTerminating());
 	}
 
 }

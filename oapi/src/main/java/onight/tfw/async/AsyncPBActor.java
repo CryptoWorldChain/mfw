@@ -34,7 +34,7 @@ public abstract class AsyncPBActor<T extends Message> extends PBActor<T> {
 	}
 
 	public void setDispatcher(IActorDispatcher dispatcher) {
-		log.info("setDispatcher==" + dispatcher);
+//		log.info("setDispatcher==" + dispatcher);
 		this.dispatcher = dispatcher;
 	}
 

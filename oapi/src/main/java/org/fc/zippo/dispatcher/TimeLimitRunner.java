@@ -14,7 +14,7 @@ public abstract class TimeLimitRunner implements Runnable {
 
 	protected boolean finished = false;
 	ScheduledThreadPoolExecutor sch;
-	long timeoutMS = 1L;
+	long timeoutMS = 60*1000L;
 
 	@Override
 	public void run() {

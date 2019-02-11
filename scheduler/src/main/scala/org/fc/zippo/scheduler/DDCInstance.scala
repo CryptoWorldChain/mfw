@@ -51,7 +51,7 @@ object DDCInstance extends OLog {
     for (i <- 1 to DDCConfig.DEFAULT_DISPATCHER_COUNT) {
       new Thread(new DDCDispatcher("default(" + i + ")", defaultQ, defaultWTC)).start()
     }
-    //init specify dispatcher -- thread pools 
+    //init specify dispatcher -- thread pools
     DDCConfig.specDispatchers().map { x =>
       val dcname = x._1
       val ddc = x._2;
@@ -101,7 +101,7 @@ object DDCInstance extends OLog {
   def scheduleWithFixedDelaySecond(run: Runnable, initialDelay: Long, period: Long) = {
     daemonsWTC.scheduleWithFixedDelay(run, initialDelay, period, TimeUnit.SECONDS)
   }
- def scheduleWithFixedDelay(run: Runnable, initialDelay: Long, period: Long, tu: TimeUnit) = {
+  def scheduleWithFixedDelay(run: Runnable, initialDelay: Long, period: Long, tu: TimeUnit) = {
     daemonsWTC.scheduleWithFixedDelay(run, initialDelay, period, tu)
   }
   def post(pack: FramePacket, handler: CompleteHandler, sm: PBActor[Message]) = {
