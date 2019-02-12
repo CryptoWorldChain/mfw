@@ -4,19 +4,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-//import org.codehaus.jackson.JsonNode;
-//import org.codehaus.jackson.map.DeserializationConfig.Feature;
-//import org.codehaus.jackson.map.ObjectMapper;
-//import org.codehaus.jackson.map.SerializationConfig;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.DeserializationConfig.Feature;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.protobuf.Descriptors.EnumValueDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.Descriptors.FieldDescriptor.JavaType;
@@ -30,10 +22,10 @@ public class JsonPBUtil {
 
 	static ObjectMapper mapper = new ObjectMapper();
 	static {
-		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-		mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_CONTROL_CHARS, true);
-		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		mapper.configure(Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		mapper.configure(SerializationConfig.Feature.FAIL_ON_EMPTY_BEANS, false);
+		mapper.configure(SerializationConfig.Feature.WRITE_NULL_PROPERTIES,
+				false);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -45,7 +37,7 @@ public class JsonPBUtil {
 			return null;
 		}
 		if (fd.isRepeated() && (node.isArray() || node.isObject())) {
-			Iterator<JsonNode> it = node.elements();
+			Iterator<JsonNode> it = node.getElements();
 			Message.Builder subbuilder = null;
 			if (fd.getJavaType().equals(JavaType.STRING)&&node.isObject()) {
 				if (!node.isTextual()) {
@@ -162,7 +154,8 @@ public class JsonPBUtil {
 	}
 	public static void json2PBMap(FieldDescriptor fd, JsonNode node,
 			Message.Builder msgBuilder) {
-		Iterator<Map.Entry<String, JsonNode>> it = node.fields();
+		Iterator<Map.Entry<String, JsonNode>> it = (Iterator<Map.Entry<String, JsonNode>>) node
+				.getFields();
 		while (it.hasNext()) {
 			Map.Entry<String, JsonNode> item = it.next();
 			MapEntry.Builder mb = (MapEntry.Builder) msgBuilder
@@ -175,7 +168,7 @@ public class JsonPBUtil {
 	}
 	public static void json2PBArray(JsonNode tree, BuilderFactory factory) {
 		if(tree.isArray()){
-			Iterator<JsonNode> it = tree.elements();
+			Iterator<JsonNode> it = tree.getElements();
 			while (it.hasNext()) {
 				JsonNode itnode = it.next();
 				json2PB(itnode,factory.getBuilder());

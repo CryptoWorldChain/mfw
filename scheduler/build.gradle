@@ -1,7 +1,7 @@
 
 
 dependencies {
-	compile ("org.fc.zippo:org.fc.zippo.oapi:3.4.0")
+	compile ("org.fc.zippo:org.fc.zippo.oapi:3.4.2")
 	includeInJar 'org.projectlombok:lombok:1.16.4'
 //	compile 'onight.tfw:onight.tfw.oapi:2.0.0'
 	compile 'org.apache.commons:commons-lang3:3.3.2'
